@@ -45,6 +45,16 @@
     root.querySelector('[data-bh="hide"]').onclick=()=>{enabled=false;root.classList.add("bh-hidden")};
     setTimeout(()=>API.event("greet"),650);
   };
+
+  function syncPremiumMascotContext(){
+    const root=document.getElementById("bobblehead-widget"); if(!root) return;
+    const visibleOverlay=[...document.querySelectorAll('[role="dialog"],.modal,.overlay,#answerReveal,#correctAnswerOverlay')]
+      .some(el=>{const s=getComputedStyle(el); return s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity||1)>0&&el.offsetWidth>0});
+    root.classList.toggle("bh-overlay-mode",visibleOverlay);
+  }
+  const mascotContextObserver=new MutationObserver(syncPremiumMascotContext);
+  document.addEventListener("DOMContentLoaded",()=>{syncPremiumMascotContext();mascotContextObserver.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class","style","hidden"]});});
+
   window.BobbleHost=API;
   document.readyState==="loading"?document.addEventListener("DOMContentLoaded",API.init):API.init();
 })();
