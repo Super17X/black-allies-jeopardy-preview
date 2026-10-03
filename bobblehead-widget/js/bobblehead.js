@@ -1,0 +1,44 @@
+
+(function(){
+  const API={};
+  let root,bubble,timer,enabled=true,sound=true;
+  const lines={
+    greet:["Welcome to Black & Allies Jeopardy!","Players, get ready!","Let’s make it a great game!"],
+    choose:["Choose a category!","You’re in control — pick a clue.","Board is yours!"],
+    correct:["That’s correct!","Yes! Put it on the board!","You got it!"],
+    wrong:["Not quite!","That one got away.","Watch for the steal!"],
+    steal:["Steal opportunity!","Seven seconds… then the steal opens!","Get ready to steal!"],
+    daily:["DAILY DOUBLE!","Big moment — Daily Double!"],
+    final:["It’s Final Jeopardy time!","Make those wagers count!"],
+    winner:["We have our winner!","What a game!","Give it up for our champion!"]
+  };
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  function speak(text){
+    if(!sound || !("speechSynthesis" in window)) return;
+    try{speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.pitch=.96;u.volume=.82;speechSynthesis.speak(u)}catch(e){}
+  }
+  API.show=function(text,type=""){
+    if(!enabled||!root)return;
+    root.classList.remove("bh-correct","bh-wrong","bh-daily");
+    if(type) root.classList.add("bh-"+type);
+    bubble.textContent=text;bubble.classList.add("show");
+    clearTimeout(timer);timer=setTimeout(()=>bubble.classList.remove("show"),4200);
+  };
+  API.event=function(name,detail={}){
+    const a=lines[name]; if(!a)return;
+    const text=detail.text||pick(a); API.show(text,name==="correct"?"correct":name==="wrong"?"wrong":name==="daily"?"daily":"");
+    if(detail.voice) speak(text);
+  };
+  API.init=function(){
+    if(document.getElementById("bobblehead-widget"))return;
+    root=document.createElement("div");root.id="bobblehead-widget";
+    root.innerHTML='<div class="bh-bubble" aria-live="polite"></div><div class="bh-stage" role="button" tabindex="0" aria-label="Game host mascot"><div class="bh-head"><div class="bh-hair"></div><i class="bh-eye l"></i><i class="bh-eye r"></i><div class="bh-smile"></div></div><div class="bh-neck"></div><div class="bh-body"></div><div class="bh-base"></div></div><div class="bh-controls"><button type="button" data-bh="mute">Voice: Off</button><button type="button" data-bh="hide">Hide</button></div>';
+    document.body.appendChild(root);bubble=root.querySelector(".bh-bubble");
+    root.querySelector(".bh-stage").onclick=()=>API.event("choose");
+    root.querySelector('[data-bh="mute"]').onclick=e=>{sound=!sound;e.currentTarget.textContent=sound?"Voice: On":"Voice: Off"};
+    root.querySelector('[data-bh="hide"]').onclick=()=>{enabled=false;root.classList.add("bh-hidden")};
+    setTimeout(()=>API.event("greet"),650);
+  };
+  window.BobbleHost=API;
+  document.readyState==="loading"?document.addEventListener("DOMContentLoaded",API.init):API.init();
+})();
