@@ -1,0 +1,13 @@
+PREMIUM MASCOT FIX
+
+- Mascot enlarged and moved inward.
+- Head proportion reduced relative to stage.
+- Neck/head layer overlaps deeper into the collar to hide the hard spring/crop seam.
+- Idle motion reduced to subtle physical inertia.
+- Correct, wrong, buzz, steal, pass, timeout, Daily Double, Final, and winner reactions retained but restrained.
+- Body participates slightly in large celebrations.
+- BOSS MOVE pedestal/plaque upgraded.
+- Voice/Hide controls removed from under the figurine and exposed through Host Controls.
+- Mascot repositions during modal/answer-reveal presentation.
+- Responsive desktop/mobile sizing.
+- No changes to Supabase, scoring, 7-second steal logic, team/tournament logic, or buzzer engine.
