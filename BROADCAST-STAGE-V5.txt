@@ -1,0 +1,16 @@
+BLACK & ALLIES JEOPARDY — BROADCAST STAGE V5
+
+Visual target: the approved cinematic blue/gold game-show reference.
+
+V5 changes:
+- Rebuilt live board composition around a protected center-left board and dedicated stage-right host lane.
+- Enlarged transparent BOSS MOVE host and grounded him into the set with stage shadow and 3D-styled podium.
+- Preserved mascot reactions and speech bubble behavior.
+- Repositioned title, player-in-control panel, movable Game Status toolbar, board, and bottom scoreboard to match the reference hierarchy.
+- Upgraded clue tiles, category headers, used-clue treatment, glass surfaces, gold trim, shadows and broadcast lighting.
+- Question/answer screens retain the stage and host rather than becoming opaque full-screen slabs.
+- Lobby/waiting room uses translucent glass so the stage remains visible.
+- Responsive fallbacks hide the host lane on narrow screens so gameplay remains usable.
+- Existing game logic, Supabase buzzer system, scoring, timers, Daily Doubles, Final Jeopardy, audio, question rotation and movable host/status controls are preserved.
+
+The generated V5-DESIGN-REFERENCE.png is included under assets/ as a visual QA target; the live interface remains real HTML/CSS/JS and does not use the screenshot as a fake board.

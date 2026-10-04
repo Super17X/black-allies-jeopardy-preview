@@ -3223,3 +3223,49 @@
 </body>
 </html>
 
+
+<!-- V5 Broadcast Stage visual system -->
+<style id="broadcast-stage-v5">
+:root{--v5-gold:#f6c743;--v5-gold2:#ffe66a;--v5-blue:#063d91;--v5-blue2:#0757c8;--v5-ink:#020817;--v5-glass:rgba(2,8,22,.92)}
+body{padding:0 18px 92px!important;background-color:#020617!important;background-image:linear-gradient(180deg,rgba(1,5,16,.03),rgba(1,5,16,.14)),url("assets/black-excellence-background.webp")!important;background-position:center top!important;background-size:cover!important;background-attachment:fixed!important;overflow-x:hidden}
+body:before{background:radial-gradient(circle at 48% 8%,rgba(24,96,255,.16),transparent 34%),linear-gradient(90deg,rgba(0,0,0,.03),rgba(0,0,0,.16) 72%,rgba(0,0,0,.02))!important}
+.hero{position:relative!important;z-index:40!important;width:min(760px,44vw)!important;margin:0 auto 12px!important;padding:8px 20px 10px!important;border:1px solid rgba(246,199,67,.85)!important;border-top:0!important;border-radius:0 0 18px 18px!important;background:linear-gradient(180deg,rgba(2,8,22,.97),rgba(2,8,22,.91))!important;box-shadow:0 12px 35px #0009,0 0 28px rgba(29,105,255,.18)!important}
+.hero h1{font-size:clamp(2rem,3.3vw,3.45rem)!important;letter-spacing:-.025em!important;white-space:nowrap!important}.hero p{font-size:clamp(.68rem,.9vw,.92rem)!important;margin-top:5px!important}
+#scoreBoard{position:fixed!important;left:20px!important;top:18px!important;width:285px!important;z-index:2100!important;background:linear-gradient(180deg,rgba(3,13,31,.98),rgba(1,7,19,.96))!important;border:1px solid var(--v5-gold)!important;box-shadow:0 12px 30px #0009!important}
+#boardPane{position:relative!important;width:calc(100vw - 390px)!important;max-width:none!important;margin:28px 350px 22px 0!important;padding:12px 14px 14px!important;border:2px solid var(--v5-gold)!important;border-radius:18px!important;background:rgba(1,7,20,.91)!important;box-shadow:0 18px 48px #000b,0 0 24px rgba(32,119,255,.14)!important;backdrop-filter:blur(6px)}
+#boardGrid{gap:6px!important}.cat{min-height:60px!important;border-color:#2d98ff!important;background:linear-gradient(180deg,#0752ad,#032765)!important;color:#ffe55a!important;border-radius:6px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important}.cell{min-height:47px!important;border-color:#258fff!important;background:linear-gradient(180deg,#0756bd,#042b73)!important;color:#ffe33f!important;border-radius:6px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -10px 24px rgba(0,0,0,.12)!important}.cell.used{background:linear-gradient(180deg,#052d67,#031a3d)!important;color:#564d1f!important;filter:saturate(.7)!important}
+#leaderboardTicker{position:fixed!important;left:68px!important;right:400px!important;bottom:18px!important;height:74px!important;z-index:1200!important}.tickerTrack{gap:12px!important}.tickerPlayer{padding:11px 16px!important;border:1px solid rgba(246,199,67,.55)!important;border-radius:12px!important;background:linear-gradient(180deg,rgba(4,13,30,.98),rgba(2,8,19,.98))!important;box-shadow:0 10px 25px #0008!important}.tickerLeader{border-color:var(--v5-gold)!important;box-shadow:0 0 18px rgba(246,199,67,.45),0 10px 25px #0008!important}
+.game-status-toolbar{top:78px!important;right:24px!important;left:auto!important;z-index:2600!important;border:1px solid var(--v5-gold)!important;background:rgba(2,8,20,.96)!important;box-shadow:0 12px 34px #000b!important;backdrop-filter:blur(14px)!important}.game-status-toolbar .pill,.game-status-toolbar .btn{min-height:34px!important;background:#040b18!important;border-color:#a97b16!important}.game-status-toolbar #resetBtnTop{background:#d8272e!important;color:#fff!important;border-color:#ff5960!important}
+#hostFab{right:18px!important;top:16px!important;z-index:2700!important;background:rgba(3,8,18,.94)!important;border-color:var(--v5-gold)!important}#hostDrawer{z-index:2800!important}
+/* Dedicated broadcast host lane: large, borderless, grounded into the stage. */
+body:has(#boardPane[style*="block"]) #bobblehead-widget{display:block!important;position:fixed!important;right:10px!important;bottom:64px!important;width:330px!important;height:610px!important;z-index:900!important;transform:none!important;pointer-events:none!important}
+body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage{position:absolute!important;right:0!important;bottom:0!important;width:315px!important;height:590px!important;filter:drop-shadow(0 24px 22px rgba(0,0,0,.46))!important;pointer-events:auto!important}
+body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-new-host{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;filter:contrast(1.04) saturate(1.04) drop-shadow(0 8px 7px rgba(0,0,0,.2))!important;animation:v5HostFloat 4.2s ease-in-out infinite!important;transform-origin:50% 88%!important}
+body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage:before{content:"";position:absolute;left:48px;right:16px;bottom:-7px;height:30px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.7),rgba(0,0,0,0) 70%);filter:blur(5px);z-index:-1}
+body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage:after{content:"BOSS\A MOVE";white-space:pre;position:absolute;right:-3px;bottom:-6px;width:122px;height:146px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:1000;font-size:24px;line-height:1.02;letter-spacing:.02em;color:#ffd54c;background:linear-gradient(145deg,#101827,#02050d);border:3px solid #e5ad2e;border-radius:18px 18px 8px 8px;box-shadow:inset 0 0 18px #1865ff33,0 0 0 5px #15100a,0 16px 28px #000b;text-shadow:0 2px 0 #6b4100;transform:perspective(400px) rotateY(-5deg);z-index:-1}
+@keyframes v5HostFloat{0%,100%{transform:translateY(0) rotate(-.35deg)}50%{transform:translateY(-5px) rotate(.45deg)}}
+body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-bubble{right:195px!important;bottom:430px!important;max-width:230px!important;background:rgba(4,10,22,.94)!important;color:#fff!important;border:1px solid var(--v5-gold)!important;backdrop-filter:blur(12px)!important}
+body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-controls{display:none!important}
+/* Question and answer screens preserve the stage and host rather than covering it. */
+#qaPane,#finalPane,#summaryPane{width:calc(100vw - 420px)!important;margin-left:30px!important;margin-right:390px!important;background:rgba(2,8,22,.92)!important;border:2px solid var(--v5-gold)!important;backdrop-filter:blur(12px)!important;box-shadow:0 18px 55px #000b!important}
+#correctAnswerOverlay{background:rgba(1,5,15,.56)!important;backdrop-filter:blur(5px)!important}#correctAnswerBox{width:min(760px,58vw)!important;margin-right:260px!important;background:linear-gradient(180deg,#141027,#080713)!important;border:3px solid var(--v5-gold)!important;box-shadow:0 0 50px rgba(246,199,67,.2),0 28px 70px #000c!important}
+#correctAnswerTitle{color:var(--v5-gold2)!important;letter-spacing:.09em!important}#correctAnswerText{font-size:clamp(2.4rem,5vw,5.5rem)!important;line-height:.98!important}
+/* Waiting/lobby: glass, not a blocking slab. */
+#lobbyPane,#waitingRoomPane{background:linear-gradient(180deg,rgba(2,8,22,.82),rgba(2,8,22,.68))!important;backdrop-filter:blur(9px) saturate(1.15)!important;border:1px solid rgba(246,199,67,.78)!important;box-shadow:0 20px 60px #0008!important}
+@media(max-width:1250px){#boardPane{width:calc(100vw - 310px)!important;margin-right:285px!important}body:has(#boardPane[style*="block"]) #bobblehead-widget{width:275px!important;height:520px!important}body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage{width:265px!important;height:500px!important}#leaderboardTicker{right:310px!important}.hero{width:min(700px,52vw)!important}}
+@media(max-width:900px){body{padding:0 8px 96px!important}.hero{width:94vw!important}.hero h1{white-space:normal!important}.game-status-toolbar{top:auto!important;right:8px!important;left:8px!important;bottom:8px!important}#scoreBoard{position:relative!important;left:auto!important;top:auto!important;width:auto!important;margin:8px!important}#boardPane{width:100%!important;margin:8px 0 100px!important}body:has(#boardPane[style*="block"]) #bobblehead-widget{display:none!important}#leaderboardTicker{left:8px!important;right:8px!important;bottom:62px!important}#qaPane,#finalPane,#summaryPane{width:auto!important;margin:12px!important}#correctAnswerBox{width:min(92vw,760px)!important;margin:0!important}}
+@media(prefers-reduced-motion:reduce){body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-new-host{animation:none!important}}
+</style>
+<script id="broadcast-stage-v5-controller">
+(()=>{
+  const protect=()=>{
+    const bar=document.getElementById('gameStatusToolbar');
+    if(!bar||innerWidth<901)return;
+    const q=document.getElementById('qaPane'), a=document.getElementById('correctAnswerOverlay');
+    const questionOpen=q&&getComputedStyle(q).display!=='none';
+    const answerOpen=a&&getComputedStyle(a).display!=='none'&&a.offsetParent!==null;
+    if(questionOpen||answerOpen){bar.style.top='78px';bar.style.right='24px';bar.style.left='auto';}
+  };
+  addEventListener('resize',protect);setInterval(protect,700);
+})();
+</script>
