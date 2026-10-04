@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Black & Allies Jeopardy — Premiere Tests</title>
+<style>body{font-family:system-ui;background:#07060a;color:#fff7d6;padding:28px}h1{color:#ffdf6e}.pass{color:#7CFC98}.fail{color:#ff6b6b}code{color:#ffdf6e}</style>
+<h1>Premiere Self-Tests</h1><div id="out"></div>
+<script>
+const out=document.getElementById("out");
+const test=(name,fn)=>{let ok=false,msg="";try{ok=!!fn()}catch(e){msg=e.message}out.innerHTML+=`<p class="${ok?"pass":"fail"}">${ok?"✓":"✕"} ${name}${msg?` — ${msg}`:""}</p>`};
+function ranked(players){const s=players.map((p,i)=>({...p,i})).sort((a,b)=>(b.score-a.score)||a.name.localeCompare(b.name,undefined,{sensitivity:"base"}));let ps=null,pr=0;return s.map((p,i)=>{const rank=i===0?1:(p.score===ps?pr:i+1);ps=p.score;pr=rank;return {...p,rank}})}
+function norm(v){return String(v||"").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"")}
+test("Competition ranking: 1st, 2nd, 2nd, 4th",()=>JSON.stringify(ranked([{name:"A",score:100},{name:"B",score:80},{name:"C",score:80},{name:"D",score:20}]).map(x=>x.rank))==="[1,2,2,4]");
+test("Tied players display alphabetically",()=>ranked([{name:"Zoe",score:50},{name:"Amy",score:50}])[0].name==="Amy");
+test("Highest score is rank #1",()=>ranked([{name:"A",score:1},{name:"B",score:9}])[0].name==="B");
+test("Answer normalization ignores case/punctuation/spaces",()=>norm("  Who Is OPRAH?! ")===norm("who is oprah"));
+test("Local recovery storage is available",()=>{localStorage.setItem("premiere-test","ok");const ok=localStorage.getItem("premiere-test")==="ok";localStorage.removeItem("premiere-test");return ok});
+</script>
