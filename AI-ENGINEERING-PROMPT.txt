@@ -1,0 +1,33 @@
+You are a senior software engineer, product UX engineer, accessibility specialist, and live-event systems engineer. Upgrade this existing Black & Allies multiplayer trivia/game-show repository in place. Do not rewrite working features unnecessarily and do not remove functionality.
+
+PRIMARY GOAL
+Turn the current control-heavy prototype into a polished, reliable live game experience that a first-time host can launch for four players in under two minutes.
+
+NON-NEGOTIABLE PRESERVATION
+Preserve the question bank and rotation, scoring, rankings/ties, Daily Doubles, Final round, timers, host adjudication, undo, music/SFX, QR join, remote buzzer, Supabase realtime transport, reconnect behavior, team/tournament functionality, presentation mode, diagnostics, privacy features, and existing GitHub Pages compatibility. Keep index.html at repository root. Never place binary/audio data into HTML files.
+
+IMPLEMENTATION PRIORITIES
+1. Separate host, presentation, and player concerns. Host controls must never appear in presentation mode. Player buzzer must remain phone-first.
+2. Redesign setup with progressive disclosure: Quick Setup first, Advanced Options collapsed. Provide Standard Game preset: individual, 4 categories, 5 clues/category, $200 start, $200 step, 15-second answer time, 5-second steal window, 2 Daily Doubles, randomization on, readiness on.
+3. Make one primary action per screen. De-emphasize secondary controls and isolate destructive actions. Confirm reset and skip-to-final.
+4. Simplify Host Control Center into Adjudication, Game Flow, Display, Utilities, Advanced. Keep Correct/Wrong/Pass prominent. Put diagnostics and skip-to-final in advanced/overflow.
+5. Buzzer state machine must explicitly support: disconnected/reconnecting, waiting, buzzer open, buzz submitted, first buzz winner, another player won, answering, submitted, pass, steal, locked/judging, final wager, final answer. Prevent duplicate buzzes/submissions and double scoring. Refresh/reconnect must not duplicate players.
+6. Host must see who buzzed, expected response, score delta, resulting score, and time remaining before/while adjudicating. Provide immediate undo feedback.
+7. Improve timers: Answer time, Steal window, Final response time, Game time limit. Allow pause/resume and extension. Do not announce every second to screen readers.
+8. Accessibility: semantic buttons/labels/fieldsets/headings, visible focus, keyboard-only operation, focus trapping/restoration for dialogs, Escape closes safe dialogs, aria-live for buzz/score/errors, reduced motion, WCAG 2.2 AA contrast, never color-only status, shortcuts disabled while typing.
+9. Visual polish: premium blue/gold stage, unclipped header, readable 16:9 projector board, large scores/values, consistent spacing/type scale, one accent hierarchy, responsive 320px through 1080p+, 200% zoom. Remove any visible rectangular background around mascot. Use transparent mascot art and drop-shadow rather than masks/black boxes.
+10. Reliability: persist active state, reconnect players/presentation, idempotent host actions, event log, protect reset/skip actions, explicit network failure states, preload only next-screen essentials, lazy-load music/effects after interaction.
+11. Content trust: structure support for answer sources/citations, accepted alternate responses, content version/last-reviewed date, disputed-claim notes, and report-clue mechanism without exposing host notes on presentation screen.
+12. PWA/metadata: manifest, icons, favicon, description, social preview, theme color when assets are available.
+13. Tests: add smoke tests for launch, standard preset, join, ready, first-buzz wins, answer submit, pass/steal, correct/wrong scoring, tie ranking, reconnect, refresh recovery, Daily Double, Final wager/answer, reset confirmation, presentation mode, keyboard behavior, mobile widths, and broken asset paths.
+
+ENGINEERING RULES
+- Inspect existing code before changing it.
+- Prefer small modular CSS/JS additions over risky wholesale rewrites.
+- Do not add dependencies unless essential.
+- Keep Supabase public/publishable client configuration separate from game logic; never add service-role/private secrets.
+- Validate every local src/href path.
+- Validate that root index.html begins with HTML, not binary data.
+- Run syntax checks and smoke tests before packaging.
+- Produce a changelog listing files changed, why, risks, and rollback steps.
+- Package a single GitHub-ready ZIP whose root contains index.html, buzzer.html, config.js, assets/, and bobblehead-widget/ with no extra nesting directory required for upload.
