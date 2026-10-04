@@ -375,57 +375,8 @@
     }
     #bobblehead-widget .bh-stage{filter:none!important}
     @media(max-width:760px){#premiereIntro>div{padding:30px 16px}#enterPremiereBtn{min-width:190px}}
-
-    /* ===== 2026 movable Host Control toolbar + board-side BOSS MOVE host ===== */
-    #hostDrawer{
-      left:auto;right:18px;top:72px;width:min(430px,94vw);max-height:78vh;overflow:auto;
-      resize:both;min-width:300px;min-height:120px;transform:translateX(calc(100% + 40px));
-      touch-action:none;
-    }
-    #hostDrawer.open{transform:none}
-    #hostDrawer.host-minimized{width:260px!important;height:auto!important;min-height:0;resize:none;overflow:hidden}
-    #hostDrawer.host-minimized .host-grid{display:none}
-    .host-toolbar-head{cursor:grab;user-select:none;touch-action:none;padding:3px 2px 9px}
-    .host-toolbar-head:active{cursor:grabbing}
-    .host-toolbar-actions{display:flex;gap:6px;margin-left:auto}
-    .host-toolbar-actions .btn{padding:5px 9px;min-width:34px}
-    #hostDrawer.dragging{transition:none!important;box-shadow:0 22px 70px #000,0 0 0 2px rgba(255,216,79,.25)}
-    #hostFab{right:18px;top:18px}
-
-    /* Keep the mascot visible beside the live board instead of hiding it. */
-    body:has(#boardPane[style*="block"]) #bobblehead-widget{
-      display:block!important;right:22px;bottom:94px;width:270px;z-index:1100;transform:none;
-    }
-    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage{
-      width:255px!important;height:430px!important;right:0;bottom:0;filter:drop-shadow(0 18px 22px rgba(0,0,0,.5))!important;
-    }
-    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-new-host{width:100%;height:100%;object-fit:contain;object-position:center bottom}
-    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-bubble{right:10px;bottom:410px;max-width:245px}
-    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-controls{display:none}
-    @media(max-width:1000px){
-      #hostDrawer{max-height:70vh}
-      body:has(#boardPane[style*="block"]) #bobblehead-widget{right:8px;bottom:76px;transform:scale(.68);transform-origin:right bottom}
-    }
-    @media(max-width:700px){
-      #hostDrawer{left:8px!important;right:8px!important;top:58px!important;width:auto!important;max-height:72vh;resize:none}
-      body:has(#boardPane[style*="block"]) #bobblehead-widget{display:none!important}
-    }
   </style>
   <link rel="stylesheet" href="bobblehead-widget/css/bobblehead.css">
-  <link rel="stylesheet" href="assets/ux-upgrade.css">
-
-<style id="game-status-toolbar-styles">
-  .board-title-row{display:none}
-  .game-status-toolbar{position:fixed;z-index:10015;top:104px;right:22px;display:flex;align-items:center;gap:8px;max-width:min(760px,calc(100vw - 44px));padding:6px 8px;border:1px solid rgba(247,201,72,.75);border-radius:16px;background:linear-gradient(135deg,rgba(5,8,18,.94),rgba(14,10,25,.9));box-shadow:0 10px 30px rgba(0,0,0,.38),0 0 18px rgba(247,201,72,.10);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);touch-action:none}
-  .game-status-drag{display:flex;align-items:center;gap:5px;color:var(--gold2);font-size:.67rem;letter-spacing:.08em;cursor:grab;user-select:none;white-space:nowrap;padding:4px 5px;border-right:1px solid rgba(247,201,72,.25)}
-  .game-status-toolbar.dragging .game-status-drag{cursor:grabbing}
-  .game-status-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
-  .game-status-toolbar .pill,.game-status-toolbar .btn{white-space:nowrap;margin:0}
-  .game-status-toolbar.status-minimized .game-status-actions>*:not(#minimizeGameStatus){display:none}
-  .game-status-toolbar.status-minimized{width:auto!important;height:auto!important}
-  body.presentation-mode .game-status-toolbar{display:none!important}
-  @media(max-width:900px){.game-status-toolbar{top:auto!important;right:8px!important;left:8px!important;bottom:8px!important;max-width:none;transform:none!important;justify-content:center;touch-action:auto}.game-status-drag{display:none}.game-status-actions{overflow-x:auto;max-width:100%;padding-bottom:2px}.game-status-actions::-webkit-scrollbar{height:3px}}
-</style>
 </head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
@@ -433,7 +384,7 @@
   <div id="toast"></div>
   <div id="achievementOverlay"><div class="achievement-card" id="achievementCard"></div></div>
   <button id="hostFab" class="btn">🎤 Host Controls</button>
-  <aside id="hostDrawer" aria-label="Host Control Center"><div id="hostDragHandle" class="row host-toolbar-head" style="justify-content:space-between"><strong style="color:var(--gold2)">🎤 HOST CONTROL CENTER <span class="tiny" style="color:var(--muted)">• drag to move</span></strong><div class="host-toolbar-actions"><button id="resetHostPosition" class="btn" type="button" title="Reset toolbar position">↺</button><button id="minimizeHostDrawer" class="btn" type="button" title="Minimize host controls">—</button><button id="closeHostDrawer" class="btn" type="button" title="Close host controls">✕</button></div></div><div class="host-grid">
+  <aside id="hostDrawer" aria-label="Host Control Center"><div class="row" style="justify-content:space-between"><strong style="color:var(--gold2)">🎤 HOST CONTROL CENTER</strong><button id="closeHostDrawer" class="btn">✕</button></div><div class="host-grid">
     <button class="btn ok" data-host-action="correct">✓ Correct</button><button class="btn warn" data-host-action="wrong">✕ Wrong</button>
     <button class="btn" data-host-action="pass">Pass</button><button class="btn" data-host-action="pause">Pause / Resume</button>
     <button class="btn" data-host-action="reveal">Reveal Answer</button><button class="btn" data-host-action="board">Return to Board</button>
@@ -654,23 +605,16 @@
   <div id="buzzerRaceHost" aria-live="polite"><strong>⚡ BUZZER RACE</strong><div id="buzzerRaceHostRows"></div></div>
 
   <div id="boardPane" class="card" style="display:none">
-    <div class="board-title-row">
+    <div class="row" style="justify-content:space-between">
       <h2 style="margin:0;color:var(--gold2)">Board</h2>
-    </div>
-    <aside id="gameStatusToolbar" class="game-status-toolbar" aria-label="Game status toolbar">
-      <div id="gameStatusDragHandle" class="game-status-drag" title="Drag game status toolbar">
-        <span>⋮⋮</span><strong>GAME STATUS</strong>
-      </div>
-      <div class="game-status-actions tiny">
+      <div class="row tiny">
         <span class="pill control-clock">⏱ <span id="gameClock">15:00</span></span>
-        <span class="pill">Daily Doubles: <span id="ddLeft">0</span></span>
+        <span class="pill">Daily Doubles left: <span id="ddLeft">0</span></span>
         <button id="musicToggleTopBtn" class="btn alt">♫ Music</button>
         <button class="btn alt" id="buzzerLinkBtn" style="font-size:.82rem;padding:4px 10px">📱 Buzzer Link</button>
         <button id="resetBtnTop" class="btn warn">Reset Game</button>
-        <button id="resetGameStatusPosition" class="btn" type="button" title="Reset toolbar position">↺</button>
-        <button id="minimizeGameStatus" class="btn" type="button" title="Minimize toolbar">—</button>
       </div>
-    </aside>
+    </div>
     <div id="boardGrid"></div>
   </div>
 
@@ -1460,18 +1404,11 @@
       return key ? state.players.findIndex(p => p.name.trim().toLocaleLowerCase() === key) : -1;
     }
 
-    function registerBuzzerPlayer(rawName, deviceId=""){
+    function registerBuzzerPlayer(rawName){
       const requestedName = String(rawName || "").trim().slice(0, 40);
-      if (!requestedName) return { ok:false, player:"", added:false, index:-1, reason:"Enter a valid player name." };
+      if (!requestedName) return { ok:false, player:"", added:false, index:-1 };
 
       let index = playerIndexByName(requestedName);
-      if(index === -1 && roomLocked) return {ok:false,player:requestedName,added:false,index:-1,reason:"The host has locked the room. New players cannot join after the game starts."};
-      if(index !== -1){
-        const canonical=state.players[index].name; const existing=playerDevices.get(canonical); const health=deviceHealth.get(canonical);
-        if(existing && deviceId && existing!==deviceId && health?.lastSeen && Date.now()-health.lastSeen<12000){
-          return {ok:false,player:canonical,added:false,index,reason:"That player is already connected on another device."};
-        }
-      }
       let added = false;
       if (index === -1) {
         index = state.players.length;
@@ -1488,9 +1425,7 @@
         if (scoreBoard.style.display !== "none") renderScoreboard();
       }
 
-      const canonical=state.players[index].name;
-      if(deviceId) playerDevices.set(canonical,deviceId);
-      return { ok:true, player:canonical, added, index };
+      return { ok:true, player:state.players[index].name, added, index };
     }
     addPlayerBtn.addEventListener("click", addPlayer);
     nameInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") addPlayer(); });
@@ -1841,8 +1776,6 @@
     // Game start
     // -----------------------------
     function beginGameNow(){
-      roomLocked = true;
-      proLog("Room locked to new players for live gameplay");
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId = null;
 
@@ -2158,7 +2091,7 @@
       setGamePhase("STEAL_DELAY");
 
       // STEAL LOCK: nobody may buzz for 7 seconds after a miss/pass.
-      const stealDelaySeconds = Math.max(2, Number(stealSecondsInput.value||7));
+      const stealDelaySeconds = 7;
       const stealPlayer = state.players[state.controlIdx].name;
       const activeKeyAtDelayStart = state.activeKey;
 
@@ -2263,7 +2196,7 @@
 
 
       sfxWrong();
-      if(firstBuzzer) broadcastToBuzzers({type:"answer-wrong",player:firstBuzzer,seconds:Math.max(2,Number(stealSecondsInput.value||7))});
+      if(firstBuzzer) broadcastToBuzzers({type:"answer-wrong",player:firstBuzzer});
       statInc(premiereStats.wrong,state.players[state.controlIdx].name);
       correctStreaks.set(state.players[state.controlIdx].name, 0);
       if (state.clueAttempts > 0) {
@@ -2530,9 +2463,6 @@
       stopGameClock();
       stopFinalTimer();
       setPrivacy(false);
-      roomLocked = false;
-      playerDevices.clear();
-      proLog("Room unlocked for a new game");
 
 
       // reset core game state but keep players list (common expectation)
@@ -2597,18 +2527,8 @@
     const realtimeConfig = window.JEOPARDY_CONFIG || {};
     const realtimeEnabled = !!(realtimeConfig.supabaseUrl && realtimeConfig.supabaseAnonKey && window.supabase);
     const roomParam = new URLSearchParams(location.search).get("room");
-    const roomCode = (roomParam || sessionStorage.getItem("jeopardy-room") || (crypto.randomUUID?.().replace(/-/g,"").slice(0,8) || Math.random().toString(36).slice(2,10))).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8) || "GAME01";
+    const roomCode = (roomParam || sessionStorage.getItem("jeopardy-room") || Math.random().toString(36).slice(2,8)).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8) || "GAME01";
     sessionStorage.setItem("jeopardy-room", roomCode);
-    const roomSessionToken = sessionStorage.getItem("jeopardy-room-token") || (crypto.randomUUID?.().replace(/-/g,"") || (Date.now().toString(36)+Math.random().toString(36).slice(2)));
-    sessionStorage.setItem("jeopardy-room-token", roomSessionToken);
-    let roomLocked = false;
-    const playerDevices = new Map();
-    const rateBuckets = new Map();
-    function rateAllowed(deviceId,type,limit=6,windowMs=1500){
-      const key=`${deviceId||"unknown"}:${type}`; const now=Date.now();
-      const arr=(rateBuckets.get(key)||[]).filter(t=>now-t<windowMs);
-      if(arr.length>=limit) return false; arr.push(now); rateBuckets.set(key,arr); return true;
-    }
     let realtimeChannel = null;
     let realtimeReady = false;
     let outboundQueue = [];
@@ -2656,12 +2576,6 @@
     }
     function proLog(text){
       proLastEvent=text;
-      try{
-        const key=`jeopardy-event-log-${roomCode}`;
-        const events=JSON.parse(localStorage.getItem(key)||"[]");
-        events.unshift({at:new Date().toISOString(),text:String(text)});
-        localStorage.setItem(key,JSON.stringify(events.slice(0,200)));
-      }catch(_){}
       const last=$("proLastEvent"); if(last) last.textContent=text;
       const log=$("proEventLog"); if(log){
         const d=document.createElement("div");
@@ -2785,14 +2699,6 @@
     // ---------- handle message from buzzer pages ----------
     function handleBuzzerMessage(data) {
       if (!data || !data.type) return;
-      if(data.sessionToken !== roomSessionToken){
-        if(data.player) broadcastToBuzzers({type:"session-denied",player:data.player,deviceId:data.deviceId||"",message:"This buzzer link is stale. Scan the current host QR code again."});
-        return;
-      }
-      if(!rateAllowed(data.deviceId||data.player||"unknown",data.type,data.type==="buzz"?3:8,data.type==="buzz"?1200:1800)){
-        if(data.player) broadcastToBuzzers({type:"rate-limited",player:data.player,deviceId:data.deviceId||"",message:"Too many requests. Please wait a moment."});
-        return;
-      }
 
       if(data.player) markDevice(data.player);
       if(data._mid){
@@ -2826,9 +2732,9 @@
 
 
       if (data.type === "join") {
-        const registration = registerBuzzerPlayer(data.player,data.deviceId||"");
+        const registration = registerBuzzerPlayer(data.player);
         if (!registration.ok) {
-          broadcastToBuzzers({ type:"join-ack", player:data.player, deviceId:data.deviceId||"", registered:false, reason:registration.reason||"Unable to join." });
+          broadcastToBuzzers({ type:"join-ack", player:data.player, registered:false });
           return;
         }
         connectedBuzzers.add(registration.player);
@@ -2836,7 +2742,6 @@
         broadcastToBuzzers({
           type:"join-ack",
           player:data.player,
-          deviceId:data.deviceId||"",
           registered:true,
           canonicalPlayer:registration.player,
           added:registration.added,
@@ -2864,7 +2769,6 @@
         if(idx>=0){
           state.ready.set(idx,!state.ready.get(idx));
           renderWaitingRoom(); updateBeginEnabled(); broadcastReadyState();
-          broadcastToBuzzers({type:"ready-ack",player:state.players[idx].name,ready:!!state.ready.get(idx),deviceId:data.deviceId||""});
         }
         return;
       }
@@ -2875,7 +2779,7 @@
         if(!questionIsActive || !samePlayer){
           broadcastToBuzzers({type:"answer-denied",player:data.player}); return;
         }
-        broadcastToBuzzers({type:"answer-pass",player:data.player,seconds:Math.max(2,Number(stealSecondsInput.value||7))});
+        broadcastToBuzzers({type:"answer-pass",player:data.player});
         handlePass();
         return;
       }
@@ -2918,9 +2822,7 @@
       if (data.type === "final-answer-submit") {
         const idx=state.players.findIndex(p=>sameName(p.name,data.player));
         if(state.final.step!=="answers" || idx<0 || state.final.answers.has(idx)) return;
-        const finalAnswer=String(data.answer||"").trim();
-        if(!finalAnswer){ broadcastToBuzzers({type:"final-error",player:data.player,message:"Enter a Final Jeopardy answer before submitting."}); return; }
-        state.final.answers.set(idx,finalAnswer);
+        state.final.answers.set(idx,String(data.answer||"").trim());
         broadcastToBuzzers({type:"final-answer-ack",player:data.player});
         if(state.final.answers.size>=state.players.length){
           state.final.step="reveal"; state.final.idx=0; renderFinalUI();
@@ -2953,8 +2855,7 @@
           return;
         }
         buzzerActive = true;
-        const existingIdx=playerIndexByName(data.player);
-        const registration = existingIdx>=0 ? {ok:true,player:state.players[existingIdx].name,index:existingIdx,added:false} : {ok:false};
+        const registration = registerBuzzerPlayer(data.player);
         if (!registration.ok) {
           broadcastToBuzzers({ type:"buzz-denied", player:data.player });
           return;
@@ -3024,7 +2925,6 @@
     function openBuzzerPanel() {
       const buzzerUrl = new URL("buzzer.html", window.location.href);
       buzzerUrl.searchParams.set("room", roomCode);
-      buzzerUrl.searchParams.set("session", roomSessionToken);
       buzzerPanelEl.style.display = "block";
       buzzerRoomEl.textContent = `Room: ${roomCode}`;
       buzzerLinkEl.textContent = buzzerUrl.href;
@@ -3157,28 +3057,6 @@
     }
     function undoLast(){const u=undoStack.pop();if(!u)return toast("Nothing to undo");u.scores.forEach((v,i)=>{if(state.players[i])state.players[i].score=v});state.controlIdx=u.controlIdx;state.used=new Set(u.used);renderScoreboard();renderBoard();broadcastScoreboard(false);broadcastBoardState();toast(`Undid: ${u.label}`)}
     $("hostFab").onclick=()=>$("hostDrawer").classList.toggle("open");$("closeHostDrawer").onclick=()=>$("hostDrawer").classList.remove("open");$("undoBtn").onclick=undoLast;
-
-    // Movable/resizable Host Control toolbar. Position is remembered on this browser.
-    (()=>{
-      const drawer=$("hostDrawer"), handle=$("hostDragHandle"), minBtn=$("minimizeHostDrawer"), resetBtn=$("resetHostPosition");
-      const key="black-allies-host-toolbar-v1"; let drag=null;
-      function clampPosition(left,top){
-        const r=drawer.getBoundingClientRect();
-        return {left:Math.max(4,Math.min(left,innerWidth-Math.min(r.width,innerWidth-8)-4)),top:Math.max(4,Math.min(top,innerHeight-54))};
-      }
-      function save(){try{const r=drawer.getBoundingClientRect();localStorage.setItem(key,JSON.stringify({left:r.left,top:r.top,width:r.width,height:r.height,min:drawer.classList.contains("host-minimized")}))}catch(_){}}
-      function restore(){try{const d=JSON.parse(localStorage.getItem(key)||"null");if(!d||innerWidth<701)return;drawer.style.left=d.left+"px";drawer.style.top=d.top+"px";drawer.style.right="auto";if(d.width)drawer.style.width=d.width+"px";if(d.height&&!d.min)drawer.style.height=d.height+"px";drawer.classList.toggle("host-minimized",!!d.min);minBtn.textContent=d.min?"□":"—"}catch(_){}}
-      function reset(){localStorage.removeItem(key);drawer.removeAttribute("style");drawer.classList.remove("host-minimized");minBtn.textContent="—";toast("Host toolbar position reset")};
-      handle.addEventListener("pointerdown",e=>{if(e.target.closest("button")||innerWidth<701)return;const r=drawer.getBoundingClientRect();drag={dx:e.clientX-r.left,dy:e.clientY-r.top};drawer.classList.add("dragging");handle.setPointerCapture?.(e.pointerId);e.preventDefault()});
-      handle.addEventListener("pointermove",e=>{if(!drag)return;const p=clampPosition(e.clientX-drag.dx,e.clientY-drag.dy);drawer.style.left=p.left+"px";drawer.style.top=p.top+"px";drawer.style.right="auto"});
-      const end=()=>{if(!drag)return;drag=null;drawer.classList.remove("dragging");save()};
-      handle.addEventListener("pointerup",end);handle.addEventListener("pointercancel",end);
-      minBtn.onclick=()=>{drawer.classList.toggle("host-minimized");minBtn.textContent=drawer.classList.contains("host-minimized")?"□":"—";if(!drawer.classList.contains("host-minimized"))drawer.style.height="";save()};
-      resetBtn.onclick=reset;
-      new ResizeObserver(()=>{if(drawer.classList.contains("open")&&!drawer.classList.contains("dragging"))save()}).observe(drawer);
-      addEventListener("resize",()=>{if(innerWidth<701){drawer.style.left="";drawer.style.right="";drawer.style.top=""}else{const r=drawer.getBoundingClientRect(),p=clampPosition(r.left,r.top);drawer.style.left=p.left+"px";drawer.style.top=p.top+"px";drawer.style.right="auto"}});
-      restore();
-    })();
     $("presentationBtn").onclick=()=>{document.body.classList.toggle("presentation-mode");toast(document.body.classList.contains("presentation-mode")?"Presentation mode on — press Esc for host controls":"Presentation mode off")};
     $("fullscreenBtn").onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});
     $("muteAllBtn").onclick=()=>{mutedByHost=!mutedByHost;soundModeSel.value=mutedByHost?'off':'on';soundModeSel.dispatchEvent(new Event('change'));toast(mutedByHost?'Audio muted':'Audio enabled')};
@@ -3199,73 +3077,6 @@
     <div class="tickerViewport"><div id="leaderboardTickerTrack" class="tickerTrack">Waiting for players…</div></div>
   </div>
   <script src="bobblehead-widget/js/bobblehead.js"></script>
-  <script src="assets/ux-upgrade.js"></script>
-
-<script id="game-status-toolbar-controller">
-(()=>{
-  const bar=document.getElementById('gameStatusToolbar'), handle=document.getElementById('gameStatusDragHandle');
-  const reset=document.getElementById('resetGameStatusPosition'), min=document.getElementById('minimizeGameStatus');
-  if(!bar||!handle)return;
-  const key='black-allies-game-status-toolbar-v1'; let drag=null;
-  const clamp=(x,y)=>{const r=bar.getBoundingClientRect();return {x:Math.max(6,Math.min(x,innerWidth-r.width-6)),y:Math.max(6,Math.min(y,innerHeight-r.height-6))}};
-  const save=()=>{if(innerWidth<=900)return;try{const r=bar.getBoundingClientRect();localStorage.setItem(key,JSON.stringify({x:r.left,y:r.top,min:bar.classList.contains('status-minimized')}))}catch(_){}};
-  const defaultPos=()=>{bar.style.left='';bar.style.top='104px';bar.style.right='22px';bar.style.bottom='';bar.style.transform='';bar.classList.remove('status-minimized');if(min)min.textContent='—'};
-  const restore=()=>{if(innerWidth<=900)return;try{const d=JSON.parse(localStorage.getItem(key)||'null');if(!d)return;bar.style.left=d.x+'px';bar.style.top=d.y+'px';bar.style.right='auto';bar.style.bottom='auto';bar.classList.toggle('status-minimized',!!d.min);if(min)min.textContent=d.min?'□':'—'}catch(_){}};
-  handle.addEventListener('pointerdown',e=>{if(e.target.closest('button')||innerWidth<=900)return;const r=bar.getBoundingClientRect();drag={dx:e.clientX-r.left,dy:e.clientY-r.top};bar.classList.add('dragging');handle.setPointerCapture?.(e.pointerId);e.preventDefault()});
-  handle.addEventListener('pointermove',e=>{if(!drag)return;const p=clamp(e.clientX-drag.dx,e.clientY-drag.dy);bar.style.left=p.x+'px';bar.style.top=p.y+'px';bar.style.right='auto';bar.style.bottom='auto'});
-  const end=()=>{if(!drag)return;drag=null;bar.classList.remove('dragging');save()};handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
-  reset?.addEventListener('click',()=>{try{localStorage.removeItem(key)}catch(_){};defaultPos()});
-  min?.addEventListener('click',()=>{bar.classList.toggle('status-minimized');min.textContent=bar.classList.contains('status-minimized')?'□':'—';save()});
-  addEventListener('resize',()=>{if(innerWidth<=900){bar.removeAttribute('style')}else{const r=bar.getBoundingClientRect(),p=clamp(r.left,r.top);bar.style.left=p.x+'px';bar.style.top=p.y+'px';bar.style.right='auto';bar.style.bottom='auto'}});
-  restore();
-})();
-</script>
 </body>
 </html>
 
-
-<!-- V5 Broadcast Stage visual system -->
-<style id="broadcast-stage-v5">
-:root{--v5-gold:#f6c743;--v5-gold2:#ffe66a;--v5-blue:#063d91;--v5-blue2:#0757c8;--v5-ink:#020817;--v5-glass:rgba(2,8,22,.92)}
-body{padding:0 18px 92px!important;background-color:#020617!important;background-image:linear-gradient(180deg,rgba(1,5,16,.03),rgba(1,5,16,.14)),url("assets/black-excellence-background.webp")!important;background-position:center top!important;background-size:cover!important;background-attachment:fixed!important;overflow-x:hidden}
-body:before{background:radial-gradient(circle at 48% 8%,rgba(24,96,255,.16),transparent 34%),linear-gradient(90deg,rgba(0,0,0,.03),rgba(0,0,0,.16) 72%,rgba(0,0,0,.02))!important}
-.hero{position:relative!important;z-index:40!important;width:min(760px,44vw)!important;margin:0 auto 12px!important;padding:8px 20px 10px!important;border:1px solid rgba(246,199,67,.85)!important;border-top:0!important;border-radius:0 0 18px 18px!important;background:linear-gradient(180deg,rgba(2,8,22,.97),rgba(2,8,22,.91))!important;box-shadow:0 12px 35px #0009,0 0 28px rgba(29,105,255,.18)!important}
-.hero h1{font-size:clamp(2rem,3.3vw,3.45rem)!important;letter-spacing:-.025em!important;white-space:nowrap!important}.hero p{font-size:clamp(.68rem,.9vw,.92rem)!important;margin-top:5px!important}
-#scoreBoard{position:fixed!important;left:20px!important;top:18px!important;width:285px!important;z-index:2100!important;background:linear-gradient(180deg,rgba(3,13,31,.98),rgba(1,7,19,.96))!important;border:1px solid var(--v5-gold)!important;box-shadow:0 12px 30px #0009!important}
-#boardPane{position:relative!important;width:calc(100vw - 390px)!important;max-width:none!important;margin:28px 350px 22px 0!important;padding:12px 14px 14px!important;border:2px solid var(--v5-gold)!important;border-radius:18px!important;background:rgba(1,7,20,.91)!important;box-shadow:0 18px 48px #000b,0 0 24px rgba(32,119,255,.14)!important;backdrop-filter:blur(6px)}
-#boardGrid{gap:6px!important}.cat{min-height:60px!important;border-color:#2d98ff!important;background:linear-gradient(180deg,#0752ad,#032765)!important;color:#ffe55a!important;border-radius:6px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important}.cell{min-height:47px!important;border-color:#258fff!important;background:linear-gradient(180deg,#0756bd,#042b73)!important;color:#ffe33f!important;border-radius:6px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -10px 24px rgba(0,0,0,.12)!important}.cell.used{background:linear-gradient(180deg,#052d67,#031a3d)!important;color:#564d1f!important;filter:saturate(.7)!important}
-#leaderboardTicker{position:fixed!important;left:68px!important;right:400px!important;bottom:18px!important;height:74px!important;z-index:1200!important}.tickerTrack{gap:12px!important}.tickerPlayer{padding:11px 16px!important;border:1px solid rgba(246,199,67,.55)!important;border-radius:12px!important;background:linear-gradient(180deg,rgba(4,13,30,.98),rgba(2,8,19,.98))!important;box-shadow:0 10px 25px #0008!important}.tickerLeader{border-color:var(--v5-gold)!important;box-shadow:0 0 18px rgba(246,199,67,.45),0 10px 25px #0008!important}
-.game-status-toolbar{top:78px!important;right:24px!important;left:auto!important;z-index:2600!important;border:1px solid var(--v5-gold)!important;background:rgba(2,8,20,.96)!important;box-shadow:0 12px 34px #000b!important;backdrop-filter:blur(14px)!important}.game-status-toolbar .pill,.game-status-toolbar .btn{min-height:34px!important;background:#040b18!important;border-color:#a97b16!important}.game-status-toolbar #resetBtnTop{background:#d8272e!important;color:#fff!important;border-color:#ff5960!important}
-#hostFab{right:18px!important;top:16px!important;z-index:2700!important;background:rgba(3,8,18,.94)!important;border-color:var(--v5-gold)!important}#hostDrawer{z-index:2800!important}
-/* Dedicated broadcast host lane: large, borderless, grounded into the stage. */
-body:has(#boardPane[style*="block"]) #bobblehead-widget{display:block!important;position:fixed!important;right:10px!important;bottom:64px!important;width:330px!important;height:610px!important;z-index:900!important;transform:none!important;pointer-events:none!important}
-body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage{position:absolute!important;right:0!important;bottom:0!important;width:315px!important;height:590px!important;filter:drop-shadow(0 24px 22px rgba(0,0,0,.46))!important;pointer-events:auto!important}
-body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-new-host{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;filter:contrast(1.04) saturate(1.04) drop-shadow(0 8px 7px rgba(0,0,0,.2))!important;animation:v5HostFloat 4.2s ease-in-out infinite!important;transform-origin:50% 88%!important}
-body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage:before{content:"";position:absolute;left:48px;right:16px;bottom:-7px;height:30px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.7),rgba(0,0,0,0) 70%);filter:blur(5px);z-index:-1}
-body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage:after{content:"BOSS\A MOVE";white-space:pre;position:absolute;right:-3px;bottom:-6px;width:122px;height:146px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:1000;font-size:24px;line-height:1.02;letter-spacing:.02em;color:#ffd54c;background:linear-gradient(145deg,#101827,#02050d);border:3px solid #e5ad2e;border-radius:18px 18px 8px 8px;box-shadow:inset 0 0 18px #1865ff33,0 0 0 5px #15100a,0 16px 28px #000b;text-shadow:0 2px 0 #6b4100;transform:perspective(400px) rotateY(-5deg);z-index:-1}
-@keyframes v5HostFloat{0%,100%{transform:translateY(0) rotate(-.35deg)}50%{transform:translateY(-5px) rotate(.45deg)}}
-body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-bubble{right:195px!important;bottom:430px!important;max-width:230px!important;background:rgba(4,10,22,.94)!important;color:#fff!important;border:1px solid var(--v5-gold)!important;backdrop-filter:blur(12px)!important}
-body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-controls{display:none!important}
-/* Question and answer screens preserve the stage and host rather than covering it. */
-#qaPane,#finalPane,#summaryPane{width:calc(100vw - 420px)!important;margin-left:30px!important;margin-right:390px!important;background:rgba(2,8,22,.92)!important;border:2px solid var(--v5-gold)!important;backdrop-filter:blur(12px)!important;box-shadow:0 18px 55px #000b!important}
-#correctAnswerOverlay{background:rgba(1,5,15,.56)!important;backdrop-filter:blur(5px)!important}#correctAnswerBox{width:min(760px,58vw)!important;margin-right:260px!important;background:linear-gradient(180deg,#141027,#080713)!important;border:3px solid var(--v5-gold)!important;box-shadow:0 0 50px rgba(246,199,67,.2),0 28px 70px #000c!important}
-#correctAnswerTitle{color:var(--v5-gold2)!important;letter-spacing:.09em!important}#correctAnswerText{font-size:clamp(2.4rem,5vw,5.5rem)!important;line-height:.98!important}
-/* Waiting/lobby: glass, not a blocking slab. */
-#lobbyPane,#waitingRoomPane{background:linear-gradient(180deg,rgba(2,8,22,.82),rgba(2,8,22,.68))!important;backdrop-filter:blur(9px) saturate(1.15)!important;border:1px solid rgba(246,199,67,.78)!important;box-shadow:0 20px 60px #0008!important}
-@media(max-width:1250px){#boardPane{width:calc(100vw - 310px)!important;margin-right:285px!important}body:has(#boardPane[style*="block"]) #bobblehead-widget{width:275px!important;height:520px!important}body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage{width:265px!important;height:500px!important}#leaderboardTicker{right:310px!important}.hero{width:min(700px,52vw)!important}}
-@media(max-width:900px){body{padding:0 8px 96px!important}.hero{width:94vw!important}.hero h1{white-space:normal!important}.game-status-toolbar{top:auto!important;right:8px!important;left:8px!important;bottom:8px!important}#scoreBoard{position:relative!important;left:auto!important;top:auto!important;width:auto!important;margin:8px!important}#boardPane{width:100%!important;margin:8px 0 100px!important}body:has(#boardPane[style*="block"]) #bobblehead-widget{display:none!important}#leaderboardTicker{left:8px!important;right:8px!important;bottom:62px!important}#qaPane,#finalPane,#summaryPane{width:auto!important;margin:12px!important}#correctAnswerBox{width:min(92vw,760px)!important;margin:0!important}}
-@media(prefers-reduced-motion:reduce){body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-new-host{animation:none!important}}
-</style>
-<script id="broadcast-stage-v5-controller">
-(()=>{
-  const protect=()=>{
-    const bar=document.getElementById('gameStatusToolbar');
-    if(!bar||innerWidth<901)return;
-    const q=document.getElementById('qaPane'), a=document.getElementById('correctAnswerOverlay');
-    const questionOpen=q&&getComputedStyle(q).display!=='none';
-    const answerOpen=a&&getComputedStyle(a).display!=='none'&&a.offsetParent!==null;
-    if(questionOpen||answerOpen){bar.style.top='78px';bar.style.right='24px';bar.style.left='auto';}
-  };
-  addEventListener('resize',protect);setInterval(protect,700);
-})();
-</script>
