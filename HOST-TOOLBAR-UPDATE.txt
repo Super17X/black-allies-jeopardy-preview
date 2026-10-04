@@ -1,0 +1,10 @@
+HOST CONTROL TOOLBAR UPDATE
+
+- Host Control Center is now draggable anywhere on the desktop game screen.
+- Resize it from the browser-native resize handle at the lower-right corner.
+- Use — to minimize/restore it.
+- Use ↺ to reset it to the default position.
+- Its position/size is remembered in localStorage on that browser.
+- On narrow/mobile screens it returns to a safe fixed layout.
+- Presentation Mode still hides all host-only controls.
+- The BOSS MOVE mascot is now visible beside the live board on desktop and is hidden on small mobile screens to preserve board space.

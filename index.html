@@ -375,6 +375,41 @@
     }
     #bobblehead-widget .bh-stage{filter:none!important}
     @media(max-width:760px){#premiereIntro>div{padding:30px 16px}#enterPremiereBtn{min-width:190px}}
+
+    /* ===== 2026 movable Host Control toolbar + board-side BOSS MOVE host ===== */
+    #hostDrawer{
+      left:auto;right:18px;top:72px;width:min(430px,94vw);max-height:78vh;overflow:auto;
+      resize:both;min-width:300px;min-height:120px;transform:translateX(calc(100% + 40px));
+      touch-action:none;
+    }
+    #hostDrawer.open{transform:none}
+    #hostDrawer.host-minimized{width:260px!important;height:auto!important;min-height:0;resize:none;overflow:hidden}
+    #hostDrawer.host-minimized .host-grid{display:none}
+    .host-toolbar-head{cursor:grab;user-select:none;touch-action:none;padding:3px 2px 9px}
+    .host-toolbar-head:active{cursor:grabbing}
+    .host-toolbar-actions{display:flex;gap:6px;margin-left:auto}
+    .host-toolbar-actions .btn{padding:5px 9px;min-width:34px}
+    #hostDrawer.dragging{transition:none!important;box-shadow:0 22px 70px #000,0 0 0 2px rgba(255,216,79,.25)}
+    #hostFab{right:18px;top:18px}
+
+    /* Keep the mascot visible beside the live board instead of hiding it. */
+    body:has(#boardPane[style*="block"]) #bobblehead-widget{
+      display:block!important;right:22px;bottom:94px;width:270px;z-index:1100;transform:none;
+    }
+    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-stage{
+      width:255px!important;height:430px!important;right:0;bottom:0;filter:drop-shadow(0 18px 22px rgba(0,0,0,.5))!important;
+    }
+    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-new-host{width:100%;height:100%;object-fit:contain;object-position:center bottom}
+    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-bubble{right:10px;bottom:410px;max-width:245px}
+    body:has(#boardPane[style*="block"]) #bobblehead-widget .bh-controls{display:none}
+    @media(max-width:1000px){
+      #hostDrawer{max-height:70vh}
+      body:has(#boardPane[style*="block"]) #bobblehead-widget{right:8px;bottom:76px;transform:scale(.68);transform-origin:right bottom}
+    }
+    @media(max-width:700px){
+      #hostDrawer{left:8px!important;right:8px!important;top:58px!important;width:auto!important;max-height:72vh;resize:none}
+      body:has(#boardPane[style*="block"]) #bobblehead-widget{display:none!important}
+    }
   </style>
   <link rel="stylesheet" href="bobblehead-widget/css/bobblehead.css">
   <link rel="stylesheet" href="assets/ux-upgrade.css">
@@ -385,7 +420,7 @@
   <div id="toast"></div>
   <div id="achievementOverlay"><div class="achievement-card" id="achievementCard"></div></div>
   <button id="hostFab" class="btn">🎤 Host Controls</button>
-  <aside id="hostDrawer" aria-label="Host Control Center"><div class="row" style="justify-content:space-between"><strong style="color:var(--gold2)">🎤 HOST CONTROL CENTER</strong><button id="closeHostDrawer" class="btn">✕</button></div><div class="host-grid">
+  <aside id="hostDrawer" aria-label="Host Control Center"><div id="hostDragHandle" class="row host-toolbar-head" style="justify-content:space-between"><strong style="color:var(--gold2)">🎤 HOST CONTROL CENTER <span class="tiny" style="color:var(--muted)">• drag to move</span></strong><div class="host-toolbar-actions"><button id="resetHostPosition" class="btn" type="button" title="Reset toolbar position">↺</button><button id="minimizeHostDrawer" class="btn" type="button" title="Minimize host controls">—</button><button id="closeHostDrawer" class="btn" type="button" title="Close host controls">✕</button></div></div><div class="host-grid">
     <button class="btn ok" data-host-action="correct">✓ Correct</button><button class="btn warn" data-host-action="wrong">✕ Wrong</button>
     <button class="btn" data-host-action="pass">Pass</button><button class="btn" data-host-action="pause">Pause / Resume</button>
     <button class="btn" data-host-action="reveal">Reveal Answer</button><button class="btn" data-host-action="board">Return to Board</button>
@@ -1405,11 +1440,18 @@
       return key ? state.players.findIndex(p => p.name.trim().toLocaleLowerCase() === key) : -1;
     }
 
-    function registerBuzzerPlayer(rawName){
+    function registerBuzzerPlayer(rawName, deviceId=""){
       const requestedName = String(rawName || "").trim().slice(0, 40);
-      if (!requestedName) return { ok:false, player:"", added:false, index:-1 };
+      if (!requestedName) return { ok:false, player:"", added:false, index:-1, reason:"Enter a valid player name." };
 
       let index = playerIndexByName(requestedName);
+      if(index === -1 && roomLocked) return {ok:false,player:requestedName,added:false,index:-1,reason:"The host has locked the room. New players cannot join after the game starts."};
+      if(index !== -1){
+        const canonical=state.players[index].name; const existing=playerDevices.get(canonical); const health=deviceHealth.get(canonical);
+        if(existing && deviceId && existing!==deviceId && health?.lastSeen && Date.now()-health.lastSeen<12000){
+          return {ok:false,player:canonical,added:false,index,reason:"That player is already connected on another device."};
+        }
+      }
       let added = false;
       if (index === -1) {
         index = state.players.length;
@@ -1426,7 +1468,9 @@
         if (scoreBoard.style.display !== "none") renderScoreboard();
       }
 
-      return { ok:true, player:state.players[index].name, added, index };
+      const canonical=state.players[index].name;
+      if(deviceId) playerDevices.set(canonical,deviceId);
+      return { ok:true, player:canonical, added, index };
     }
     addPlayerBtn.addEventListener("click", addPlayer);
     nameInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") addPlayer(); });
@@ -1777,6 +1821,8 @@
     // Game start
     // -----------------------------
     function beginGameNow(){
+      roomLocked = true;
+      proLog("Room locked to new players for live gameplay");
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId = null;
 
@@ -2092,7 +2138,7 @@
       setGamePhase("STEAL_DELAY");
 
       // STEAL LOCK: nobody may buzz for 7 seconds after a miss/pass.
-      const stealDelaySeconds = 7;
+      const stealDelaySeconds = Math.max(2, Number(stealSecondsInput.value||7));
       const stealPlayer = state.players[state.controlIdx].name;
       const activeKeyAtDelayStart = state.activeKey;
 
@@ -2197,7 +2243,7 @@
 
 
       sfxWrong();
-      if(firstBuzzer) broadcastToBuzzers({type:"answer-wrong",player:firstBuzzer});
+      if(firstBuzzer) broadcastToBuzzers({type:"answer-wrong",player:firstBuzzer,seconds:Math.max(2,Number(stealSecondsInput.value||7))});
       statInc(premiereStats.wrong,state.players[state.controlIdx].name);
       correctStreaks.set(state.players[state.controlIdx].name, 0);
       if (state.clueAttempts > 0) {
@@ -2464,6 +2510,9 @@
       stopGameClock();
       stopFinalTimer();
       setPrivacy(false);
+      roomLocked = false;
+      playerDevices.clear();
+      proLog("Room unlocked for a new game");
 
 
       // reset core game state but keep players list (common expectation)
@@ -2528,8 +2577,18 @@
     const realtimeConfig = window.JEOPARDY_CONFIG || {};
     const realtimeEnabled = !!(realtimeConfig.supabaseUrl && realtimeConfig.supabaseAnonKey && window.supabase);
     const roomParam = new URLSearchParams(location.search).get("room");
-    const roomCode = (roomParam || sessionStorage.getItem("jeopardy-room") || Math.random().toString(36).slice(2,8)).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8) || "GAME01";
+    const roomCode = (roomParam || sessionStorage.getItem("jeopardy-room") || (crypto.randomUUID?.().replace(/-/g,"").slice(0,8) || Math.random().toString(36).slice(2,10))).toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8) || "GAME01";
     sessionStorage.setItem("jeopardy-room", roomCode);
+    const roomSessionToken = sessionStorage.getItem("jeopardy-room-token") || (crypto.randomUUID?.().replace(/-/g,"") || (Date.now().toString(36)+Math.random().toString(36).slice(2)));
+    sessionStorage.setItem("jeopardy-room-token", roomSessionToken);
+    let roomLocked = false;
+    const playerDevices = new Map();
+    const rateBuckets = new Map();
+    function rateAllowed(deviceId,type,limit=6,windowMs=1500){
+      const key=`${deviceId||"unknown"}:${type}`; const now=Date.now();
+      const arr=(rateBuckets.get(key)||[]).filter(t=>now-t<windowMs);
+      if(arr.length>=limit) return false; arr.push(now); rateBuckets.set(key,arr); return true;
+    }
     let realtimeChannel = null;
     let realtimeReady = false;
     let outboundQueue = [];
@@ -2577,6 +2636,12 @@
     }
     function proLog(text){
       proLastEvent=text;
+      try{
+        const key=`jeopardy-event-log-${roomCode}`;
+        const events=JSON.parse(localStorage.getItem(key)||"[]");
+        events.unshift({at:new Date().toISOString(),text:String(text)});
+        localStorage.setItem(key,JSON.stringify(events.slice(0,200)));
+      }catch(_){}
       const last=$("proLastEvent"); if(last) last.textContent=text;
       const log=$("proEventLog"); if(log){
         const d=document.createElement("div");
@@ -2700,6 +2765,14 @@
     // ---------- handle message from buzzer pages ----------
     function handleBuzzerMessage(data) {
       if (!data || !data.type) return;
+      if(data.sessionToken !== roomSessionToken){
+        if(data.player) broadcastToBuzzers({type:"session-denied",player:data.player,deviceId:data.deviceId||"",message:"This buzzer link is stale. Scan the current host QR code again."});
+        return;
+      }
+      if(!rateAllowed(data.deviceId||data.player||"unknown",data.type,data.type==="buzz"?3:8,data.type==="buzz"?1200:1800)){
+        if(data.player) broadcastToBuzzers({type:"rate-limited",player:data.player,deviceId:data.deviceId||"",message:"Too many requests. Please wait a moment."});
+        return;
+      }
 
       if(data.player) markDevice(data.player);
       if(data._mid){
@@ -2733,9 +2806,9 @@
 
 
       if (data.type === "join") {
-        const registration = registerBuzzerPlayer(data.player);
+        const registration = registerBuzzerPlayer(data.player,data.deviceId||"");
         if (!registration.ok) {
-          broadcastToBuzzers({ type:"join-ack", player:data.player, registered:false });
+          broadcastToBuzzers({ type:"join-ack", player:data.player, deviceId:data.deviceId||"", registered:false, reason:registration.reason||"Unable to join." });
           return;
         }
         connectedBuzzers.add(registration.player);
@@ -2743,6 +2816,7 @@
         broadcastToBuzzers({
           type:"join-ack",
           player:data.player,
+          deviceId:data.deviceId||"",
           registered:true,
           canonicalPlayer:registration.player,
           added:registration.added,
@@ -2770,6 +2844,7 @@
         if(idx>=0){
           state.ready.set(idx,!state.ready.get(idx));
           renderWaitingRoom(); updateBeginEnabled(); broadcastReadyState();
+          broadcastToBuzzers({type:"ready-ack",player:state.players[idx].name,ready:!!state.ready.get(idx),deviceId:data.deviceId||""});
         }
         return;
       }
@@ -2780,7 +2855,7 @@
         if(!questionIsActive || !samePlayer){
           broadcastToBuzzers({type:"answer-denied",player:data.player}); return;
         }
-        broadcastToBuzzers({type:"answer-pass",player:data.player});
+        broadcastToBuzzers({type:"answer-pass",player:data.player,seconds:Math.max(2,Number(stealSecondsInput.value||7))});
         handlePass();
         return;
       }
@@ -2823,7 +2898,9 @@
       if (data.type === "final-answer-submit") {
         const idx=state.players.findIndex(p=>sameName(p.name,data.player));
         if(state.final.step!=="answers" || idx<0 || state.final.answers.has(idx)) return;
-        state.final.answers.set(idx,String(data.answer||"").trim());
+        const finalAnswer=String(data.answer||"").trim();
+        if(!finalAnswer){ broadcastToBuzzers({type:"final-error",player:data.player,message:"Enter a Final Jeopardy answer before submitting."}); return; }
+        state.final.answers.set(idx,finalAnswer);
         broadcastToBuzzers({type:"final-answer-ack",player:data.player});
         if(state.final.answers.size>=state.players.length){
           state.final.step="reveal"; state.final.idx=0; renderFinalUI();
@@ -2856,7 +2933,8 @@
           return;
         }
         buzzerActive = true;
-        const registration = registerBuzzerPlayer(data.player);
+        const existingIdx=playerIndexByName(data.player);
+        const registration = existingIdx>=0 ? {ok:true,player:state.players[existingIdx].name,index:existingIdx,added:false} : {ok:false};
         if (!registration.ok) {
           broadcastToBuzzers({ type:"buzz-denied", player:data.player });
           return;
@@ -2926,6 +3004,7 @@
     function openBuzzerPanel() {
       const buzzerUrl = new URL("buzzer.html", window.location.href);
       buzzerUrl.searchParams.set("room", roomCode);
+      buzzerUrl.searchParams.set("session", roomSessionToken);
       buzzerPanelEl.style.display = "block";
       buzzerRoomEl.textContent = `Room: ${roomCode}`;
       buzzerLinkEl.textContent = buzzerUrl.href;
@@ -3058,6 +3137,28 @@
     }
     function undoLast(){const u=undoStack.pop();if(!u)return toast("Nothing to undo");u.scores.forEach((v,i)=>{if(state.players[i])state.players[i].score=v});state.controlIdx=u.controlIdx;state.used=new Set(u.used);renderScoreboard();renderBoard();broadcastScoreboard(false);broadcastBoardState();toast(`Undid: ${u.label}`)}
     $("hostFab").onclick=()=>$("hostDrawer").classList.toggle("open");$("closeHostDrawer").onclick=()=>$("hostDrawer").classList.remove("open");$("undoBtn").onclick=undoLast;
+
+    // Movable/resizable Host Control toolbar. Position is remembered on this browser.
+    (()=>{
+      const drawer=$("hostDrawer"), handle=$("hostDragHandle"), minBtn=$("minimizeHostDrawer"), resetBtn=$("resetHostPosition");
+      const key="black-allies-host-toolbar-v1"; let drag=null;
+      function clampPosition(left,top){
+        const r=drawer.getBoundingClientRect();
+        return {left:Math.max(4,Math.min(left,innerWidth-Math.min(r.width,innerWidth-8)-4)),top:Math.max(4,Math.min(top,innerHeight-54))};
+      }
+      function save(){try{const r=drawer.getBoundingClientRect();localStorage.setItem(key,JSON.stringify({left:r.left,top:r.top,width:r.width,height:r.height,min:drawer.classList.contains("host-minimized")}))}catch(_){}}
+      function restore(){try{const d=JSON.parse(localStorage.getItem(key)||"null");if(!d||innerWidth<701)return;drawer.style.left=d.left+"px";drawer.style.top=d.top+"px";drawer.style.right="auto";if(d.width)drawer.style.width=d.width+"px";if(d.height&&!d.min)drawer.style.height=d.height+"px";drawer.classList.toggle("host-minimized",!!d.min);minBtn.textContent=d.min?"□":"—"}catch(_){}}
+      function reset(){localStorage.removeItem(key);drawer.removeAttribute("style");drawer.classList.remove("host-minimized");minBtn.textContent="—";toast("Host toolbar position reset")};
+      handle.addEventListener("pointerdown",e=>{if(e.target.closest("button")||innerWidth<701)return;const r=drawer.getBoundingClientRect();drag={dx:e.clientX-r.left,dy:e.clientY-r.top};drawer.classList.add("dragging");handle.setPointerCapture?.(e.pointerId);e.preventDefault()});
+      handle.addEventListener("pointermove",e=>{if(!drag)return;const p=clampPosition(e.clientX-drag.dx,e.clientY-drag.dy);drawer.style.left=p.left+"px";drawer.style.top=p.top+"px";drawer.style.right="auto"});
+      const end=()=>{if(!drag)return;drag=null;drawer.classList.remove("dragging");save()};
+      handle.addEventListener("pointerup",end);handle.addEventListener("pointercancel",end);
+      minBtn.onclick=()=>{drawer.classList.toggle("host-minimized");minBtn.textContent=drawer.classList.contains("host-minimized")?"□":"—";if(!drawer.classList.contains("host-minimized"))drawer.style.height="";save()};
+      resetBtn.onclick=reset;
+      new ResizeObserver(()=>{if(drawer.classList.contains("open")&&!drawer.classList.contains("dragging"))save()}).observe(drawer);
+      addEventListener("resize",()=>{if(innerWidth<701){drawer.style.left="";drawer.style.right="";drawer.style.top=""}else{const r=drawer.getBoundingClientRect(),p=clampPosition(r.left,r.top);drawer.style.left=p.left+"px";drawer.style.top=p.top+"px";drawer.style.right="auto"}});
+      restore();
+    })();
     $("presentationBtn").onclick=()=>{document.body.classList.toggle("presentation-mode");toast(document.body.classList.contains("presentation-mode")?"Presentation mode on — press Esc for host controls":"Presentation mode off")};
     $("fullscreenBtn").onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});
     $("muteAllBtn").onclick=()=>{mutedByHost=!mutedByHost;soundModeSel.value=mutedByHost?'off':'on';soundModeSel.dispatchEvent(new Event('change'));toast(mutedByHost?'Audio muted':'Audio enabled')};

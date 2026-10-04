@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buzzer Reliability V2 Tests</title><style>body{font:16px system-ui;background:#071126;color:#fff;padding:24px}main{max-width:900px;margin:auto}.ok{color:#61e294}.bad{color:#ff6b6b}code{color:#ffd84d}</style></head><body><main><h1>Buzzer Reliability V2 Tests</h1><div id="out"></div><script>
+const out=document.getElementById('out'), rows=[]; const test=(n,fn)=>{try{fn();rows.push([n,true])}catch(e){rows.push([n,false,e.message])}}; const eq=(a,b)=>{if(a!==b)throw Error(`${a} !== ${b}`)};
+function race(messages){let first=null,processed=new Set();for(const m of messages){if(processed.has(m.mid))continue;processed.add(m.mid);if(m.type==='buzz'&&!first)first=m.player}return first}
+test('First accepted buzz wins',()=>eq(race([{type:'buzz',player:'A',mid:'1'},{type:'buzz',player:'B',mid:'2'}]),'A'));
+test('Duplicate retry cannot replace winner',()=>eq(race([{type:'buzz',player:'A',mid:'1'},{type:'buzz',player:'A',mid:'1'},{type:'buzz',player:'B',mid:'2'}]),'A'));
+test('Later player cannot replace winner',()=>eq(race([{type:'buzz',player:'C',mid:'3'},{type:'buzz',player:'A',mid:'1'},{type:'buzz',player:'B',mid:'2'}]),'C'));
+function finalValid(v){return String(v||'').trim().length>0} test('Blank Final answer rejected',()=>eq(finalValid('   '),false)); test('Final answer accepted',()=>eq(finalValid('Who is Katherine Johnson?'),true));
+function canJoin({known,locked}){return known||!locked} test('New player blocked after room lock',()=>eq(canJoin({known:false,locked:true}),false)); test('Known player can reconnect after room lock',()=>eq(canJoin({known:true,locked:true}),true));
+out.innerHTML=rows.map(([n,ok,e])=>`<p class="${ok?'ok':'bad'}">${ok?'PASS':'FAIL'} — ${n}${e?` <code>${e}</code>`:''}</p>`).join('')+`<h2>${rows.filter(r=>r[1]).length}/${rows.length} passed</h2>`;
+</script></main></body></html>

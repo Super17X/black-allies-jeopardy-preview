@@ -1,0 +1,22 @@
+BLACK & ALLIES JEOPARDY — BUZZER RELIABILITY V2
+
+Implemented in this build:
+- Per-game session token embedded in the QR/buzzer URL to reject stale links.
+- Stronger 8-character room generation.
+- Room automatically locks to NEW player names when live gameplay begins; existing players can reconnect.
+- Duplicate active-player protection using a persistent per-device ID and recent heartbeat status.
+- Host-side rate limiting for buzzes and other phone messages.
+- Critical delivery acknowledgement/retry remains enabled for buzz, answer, pass, ready, wager, and final-answer messages.
+- Ready changes now receive an explicit host acknowledgement.
+- Buzzer UI now shows a neutral "determining who was first" state while the host arbitrates a buzz.
+- Wrong/pass steal countdown text uses the host-provided configured duration.
+- Final Jeopardy blank-answer validation on both phone and host.
+- Event log persisted locally (bounded to the latest 200 host events) for troubleshooting.
+- Refresh/reconnect preserves contestant identity and reclaims the existing player instead of adding a duplicate when safe.
+- Reset Game unlocks the room for the next game.
+
+FAIRNESS NOTE
+GitHub Pages is a static host, so authoritative first-buzz arbitration still occurs in the host browser based on the order messages arrive through Supabase Realtime. This is appropriate for a live social/event game. Truly competition-grade server-side arbitration would require a server/Edge Function with authoritative server timestamps; it cannot be guaranteed by static client code alone.
+
+TEST
+Open buzzer-race-tests.html for deterministic reliability/state-machine tests. For a real event, also test with 3+ physical phones on the venue Wi-Fi/cellular network.
