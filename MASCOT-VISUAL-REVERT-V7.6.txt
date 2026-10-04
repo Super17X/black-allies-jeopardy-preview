@@ -1,0 +1,1 @@
+V7.6 restores the compact arms-crossed BOSS MOVE mascot appearance on the live board while preserving the current game engine and host speech/reaction hooks.
