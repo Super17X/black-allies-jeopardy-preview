@@ -1,0 +1,8 @@
+V7.5 LIVE HOST + STATUS TOOLBAR FIX
+- Rewired visible mascot reactions to actual game events.
+- Added working reveal/streak/choose prompts.
+- Forced speech bubble above stage art and prevented legacy CSS from hiding it.
+- Late CSS overrides ensure reaction animations beat the perpetual idle animation.
+- Mascot uses transparent host asset with fallback.
+- Game Status defaults to compact upper-right dock, collapses, drags with pointer input, remembers position, resets safely, and docks on mobile.
+- Gameplay/buzzer/scoring logic unchanged.

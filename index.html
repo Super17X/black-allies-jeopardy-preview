@@ -3515,3 +3515,85 @@ body.v72-lobby .hero h1{line-height:1.02!important;padding-top:.08em!important}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start):start();
 })();
 </script>
+
+<!-- V7.5 LIVE HOST REACTION + SAFE STATUS TOOLBAR HOTFIX -->
+<style id="v7-5-live-host-fix">
+/* Status toolbar: compact corner dock by default, but truly draggable. */
+#gameStatusToolbar{top:76px!important;right:18px!important;left:auto!important;bottom:auto!important;max-width:min(610px,calc(100vw - 36px))!important;z-index:12000!important}
+#gameStatusToolbar.status-minimized{padding:5px 7px!important;border-radius:999px!important}
+#gameStatusToolbar.status-minimized .game-status-drag{border-right:0!important}
+#gameStatusToolbar.status-minimized .game-status-actions{display:none!important}
+#gameStatusToolbar.status-minimized:after{content:"▣";color:#ffd84f;font-weight:900;padding:0 4px}
+#gameStatusToolbar.v75-user-positioned{right:auto!important;bottom:auto!important}
+/* Keep mascot speech above all board art and make it impossible for old rules to hide it. */
+#bobblehead-widget{overflow:visible!important}
+#bobblehead-widget .bh-bubble{display:block!important;z-index:13050!important;opacity:0!important;visibility:hidden!important;min-width:170px!important;max-width:260px!important;padding:12px 15px!important;border-radius:18px 18px 4px 18px!important;background:linear-gradient(145deg,rgba(3,8,22,.98),rgba(17,12,31,.98))!important;color:#fff7c9!important;border:2px solid #ffd84f!important;box-shadow:0 12px 34px #000b,0 0 22px rgba(255,216,79,.22)!important;font-weight:900!important;line-height:1.25!important;pointer-events:none!important}
+#bobblehead-widget .bh-bubble.show{opacity:1!important;visibility:visible!important;transform:translateY(0) scale(1)!important}
+/* These late rules override the perpetual idle animation in the broadcast layout. */
+#bobblehead-widget.bh-correct .bh-new-host{animation:v75Yes .32s cubic-bezier(.2,.8,.2,1) 5!important}
+#bobblehead-widget.bh-wrong .bh-new-host{animation:v75No .20s ease-in-out 7!important}
+#bobblehead-widget.bh-daily .bh-new-host{animation:v75Daily .32s cubic-bezier(.2,.9,.2,1) 7!important}
+#bobblehead-widget.bh-buzz .bh-new-host{animation:v75Buzz .24s ease-in-out 4!important}
+#bobblehead-widget.bh-steal .bh-new-host{animation:v75Steal .27s ease-in-out 5!important}
+#bobblehead-widget.bh-pass .bh-new-host{animation:v75Pass .34s ease-in-out 3!important}
+#bobblehead-widget.bh-timeout .bh-new-host{animation:v75Timeout .46s ease-in-out 3!important}
+#bobblehead-widget.bh-final .bh-new-host{animation:v75Final .55s ease-in-out 4!important}
+#bobblehead-widget.bh-winner .bh-new-host{animation:v75Winner .42s cubic-bezier(.2,.9,.2,1) 8!important}
+#bobblehead-widget.bh-reveal .bh-new-host{animation:v75Reveal .38s ease-in-out 3!important}
+#bobblehead-widget.bh-streak .bh-new-host{animation:v75Streak .30s ease-in-out 8!important}
+#bobblehead-widget.bh-choose .bh-new-host{animation:v75Choose .34s ease-in-out 3!important}
+@keyframes v75Yes{0%,100%{transform:rotate(0) translateY(0) scale(1)}45%{transform:rotate(3deg) translateY(-13px) scale(1.045)}72%{transform:rotate(-2deg) translateY(2px) scale(1.01)}}
+@keyframes v75No{0%,100%{transform:rotate(0) translateX(0)}25%{transform:rotate(-7deg) translateX(-5px)}50%{transform:rotate(7deg) translateX(5px)}75%{transform:rotate(-5deg) translateX(-3px)}}
+@keyframes v75Daily{0%,100%{transform:scale(1) translateY(0)}35%{transform:scale(.96) translateY(7px)}60%{transform:scale(1.09) translateY(-18px) rotate(4deg)}}
+@keyframes v75Buzz{0%,100%{transform:translateX(0) scale(1)}50%{transform:translateX(-14px) translateY(-5px) rotate(-3deg) scale(1.045)}}
+@keyframes v75Steal{0%,100%{transform:rotate(0)}35%{transform:rotate(-5deg) translateX(-8px)}70%{transform:rotate(5deg) translateX(4px)}}
+@keyframes v75Pass{0%,100%{transform:rotate(0)}50%{transform:rotate(5deg) translateX(9px)}}
+@keyframes v75Timeout{0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(11px) rotate(-4deg) scale(.97)}}
+@keyframes v75Final{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-9px) scale(1.035);filter:drop-shadow(0 0 18px #ffd84f)}}
+@keyframes v75Winner{0%,100%{transform:translateY(0) rotate(0) scale(1)}35%{transform:translateY(-20px) rotate(-5deg) scale(1.09)}70%{transform:translateY(-11px) rotate(5deg) scale(1.06)}}
+@keyframes v75Reveal{0%,100%{transform:rotate(0)}50%{transform:rotate(3deg) translateY(-7px)}}
+@keyframes v75Streak{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-16px) rotate(4deg) scale(1.08)}}
+@keyframes v75Choose{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg) translateX(-7px)}}
+@media(max-width:900px){#gameStatusToolbar{top:auto!important;left:8px!important;right:8px!important;bottom:8px!important;max-width:none!important}#gameStatusToolbar.v75-user-positioned{left:8px!important;right:8px!important;top:auto!important;bottom:8px!important}}
+@media(prefers-reduced-motion:reduce){#bobblehead-widget[class*="bh-"] .bh-new-host{animation:none!important}}
+</style>
+<script id="v7-5-live-host-controller">
+(()=>{
+  const ready=()=>{
+    const host=window.BobbleHost;
+    if(host && !host.__v75){
+      host.__v75=true;
+      const oldEvent=host.event.bind(host);
+      const extra={
+        reveal:["Here’s the correct answer.","Let’s reveal it."],
+        streak:["That’s a hot streak!","Three straight — BOSS MOVE!"],
+        choose:["Choose a category!","Board is yours — pick a clue."],
+        greet:["Welcome to Black & Allies Jeopardy!","Ready to make your BOSS MOVE?"]
+      };
+      host.event=(name,detail={})=>{
+        if(extra[name]){
+          const text=detail.text||extra[name][Math.floor(Math.random()*extra[name].length)];
+          host.show(text,name);
+          if(detail.voice && 'speechSynthesis' in window){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.pitch=.96;u.volume=.82;speechSynthesis.speak(u)}catch(_){}}
+          return;
+        }
+        oldEvent(name,detail);
+      };
+    }
+    const bar=document.getElementById('gameStatusToolbar'), handle=document.getElementById('gameStatusDragHandle'), min=document.getElementById('minimizeGameStatus'), reset=document.getElementById('resetGameStatusPosition');
+    if(bar&&!bar.__v75){
+      bar.__v75=true;
+      const key='black-allies-game-status-toolbar-v75'; let drag=null;
+      const place=(x,y)=>{const r=bar.getBoundingClientRect();x=Math.max(6,Math.min(x,innerWidth-r.width-6));y=Math.max(6,Math.min(y,innerHeight-r.height-6));bar.classList.add('v75-user-positioned');bar.style.setProperty('left',x+'px','important');bar.style.setProperty('top',y+'px','important');bar.style.setProperty('right','auto','important');bar.style.setProperty('bottom','auto','important');};
+      const save=()=>{if(innerWidth<=900)return;const r=bar.getBoundingClientRect();try{localStorage.setItem(key,JSON.stringify({x:r.left,y:r.top,min:bar.classList.contains('status-minimized')}))}catch(_){}};
+      try{const d=JSON.parse(localStorage.getItem(key)||'null');if(d&&innerWidth>900){place(d.x,d.y);bar.classList.toggle('status-minimized',!!d.min);if(min)min.textContent=d.min?'□':'—'}}catch(_){}
+      handle?.addEventListener('pointerdown',e=>{if(innerWidth<=900||e.target.closest('button'))return;const r=bar.getBoundingClientRect();drag={dx:e.clientX-r.left,dy:e.clientY-r.top,id:e.pointerId};handle.setPointerCapture?.(e.pointerId);e.preventDefault();e.stopImmediatePropagation()},true);
+      handle?.addEventListener('pointermove',e=>{if(!drag)return;place(e.clientX-drag.dx,e.clientY-drag.dy);e.stopImmediatePropagation()},true);
+      const end=e=>{if(!drag)return;drag=null;save();e?.stopImmediatePropagation?.()};handle?.addEventListener('pointerup',end,true);handle?.addEventListener('pointercancel',end,true);
+      min?.addEventListener('click',()=>{setTimeout(save,0)});
+      reset?.addEventListener('click',()=>{try{localStorage.removeItem(key);localStorage.removeItem('black-allies-game-status-toolbar-v1')}catch(_){};bar.classList.remove('v75-user-positioned','status-minimized');bar.removeAttribute('style');if(min)min.textContent='—'},true);
+    }
+  };
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>setTimeout(ready,50)):setTimeout(ready,50);
+})();
+</script>
