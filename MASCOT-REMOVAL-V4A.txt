@@ -1,0 +1,4 @@
+BLACK & ALLIES JEOPARDY — V4A MASCOT REMOVAL TEST
+
+This diagnostic build intentionally contains NO mascot component, mascot script, mascot stylesheet, or mascot image asset.
+Deploy the contents to the repository root and verify the right side of the live game is empty.

@@ -360,23 +360,11 @@
     #boardPane>.row:first-child{position:fixed;right:20px;top:102px;z-index:30;justify-content:flex-end;background:rgba(2,7,18,.88);border:1px solid #d5a52d;border-radius:999px;padding:5px 7px;backdrop-filter:blur(8px)}#boardPane>.row:first-child h2{display:none}#boardPane .pill,#boardPane .btn{border-color:#d5a52d;background:#030914;color:#ffe35a;border-radius:999px;font-weight:800}
     #boardGrid{gap:7px;margin-top:0}.cat{min-height:58px;display:flex;align-items:center;justify-content:center;padding:7px 5px;border:1px solid #2b9cff;border-radius:7px;background:linear-gradient(180deg,#06418f,#031c54);color:#ffe14c;font-size:clamp(.72rem,1.05vw,1.08rem);line-height:1.1;text-shadow:0 2px 3px #000}.cell{min-height:48px;padding:7px 3px;border:1px solid #208cff;border-radius:6px;background:linear-gradient(180deg,#0645a2,#031c63);color:#ffdf35;font-size:clamp(1rem,1.55vw,1.45rem);font-weight:1000;text-shadow:0 2px 3px #000;box-shadow:inset 0 0 14px #1488ff22}.cell:hover:not(.used){transform:translateY(-1px);filter:brightness(1.2);box-shadow:0 0 18px #168cff66,inset 0 0 16px #2b9cff33}
     #leaderboardTicker{left:20px;right:315px;bottom:10px;height:82px;border:0;background:transparent;box-shadow:none;gap:8px}#leaderboardTicker .tickerLabel{display:none}#leaderboardTicker .tickerViewport{overflow:visible}#leaderboardTicker .tickerTrack{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;min-width:0;padding:0}#leaderboardTicker .tickerPlayer{display:block;min-width:0;padding:13px 16px;border:1px solid #a88fbc;border-radius:12px;background:rgba(3,8,18,.96);font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 20px #0008}#leaderboardTicker .tickerLeader{border-color:#ffd33f;color:#fff;box-shadow:0 0 14px #ffd33f99,0 8px 20px #0008}
-    #premiereIntro{background:linear-gradient(rgba(2,6,23,.34),rgba(2,6,23,.72)),url("assets/black-excellence-background.webp") center/cover no-repeat;align-items:center;justify-content:center}#premiereIntro>div{position:relative;width:min(900px,92vw);height:auto;padding:44px 24px;text-align:center;border:1px solid rgba(247,201,72,.62);border-radius:24px;background:rgba(2,7,18,.76);box-shadow:0 24px 80px #000b,0 0 42px #146eff33;backdrop-filter:blur(12px)}#premiereIntro .premiere-logo{display:block;font-size:clamp(2.6rem,7vw,6.5rem);line-height:.9;font-weight:1000;color:#ffd84f;text-shadow:0 3px 0 #8f5900,0 0 28px #ffc92866}#premiereIntro p{display:block!important;margin:18px 0 26px!important;font-size:clamp(.9rem,1.8vw,1.25rem);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff!important}#enterPremiereBtn{position:static;width:auto;height:auto;min-width:230px;opacity:1;border:1px solid #e9b93f!important;background:linear-gradient(180deg,#173a85,#071942)!important;color:#ffe35a!important;box-shadow:0 10px 28px #0008,0 0 18px #146eff55!important}#enterPremiereBtn:focus-visible{outline:3px solid #ffe14c;outline-offset:4px}
-    body:has(#boardPane[style*="block"]) #bobblehead-widget{display:none!important}body:has(#boardPane[style*="block"]) #ticker{display:none}#qaPane,#finalPane,#summaryPane,#lobbyPane,#waitingRoomPane{backdrop-filter:blur(12px)}
+    #premiereIntro{background:linear-gradient(rgba(2,6,23,.34),rgba(2,6,23,.72)),url("assets/black-excellence-background.webp") center/cover no-repeat;align-items:center;justify-content:center}#premiereIntro>div{position:relative;width:min(900px,92vw);height:auto;padding:44px 24px;text-align:center;border:1px solid rgba(247,201,72,.62);border-radius:24px;background:rgba(2,7,18,.76);box-shadow:0 24px 80px #000b,0 0 42px #146eff33;backdrop-filter:blur(12px)}#premiereIntro .premiere-logo{display:block;font-size:clamp(2.6rem,7vw,6.5rem);line-height:.9;font-weight:1000;color:#ffd84f;text-shadow:0 3px 0 #8f5900,0 0 28px #ffc92866}#premiereIntro p{display:block!important;margin:18px 0 26px!important;font-size:clamp(.9rem,1.8vw,1.25rem);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff!important}#enterPremiereBtn{position:static;width:auto;height:auto;min-width:230px;opacity:1;border:1px solid #e9b93f!important;background:linear-gradient(180deg,#173a85,#071942)!important;color:#ffe35a!important;box-shadow:0 10px 28px #0008,0 0 18px #146eff55!important}#enterPremiereBtn:focus-visible{outline:3px solid #ffe14c;outline-offset:4px}body:has(#boardPane[style*="block"]) #ticker{display:none}#qaPane,#finalPane,#summaryPane,#lobbyPane,#waitingRoomPane{backdrop-filter:blur(12px)}
     @media(max-width:1000px){.hero{width:76vw}.hero h1{font-size:clamp(1.8rem,5vw,3rem)}#scoreBoard{position:relative;left:auto;top:auto;width:auto;margin:8px 0}#boardPane{width:100%;margin:10px 0 90px}#boardPane>.row:first-child{position:static;border-radius:12px;margin-bottom:10px}#leaderboardTicker{left:8px;right:8px}.cat{font-size:.68rem}.cell{font-size:.92rem}}
     @media(max-width:700px){body{padding:0 7px 78px;background-position:70% top}.hero{width:92vw}.hero p{font-size:.62rem}.hero h1{font-size:1.7rem}#boardGrid{overflow-x:auto}.cat{min-width:105px}.cell{min-width:105px}#leaderboardTicker{height:64px}#leaderboardTicker .tickerTrack{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto}#leaderboardTicker .tickerPlayer{padding:8px;font-size:.8rem}#enterPremiereBtn{left:39%;top:64%;width:24%;min-width:0}}
-
-    /* ===== GitHub Pages reliability + mascot blend hotfix ===== */
-    #bobblehead-widget .bh-new-host{
-      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 2.5%,#000 90%,transparent 99%),linear-gradient(to right,transparent 0,#000 3%,#000 97%,transparent 100%);
-      -webkit-mask-composite:source-in;
-      mask-image:linear-gradient(to bottom,transparent 0,#000 2.5%,#000 90%,transparent 99%),linear-gradient(to right,transparent 0,#000 3%,#000 97%,transparent 100%);
-      mask-composite:intersect;
-      filter:drop-shadow(0 14px 18px rgba(0,0,0,.45));
-    }
-    #bobblehead-widget .bh-stage{filter:none!important}
-    @media(max-width:760px){#premiereIntro>div{padding:30px 16px}#enterPremiereBtn{min-width:190px}}
+@media(max-width:760px){#premiereIntro>div{padding:30px 16px}#enterPremiereBtn{min-width:190px}}
   </style>
-  <link rel="stylesheet" href="bobblehead-widget/css/bobblehead.css?v=20261004-surgical3">
 </head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
@@ -1243,7 +1231,7 @@
     function playBoomSound(){ playResultSound(boomSound); }
     function playBuzzSound(){ playResultSound(buzzSound); }
     function playJoinSound(){ playResultSound(joinSound); }
-    function playDailyDoubleSound(){ window.BobbleHost?.event("daily"); playResultSound(dailyDoubleSound); }
+    function playDailyDoubleSound(){ playResultSound(dailyDoubleSound); }
     function playPassSound(){ playResultSound(passSound); }
     function playStreakSound(){ playResultSound(streakSound); }
     function playTimeOutSound(){ playResultSound(timeOutSound); }
@@ -1332,8 +1320,8 @@
       osc.connect(g); g.connect(audio.master);
       osc.start(t); osc.stop(t + dur + 0.02);
     }
-    function sfxCorrect(){ window.BobbleHost?.event("correct"); flash("rgba(124,252,152,0.38)", 240, 0.8); const t=now(); [659.25,783.99,987.77,1318.51].forEach((freq,i)=>tone({freq,t:t+i*.085,dur:.16,type:"triangle",gain:.17})); }
-    function sfxWrong(){ window.BobbleHost?.event("wrong"); flash("rgba(255,107,107,0.38)", 280, 0.8); const t=now(); [311.13,277.18,233.08,196].forEach((freq,i)=>tone({freq,t:t+i*.11,dur:.2,type:"sawtooth",gain:.13})); }
+    function sfxCorrect(){ flash("rgba(124,252,152,0.38)", 240, 0.8); const t=now(); [659.25,783.99,987.77,1318.51].forEach((freq,i)=>tone({freq,t:t+i*.085,dur:.16,type:"triangle",gain:.17})); }
+    function sfxWrong(){ flash("rgba(255,107,107,0.38)", 280, 0.8); const t=now(); [311.13,277.18,233.08,196].forEach((freq,i)=>tone({freq,t:t+i*.11,dur:.2,type:"sawtooth",gain:.13})); }
     function sfxTimesUp(){ flash("rgba(247,201,72,0.22)", 360, 0.95); const t=now(); tone({freq:200,t,dur:0.25,type:"square",gain:0.12}); }
     function sfxPriceIsRightBuzzer(){ const t=now(); tone({freq:392,t,dur:0.14,type:"square",gain:0.14}); tone({freq:262,t:t+0.14,dur:0.18,type:"square",gain:0.14}); }
     function sfxQuestionOpen(){ const t=now(); tone({freq:523.25,t,dur:.08,type:"triangle",gain:.1}); tone({freq:783.99,t:t+.09,dur:.12,type:"triangle",gain:.12}); }
@@ -1794,7 +1782,6 @@
 
 
       setGamePhase("BOARD");
-      window.BobbleHost?.event("choose");
       state.players.forEach(p=>p.score=0);
       correctStreaks.clear();
       state.players.forEach(p=>correctStreaks.set(p.name,0));
@@ -2100,7 +2087,7 @@
       passBtn.disabled=true;
       answerInput.value="";
       qaHeader.textContent=`Steal opens in ${stealDelaySeconds}s — ${stealPlayer}`;
-      feedback.textContent=`${message} Steal opportunity opens in ${stealDelaySeconds} seconds.`; window.BobbleHost?.event("steal");
+      feedback.textContent=`${message} Steal opportunity opens in ${stealDelaySeconds} seconds.`;
 
       broadcastToBuzzers({
         type:"steal-delay",
@@ -2127,7 +2114,7 @@
         if(!state.activeKey || state.activeKey!==activeKeyAtDelayStart || state.final.step!=="off") return;
 
         qaHeader.textContent=`${stealPlayer} (Steal ${state.clueAttempts+1}/${state.players.length})`;
-        feedback.textContent=`STEAL OPEN — buzz now!`; window.BobbleHost?.show("Steal is open — buzz now!");
+        feedback.textContent=`STEAL OPEN — buzz now!`;
         answerInput.disabled=false;
         submitBtn.disabled=false;
         passBtn.disabled=false;
@@ -3076,7 +3063,6 @@
     <div class="tickerLabel">🏆 Current Scores</div>
     <div class="tickerViewport"><div id="leaderboardTickerTrack" class="tickerTrack">Waiting for players…</div></div>
   </div>
-  <script src="bobblehead-widget/js/bobblehead.js?v=20261004-surgical3"></script>
 </body>
 </html>
 
