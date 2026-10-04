@@ -364,7 +364,31 @@
     @media(max-width:1000px){.hero{width:76vw}.hero h1{font-size:clamp(1.8rem,5vw,3rem)}#scoreBoard{position:relative;left:auto;top:auto;width:auto;margin:8px 0}#boardPane{width:100%;margin:10px 0 90px}#boardPane>.row:first-child{position:static;border-radius:12px;margin-bottom:10px}#leaderboardTicker{left:8px;right:8px}.cat{font-size:.68rem}.cell{font-size:.92rem}}
     @media(max-width:700px){body{padding:0 7px 78px;background-position:70% top}.hero{width:92vw}.hero p{font-size:.62rem}.hero h1{font-size:1.7rem}#boardGrid{overflow-x:auto}.cat{min-width:105px}.cell{min-width:105px}#leaderboardTicker{height:64px}#leaderboardTicker .tickerTrack{grid-template-columns:repeat(2,minmax(0,1fr));overflow:auto}#leaderboardTicker .tickerPlayer{padding:8px;font-size:.8rem}#enterPremiereBtn{left:39%;top:64%;width:24%;min-width:0}}
 @media(max-width:760px){#premiereIntro>div{padding:30px 16px}#enterPremiereBtn{min-width:190px}}
-  </style>
+  
+    /* ===== V4B SINGLE MASCOT COMPONENT ===== */
+    #hostMascotV4B{position:fixed;right:clamp(8px,1.4vw,24px);bottom:52px;z-index:2050;width:clamp(145px,12vw,225px);height:min(58vh,590px);pointer-events:none;display:flex;align-items:flex-end;justify-content:center;filter:drop-shadow(0 18px 18px rgba(0,0,0,.52));transform-origin:50% 100%;transition:right .3s ease,bottom .3s ease,width .3s ease,opacity .25s ease,transform .25s ease;animation:mascotIdleV4B 4.8s ease-in-out infinite}
+    #hostMascotV4B img{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;background:transparent!important;border:0!important;box-shadow:none!important;mix-blend-mode:normal!important;mask:none!important;-webkit-mask:none!important}
+    #hostMascotV4B.react-buzz{animation:mascotBuzzV4B .55s ease both}
+    #hostMascotV4B.react-correct{animation:mascotCorrectV4B .8s cubic-bezier(.2,.9,.2,1) both}
+    #hostMascotV4B.react-wrong{animation:mascotWrongV4B .65s ease both}
+    #hostMascotV4B.react-steal{animation:mascotStealV4B .8s ease both}
+    #hostMascotV4B.react-daily-double{animation:mascotDDV4B 1s ease both}
+    #hostMascotV4B.react-final{animation:mascotFinalV4B 1.2s ease both}
+    #hostMascotV4B.react-winner{animation:mascotWinnerV4B 1.8s cubic-bezier(.15,.8,.2,1) both}
+    @keyframes mascotIdleV4B{0%,100%{transform:translateY(0) rotate(-.4deg)}50%{transform:translateY(-6px) rotate(.5deg)}}
+    @keyframes mascotBuzzV4B{0%{transform:scale(1)}35%{transform:scale(1.08) translateY(-10px)}100%{transform:scale(1)}}
+    @keyframes mascotCorrectV4B{0%{transform:scale(1)}35%{transform:translateY(-22px) scale(1.08) rotate(2deg)}65%{transform:translateY(-8px) rotate(-1deg)}100%{transform:none}}
+    @keyframes mascotWrongV4B{0%,100%{transform:none}25%{transform:translateX(-10px) rotate(-2deg)}55%{transform:translateX(9px) rotate(2deg)}75%{transform:translateX(-4px)}}
+    @keyframes mascotStealV4B{0%,100%{transform:none}35%{transform:translateX(-16px) scale(1.06) rotate(-2deg)}65%{transform:translateX(4px) scale(1.02)}}
+    @keyframes mascotDDV4B{0%{transform:none}35%{transform:translateY(-28px) scale(1.12) rotate(3deg)}70%{transform:translateY(-8px) scale(1.05) rotate(-2deg)}100%{transform:none}}
+    @keyframes mascotFinalV4B{0%{transform:none}50%{transform:scale(1.1);filter:drop-shadow(0 18px 18px rgba(0,0,0,.52)) drop-shadow(0 0 22px rgba(247,201,72,.65))}100%{transform:none}}
+    @keyframes mascotWinnerV4B{0%{transform:none}25%{transform:translateY(-34px) scale(1.15) rotate(4deg)}50%{transform:translateY(-8px) scale(1.08) rotate(-4deg)}75%{transform:translateY(-22px) scale(1.12) rotate(2deg)}100%{transform:none}}
+    body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#buzzerPanel[style*="block"]) #hostMascotV4B,body:has(#correctAnswerOverlay.show) #hostMascotV4B{width:clamp(115px,9vw,165px);opacity:.86}
+    @media(max-width:1100px){#hostMascotV4B{width:clamp(115px,13vw,170px);right:4px}}
+    @media(max-width:760px){#hostMascotV4B{width:105px;height:34vh;right:2px;bottom:54px;opacity:.92}}
+    @media(max-width:520px){#hostMascotV4B{width:82px;height:28vh;opacity:.82}}
+    @media(prefers-reduced-motion:reduce){#hostMascotV4B{animation:none!important}#hostMascotV4B[class*="react-"]{animation:none!important}}
+</style>
 </head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
@@ -1871,7 +1895,7 @@
       const isDD = state.board.isDailyDouble(key) && !state.used.has(key);
       ddBadge.style.display = isDD ? "inline-block" : "none";
       ddWagerRow.style.display = isDD ? "block" : "none";
-      if (isDD) playDailyDoubleSound();
+      if (isDD) { playDailyDoubleSound(); MascotV4B.react("daily-double",1100); }
 
 
       feedback.textContent="";
@@ -2159,6 +2183,7 @@
 
       if (correct){
         sfxCorrect();
+        MascotV4B.react(state.clueAttempts>0?"steal":"correct",950);
         const currentPlayer = state.players[state.controlIdx];
         const nextStreak = (correctStreaks.get(currentPlayer.name) || 0) + 1;
         correctStreaks.set(currentPlayer.name, nextStreak);
@@ -2183,6 +2208,7 @@
 
 
       sfxWrong();
+      MascotV4B.react("wrong",800);
       if(firstBuzzer) broadcastToBuzzers({type:"answer-wrong",player:firstBuzzer});
       statInc(premiereStats.wrong,state.players[state.controlIdx].name);
       correctStreaks.set(state.players[state.controlIdx].name, 0);
@@ -2429,6 +2455,7 @@
 
       const awardTop=(map)=>{const arr=[...map.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));return arr[0]&&arr[0][1]>0?`${escapeHtml(arr[0][0])} (${arr[0][1]})`:"—"};
       $("summaryText").innerHTML += `<div class="spacer"></div><h3 style="color:var(--gold2)">Game Awards</h3><div class="mono tiny">🔥 Hot Streak: ${awardTop(premiereStats.maxStreak)} &nbsp; • &nbsp; ⚡ Fastest Finger: ${awardTop(premiereStats.buzzes)} &nbsp; • &nbsp; 🏴‍☠️ Master Thief: ${awardTop(premiereStats.steals)} &nbsp; • &nbsp; 💰 Daily Double: ${awardTop(premiereStats.dailyDoubleWins)}</div>`;
+      MascotV4B.react("winner",2000);
       showAchievement(winners.length>1?`🏆 CO-WINNERS<br>${winners.map(p=>escapeHtml(p.name)).join(" & ")}`:`🏆 ${escapeHtml(winners[0]?.name||"")} WINS!`,4500);
       broadcastToBuzzers({type:"final-results",accepted:finalJeopardy.answers[0], ...scoreboardPayload(true)});
       const competitionWinners=getRankedPlayers().filter(p=>p.rank===1); if(competitionWinners.length===1) advanceTournamentWinner(competitionWinners[0].name);
@@ -2595,6 +2622,7 @@
 
     // ---------- buzz flash popup ----------
     function triggerBuzzFlash(playerName) {
+      MascotV4B.react("buzz",700);
       buzzFlashLabel.textContent = `🔔 ${playerName} BUZZED!`;
       buzzFlashOverlay.style.background = "rgba(247,201,72,0.55)";
       buzzFlashOverlay.style.opacity    = "1";
@@ -3003,7 +3031,7 @@
     function advanceTournamentWinner(name){
       const t=state.tournament;if(!t||t.champion)return;const pending=t.matches.find(m=>!m.winner&&(m.a===name||m.b===name));if(pending)pending.winner=name;
       let round=t.round, roundMatches=t.matches.filter(m=>m.round===round);
-      if(roundMatches.length&&roundMatches.every(m=>m.winner)){const winners=roundMatches.map(m=>m.winner).filter(x=>x&&x!=="BYE");if(winners.length===1){t.champion=winners[0];showAchievement(`🏆 TOURNAMENT CHAMPION<br><span style="color:var(--gold2)">${escapeHtml(t.champion)}</span>`,4000)}else{t.round++;for(let i=0;i<winners.length;i+=2)t.matches.push({round:t.round,a:winners[i],b:winners[i+1]||"BYE",winner:null});autoAdvanceByes();}}
+      if(roundMatches.length&&roundMatches.every(m=>m.winner)){const winners=roundMatches.map(m=>m.winner).filter(x=>x&&x!=="BYE");if(winners.length===1){t.champion=winners[0];MascotV4B.react("winner",2000);showAchievement(`🏆 TOURNAMENT CHAMPION<br><span style="color:var(--gold2)">${escapeHtml(t.champion)}</span>`,4000)}else{t.round++;for(let i=0;i<winners.length;i+=2)t.matches.push({round:t.round,a:winners[i],b:winners[i+1]||"BYE",winner:null});autoAdvanceByes();}}
       saveTournament();renderTournament();
     }
     function saveTournament(){try{localStorage.setItem("black-allies-jeopardy-tournament",JSON.stringify(state.tournament))}catch(_){}}
@@ -3057,12 +3085,28 @@
     $("enterPremiereBtn").onclick=()=>{$("premiereIntro").classList.add("hidden");startLandingMusic();setTimeout(()=>presentView(lobbyPane),300)};
     setTimeout(offerRecovery,350);
   })();
-  </script>
+  
+    // ===== V4B mascot reaction API =====
+    const MascotV4B=(()=>{
+      const el=document.getElementById("hostMascotV4B");
+      let timer=null;
+      const classes=["react-buzz","react-correct","react-wrong","react-steal","react-daily-double","react-final","react-winner"];
+      function react(name,duration=900){
+        if(!el)return; clearTimeout(timer); el.classList.remove(...classes); void el.offsetWidth;
+        const cls="react-"+name; if(classes.includes(cls))el.classList.add(cls);
+        timer=setTimeout(()=>el.classList.remove(...classes),duration);
+      }
+      return {react};
+    })();
+</script>
 
   <div id="leaderboardTicker" aria-label="Live leaderboard">
     <div class="tickerLabel">🏆 Current Scores</div>
     <div class="tickerViewport"><div id="leaderboardTickerTrack" class="tickerTrack">Waiting for players…</div></div>
   </div>
+
+  <!-- V4B: the only mascot rendered by the game -->
+  <div id="hostMascotV4B" aria-hidden="true"><img src="assets/host-mascot-v4b.png?v=20261004b" alt="" /></div>
 </body>
 </html>
 
