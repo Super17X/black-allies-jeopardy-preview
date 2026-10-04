@@ -1,0 +1,27 @@
+BLACK & ALLIES JEOPARDY — V7.4 CHARACTER ANIMATION ENGINE
+
+Adds interruptible, event-driven BOSS MOVE reactions without changing scoring or multiplayer authority.
+
+REACTIONS
+- Correct: confident double nod/bob; stronger on $1600+ clues.
+- Wrong: multi-direction head shake.
+- High-value wrong: jaw-drop illusion using squash/stretch + recoil.
+- Daily Double: surprise recoil, large bounce, gold spark treatment.
+- Buzz winner: snap/lean reaction.
+- Steal: alert/turn reaction.
+- Pass: tilt/hand-off style motion.
+- Timeout: disappointed drop + shake.
+- Correct answer reveal: deliberate host nod.
+- 3-answer streak: high-energy streak celebration.
+- Final Jeopardy: restrained dramatic focus motion.
+- Winner: championship-level bounce, gold glow and spark treatment.
+
+ENGINE
+- Reaction intensity: subtle / normal / big / championship.
+- Same reaction can retrigger cleanly.
+- New reactions interrupt old reactions instead of stacking.
+- Reduced-motion preference disables character movement.
+- Existing speech bubble and optional voice remain supported.
+
+NOTE
+The mascot is a single transparent PNG, so 'jaw drop' is a squash/stretch and recoil illusion rather than literal mouth articulation. True mouth opening requires a layered/rigger character asset.

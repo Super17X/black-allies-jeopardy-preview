@@ -1,0 +1,10 @@
+Black & Allies Jeopardy — V7.1 Layout Correction
+
+- Moves GAME STATUS into a protected upper-right broadcast position so it does not cover category cards or clues.
+- Preserves the existing draggable/minimize/reset behavior.
+- Creates a dedicated right-side host lane.
+- Moves the mascot fully out of the game-board interaction area.
+- Forces the clean transparent host asset to prevent the old black rectangular artwork from appearing.
+- Removes the extra CSS podium/card behind the mascot and replaces it with only a soft stage shadow.
+- Keeps responsive behavior: on small screens the mascot hides and GAME STATUS docks safely at the bottom.
+- No scoring, buzzer, question, timer, Daily Double, Final Jeopardy, Supabase, or leaderboard logic was changed.

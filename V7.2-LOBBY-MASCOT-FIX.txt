@@ -1,0 +1,9 @@
+Black & Allies Jeopardy — V7.2 Lobby/Mascot Fix
+
+- Hides the BOSS MOVE host during Lobby and Waiting Room setup so it cannot cover setup controls or stage artwork.
+- Shows the host only during Board, Question/Answer, and Final gameplay views.
+- Adds a root-level transparent mascot asset for more reliable GitHub Pages loading.
+- Adds automatic asset fallback and hides the host cleanly if both mascot sources fail; no broken-image rectangle.
+- Re-centers the lobby over the full stage and keeps the cinematic background visible.
+- Improves top-title clearance at common desktop zoom/resolution combinations.
+- Does not change buzzer, scoring, Supabase, timers, question bank, Daily Doubles, Final Jeopardy, or host/status toolbar logic.

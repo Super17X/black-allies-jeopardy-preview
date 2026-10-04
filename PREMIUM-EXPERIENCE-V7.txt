@@ -1,0 +1,15 @@
+Black & Allies Jeopardy — Premium Experience V7
+
+Implemented on top of Interactive Reference V6 without replacing the existing game engine.
+
+Highlights:
+- Broadcast board microinteractions, glow/focus/used states and board completion progress.
+- Question focus treatment with dynamic stage lighting and difficulty labels.
+- Persistent live leaderboard retained, with score-change animation and first-place crown.
+- Player phone HUD surfaces connection, room and current category immediately.
+- Buzzer gets stronger tactile press feedback and supported-device vibration.
+- Existing Buzzer Reliability V2 anti-spam/retry/host arbitration remains intact.
+- Adjustable text-size controls (A-/A/A+) stored locally.
+- Reduced-motion support and keyboard focus retained/enhanced.
+- Existing awards (Hot Streak, Fastest Finger, Master Thief, Daily Double) preserved.
+- No new framework or dependency; designed to keep GitHub Pages deployment simple.
