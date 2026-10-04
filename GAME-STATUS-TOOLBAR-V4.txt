@@ -1,0 +1,9 @@
+GAME STATUS TOOLBAR V4
+- Timer / Daily Doubles / Music / Buzzer Link / Reset Game removed from the board header flow.
+- Toolbar is now floating and draggable on desktop.
+- Position is remembered in localStorage.
+- Includes reset-position and minimize controls.
+- Automatically clamps to the visible browser window.
+- On screens <= 900px it docks safely at the bottom and scrolls horizontally if needed.
+- Hidden in Presentation Mode.
+- Existing element IDs and game logic were preserved.

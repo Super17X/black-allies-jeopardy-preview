@@ -413,6 +413,19 @@
   </style>
   <link rel="stylesheet" href="bobblehead-widget/css/bobblehead.css">
   <link rel="stylesheet" href="assets/ux-upgrade.css">
+
+<style id="game-status-toolbar-styles">
+  .board-title-row{display:none}
+  .game-status-toolbar{position:fixed;z-index:10015;top:104px;right:22px;display:flex;align-items:center;gap:8px;max-width:min(760px,calc(100vw - 44px));padding:6px 8px;border:1px solid rgba(247,201,72,.75);border-radius:16px;background:linear-gradient(135deg,rgba(5,8,18,.94),rgba(14,10,25,.9));box-shadow:0 10px 30px rgba(0,0,0,.38),0 0 18px rgba(247,201,72,.10);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);touch-action:none}
+  .game-status-drag{display:flex;align-items:center;gap:5px;color:var(--gold2);font-size:.67rem;letter-spacing:.08em;cursor:grab;user-select:none;white-space:nowrap;padding:4px 5px;border-right:1px solid rgba(247,201,72,.25)}
+  .game-status-toolbar.dragging .game-status-drag{cursor:grabbing}
+  .game-status-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+  .game-status-toolbar .pill,.game-status-toolbar .btn{white-space:nowrap;margin:0}
+  .game-status-toolbar.status-minimized .game-status-actions>*:not(#minimizeGameStatus){display:none}
+  .game-status-toolbar.status-minimized{width:auto!important;height:auto!important}
+  body.presentation-mode .game-status-toolbar{display:none!important}
+  @media(max-width:900px){.game-status-toolbar{top:auto!important;right:8px!important;left:8px!important;bottom:8px!important;max-width:none;transform:none!important;justify-content:center;touch-action:auto}.game-status-drag{display:none}.game-status-actions{overflow-x:auto;max-width:100%;padding-bottom:2px}.game-status-actions::-webkit-scrollbar{height:3px}}
+</style>
 </head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
@@ -641,16 +654,23 @@
   <div id="buzzerRaceHost" aria-live="polite"><strong>⚡ BUZZER RACE</strong><div id="buzzerRaceHostRows"></div></div>
 
   <div id="boardPane" class="card" style="display:none">
-    <div class="row" style="justify-content:space-between">
+    <div class="board-title-row">
       <h2 style="margin:0;color:var(--gold2)">Board</h2>
-      <div class="row tiny">
+    </div>
+    <aside id="gameStatusToolbar" class="game-status-toolbar" aria-label="Game status toolbar">
+      <div id="gameStatusDragHandle" class="game-status-drag" title="Drag game status toolbar">
+        <span>⋮⋮</span><strong>GAME STATUS</strong>
+      </div>
+      <div class="game-status-actions tiny">
         <span class="pill control-clock">⏱ <span id="gameClock">15:00</span></span>
-        <span class="pill">Daily Doubles left: <span id="ddLeft">0</span></span>
+        <span class="pill">Daily Doubles: <span id="ddLeft">0</span></span>
         <button id="musicToggleTopBtn" class="btn alt">♫ Music</button>
         <button class="btn alt" id="buzzerLinkBtn" style="font-size:.82rem;padding:4px 10px">📱 Buzzer Link</button>
         <button id="resetBtnTop" class="btn warn">Reset Game</button>
+        <button id="resetGameStatusPosition" class="btn" type="button" title="Reset toolbar position">↺</button>
+        <button id="minimizeGameStatus" class="btn" type="button" title="Minimize toolbar">—</button>
       </div>
-    </div>
+    </aside>
     <div id="boardGrid"></div>
   </div>
 
@@ -3180,6 +3200,26 @@
   </div>
   <script src="bobblehead-widget/js/bobblehead.js"></script>
   <script src="assets/ux-upgrade.js"></script>
+
+<script id="game-status-toolbar-controller">
+(()=>{
+  const bar=document.getElementById('gameStatusToolbar'), handle=document.getElementById('gameStatusDragHandle');
+  const reset=document.getElementById('resetGameStatusPosition'), min=document.getElementById('minimizeGameStatus');
+  if(!bar||!handle)return;
+  const key='black-allies-game-status-toolbar-v1'; let drag=null;
+  const clamp=(x,y)=>{const r=bar.getBoundingClientRect();return {x:Math.max(6,Math.min(x,innerWidth-r.width-6)),y:Math.max(6,Math.min(y,innerHeight-r.height-6))}};
+  const save=()=>{if(innerWidth<=900)return;try{const r=bar.getBoundingClientRect();localStorage.setItem(key,JSON.stringify({x:r.left,y:r.top,min:bar.classList.contains('status-minimized')}))}catch(_){}};
+  const defaultPos=()=>{bar.style.left='';bar.style.top='104px';bar.style.right='22px';bar.style.bottom='';bar.style.transform='';bar.classList.remove('status-minimized');if(min)min.textContent='—'};
+  const restore=()=>{if(innerWidth<=900)return;try{const d=JSON.parse(localStorage.getItem(key)||'null');if(!d)return;bar.style.left=d.x+'px';bar.style.top=d.y+'px';bar.style.right='auto';bar.style.bottom='auto';bar.classList.toggle('status-minimized',!!d.min);if(min)min.textContent=d.min?'□':'—'}catch(_){}};
+  handle.addEventListener('pointerdown',e=>{if(e.target.closest('button')||innerWidth<=900)return;const r=bar.getBoundingClientRect();drag={dx:e.clientX-r.left,dy:e.clientY-r.top};bar.classList.add('dragging');handle.setPointerCapture?.(e.pointerId);e.preventDefault()});
+  handle.addEventListener('pointermove',e=>{if(!drag)return;const p=clamp(e.clientX-drag.dx,e.clientY-drag.dy);bar.style.left=p.x+'px';bar.style.top=p.y+'px';bar.style.right='auto';bar.style.bottom='auto'});
+  const end=()=>{if(!drag)return;drag=null;bar.classList.remove('dragging');save()};handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
+  reset?.addEventListener('click',()=>{try{localStorage.removeItem(key)}catch(_){};defaultPos()});
+  min?.addEventListener('click',()=>{bar.classList.toggle('status-minimized');min.textContent=bar.classList.contains('status-minimized')?'□':'—';save()});
+  addEventListener('resize',()=>{if(innerWidth<=900){bar.removeAttribute('style')}else{const r=bar.getBoundingClientRect(),p=clamp(r.left,r.top);bar.style.left=p.x+'px';bar.style.top=p.y+'px';bar.style.right='auto';bar.style.bottom='auto'}});
+  restore();
+})();
+</script>
 </body>
 </html>
 

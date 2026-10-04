@@ -1,0 +1,10 @@
+Black & Allies Jeopardy — Mascot / Dynamic Stage V3
+
+- Replaced the mascot source with a cleaned transparent-background derivative.
+- Enlarged and anchored BOSS MOVE at stage-right as a true host position.
+- Reserved a host lane beside the board and leaderboard.
+- Kept the host visible during clue and correct-answer presentation without covering the answer.
+- Removed mascot card/square styling and added only a natural stage shadow.
+- Made the lobby glass/translucent so the stage artwork remains visible.
+- Added subtle moving stage-light/background motion with reduced-motion support.
+- Preserved movable Host Controls, buzzer reliability V2, scoring, audio, Daily Doubles and Final Jeopardy.
