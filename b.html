@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Joining Black & Allies Jeopardy…</title>
+</head>
+<body>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const room = (params.get("r") || "").trim().toUpperCase();
+  const target = new URL("buzzer.html", location.href);
+  if (room) target.searchParams.set("room", room);
+  location.replace(target.href);
+})();
+</script>
+<noscript>Please enable JavaScript to join the game.</noscript>
+</body>
+</html>
