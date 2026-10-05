@@ -1,6 +1,0 @@
-BLACK & ALLIES JEOPARDY — MASCOT REACTIONS V7.3
-
-Added landing-page BOSS MOVE host beside ENTER THE GAME.
-Added/connected mascot reactions for category selection, buzzer winner, correct, wrong, pass, steal delay, steal open, timeout, Daily Double, Final Jeopardy, and winner/co-winner.
-Landing mascot uses transparent asset fallback and responsive/reduced-motion behavior.
-No scoring, question-bank, Supabase, buzzer arbitration, Daily Double, or Final Jeopardy logic was removed.
