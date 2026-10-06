@@ -2940,7 +2940,7 @@
       // Generate a large, high-contrast QR with an explicit quiet zone and
       // high error correction. This is much easier for phone cameras to scan
       // from a projected/desktop game screen than the previous 180px QR.
-      const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&ecc=H&margin=24&format=png&data=${encodeURIComponent(url)}`;
+      const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&ecc=M&margin=24&format=png&data=${encodeURIComponent(url)}`;
       const img = document.createElement("img");
       img.width = 320;
       img.height = 320;
