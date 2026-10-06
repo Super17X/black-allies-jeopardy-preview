@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Joining Black & Allies Jeopardy…</title>
+<style>
+html,body{height:100%;margin:0;background:#07060a;color:#ffdf6e;font-family:system-ui,Arial,sans-serif}
+body{display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}
+</style>
+</head>
+<body>
+<div><strong>Joining the game…</strong><div id="msg" style="margin-top:10px;color:#fff7d6"></div></div>
+<script>
+(() => {
+  const p = new URLSearchParams(location.search);
+  const room = String(p.get("r") || p.get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+  const target = new URL("buzzer.html", location.href);
+  target.search = "";
+  target.hash = "";
+  if (room) target.searchParams.set("room", room);
+  document.getElementById("msg").textContent = room ? `Room ${room}` : "Opening player buzzer";
+  location.replace(target.href);
+})();
+</script>
+</body>
+</html>
