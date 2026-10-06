@@ -1,0 +1,10 @@
+{
+  "name": "trivia-buzzer-validation",
+  "private": true,
+  "scripts": {
+    "test": "node tests/integration.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.2"
+  }
+}

@@ -1,0 +1,17 @@
+PASS: JavaScript syntax for host and buzzer.
+PASS: Existing input/select settings and external script references preserved.
+PASS: SVG QR construction and close button.
+PASS: Player join and all-ready auto-start.
+PASS: Phone answer, question IDs, steal unlock and winning buzz.
+PASS: Metal Gear asset playback request and buzz-time displays.
+PASS: Duplicate click and Enter submit one command.
+PASS: Hidden Final clue, mixed host/phone entries and locked-entry resync.
+PASS: Final results disable submissions; reset clears both screens.
+PASS: Expired game commands rejected.
+PASS: Duplicate ready commands are idempotent.
+PASS: Duplicate device name rejected.
+PASS: Malformed and unknown-host messages ignored.
+PASS: Channel disconnect disables controls; reconnect restores readiness.
+PASS: Leave cancels pending work and stale join activity.
+
+These are simulated DOM/transport/audio tests, not live Supabase or physical-device verification.
