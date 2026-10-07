@@ -17,3 +17,5 @@ Simulated multi-window DOM and transport tests pass. See TEST-RESULTS.txt. Tests
 
 LIVE ACCEPTANCE
 Verify actual Android QR scan, simultaneous phones, network interruption, background/resume, audio output, Daily Double, ties, and the rendered host layout after deployment. Those live/device checks were not performed with this package.
+
+</ gibbs/>
