@@ -379,7 +379,8 @@
       const iControl = !!playerName && sameName(controller,playerName);
       const stealOpen = phase==="STEAL_OPEN";
       const answeringSteal = phase==="ANSWERING" && sameName(data?.firstBuzzer,playerName);
-      const directTurn = phase==="CONTROL_ANSWER" && iControl && !data?.firstBuzzer;
+      const questionActive = data?.active !== false && !!(data?.activeKey || data?.clue || data?.category);
+      const directTurn = questionActive && phase==="CONTROL_ANSWER" && iControl && !data?.firstBuzzer;
 
       if(phonePhase) phonePhase.textContent=String(phase||"SYNC").replaceAll("_"," ");
       if(controller) controlBanner.textContent=`In control: ${controller}`;
@@ -576,7 +577,7 @@
         remoteAnswerInput.value = "";
         submitAnswerBtn.disabled = false;
         passAnswerBtn.disabled = false;
-        setPlayState({...data,phase:data.mode==="steal"?"STEAL_OPEN":"CONTROL_ANSWER",firstBuzzer:null});
+        setPlayState({...data,active:true,activeKey:data.activeKey||"question",phase:data.mode==="steal"?"STEAL_OPEN":"CONTROL_ANSWER",firstBuzzer:null});
       }
 
 

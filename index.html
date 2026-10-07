@@ -205,6 +205,22 @@
       font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
       margin-bottom:12px;width:100%;text-align:left;
     }
+    .premium-qr-btn{
+      position:relative;overflow:hidden;border:1px solid rgba(255,215,90,.85)!important;
+      background:linear-gradient(135deg,#171006 0%,#4b3500 48%,#171006 100%)!important;
+      color:#ffe58a!important;font-weight:900!important;letter-spacing:.035em;
+      box-shadow:0 0 0 1px rgba(255,215,90,.12) inset,0 8px 26px rgba(247,201,72,.18);
+      transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+    }
+    .premium-qr-btn::after{
+      content:"";position:absolute;inset:-60% -30%;transform:translateX(-70%) rotate(18deg);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);
+      transition:transform .55s ease;pointer-events:none;
+    }
+    .premium-qr-btn:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(255,215,90,.2) inset,0 10px 34px rgba(247,201,72,.28);filter:brightness(1.08)}
+    .premium-qr-btn:hover::after{transform:translateX(70%) rotate(18deg)}
+    .premium-qr-btn:active{transform:translateY(0) scale(.985)}
+
     #buzzerQr{
       margin:18px auto;display:block;
       width:min(380px,78vw);height:auto;aspect-ratio:1/1;
@@ -798,7 +814,7 @@
 
 
     <button id="enterWaitingRoomBtn" class="btn ok">Enter Waiting Room</button>
-    <button id="lobbyBuzzerLinkBtn" class="btn alt" style="font-size:.92rem;padding:8px 14px">📱 Show Player QR Code</button>
+    <button id="lobbyBuzzerLinkBtn" class="btn premium-qr-btn" style="font-size:.94rem;padding:10px 16px">✦ Generate Player QR</button>
 
 
     <div class="spacer"></div>
@@ -854,7 +870,7 @@
         <span class="pill control-clock">⏱ <span id="gameClock">15:00</span></span>
         <span class="pill">Daily Doubles left: <span id="ddLeft">0</span></span>
         <button id="musicToggleTopBtn" class="btn alt">♫ Music</button>
-        <button class="btn alt" id="buzzerLinkBtn" style="font-size:.82rem;padding:4px 10px">📱 Buzzer Link</button>
+        <button class="btn premium-qr-btn" id="buzzerLinkBtn" style="font-size:.84rem;padding:6px 11px">✦ Player QR</button>
         <button id="resetBtnTop" class="btn warn">Reset Game</button>
       </div>
     </div>
@@ -3096,7 +3112,7 @@
 
       if (data.type === "pass") {
         const controller=state.players[state.controlIdx]?.name;
-        const directControllerTurn = state.phase==="CONTROL_ANSWER" && !firstBuzzer && sameName(data.player,controller);
+        const directControllerTurn = !!state.activeKey && state.phase==="CONTROL_ANSWER" && !firstBuzzer && sameName(data.player,controller);
         const stealWinner = state.phase==="ANSWERING" && firstBuzzer && sameName(data.player,firstBuzzer);
         const questionIsActive = !!state.activeKey && (state.timer.mode === "main" || state.timer.mode === "steal");
         if(!questionIsActive || (!directControllerTurn && !stealWinner)){
@@ -3238,42 +3254,39 @@
     
     function renderQrCode(url) {
       const target = $("buzzerQr");
-      if (!target) return false;
       const finalUrl = String(url || "").trim();
-      target.innerHTML = "";
-      target.dataset.qrUrl = finalUrl;
-      target.setAttribute("aria-label", `QR code for ${finalUrl}`);
-
-      try {
-        if (typeof window.qrcode !== "function") throw new Error("qrcode-generator library unavailable");
-        const qr = window.qrcode(0, "M");
-        qr.addData(finalUrl, "Byte");
-        qr.make();
-        target.innerHTML = qr.createSvgTag(8, 4);
-
-        const svg = target.querySelector("svg");
-        if (!svg) throw new Error("QR library did not return SVG");
-        svg.setAttribute("width", "100%");
-        svg.setAttribute("height", "100%");
-        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-        svg.setAttribute("aria-hidden", "true");
-        svg.style.display = "block";
-        svg.style.background = "#fff";
-        svg.style.shapeRendering = "crispEdges";
+      if(!target || !finalUrl) return false;
+      try{
+        const parsed=new URL(finalUrl);
+        const encodedRoom=String(parsed.searchParams.get("room")||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+        if(parsed.protocol!=="https:" || parsed.origin!==location.origin || !parsed.pathname.endsWith("/buzzer.html") || encodedRoom!==roomCode){
+          throw new Error("Invalid buzzer QR URL");
+        }
+        if(typeof window.qrcode!=="function") throw new Error("QR library unavailable");
+        const qr=window.qrcode(0,"L");
+        qr.addData(finalUrl,"Byte"); qr.make();
+        const modules=qr.getModuleCount(), quiet=4, scale=10;
+        const size=(modules+quiet*2)*scale;
+        const canvas=document.createElement("canvas");
+        canvas.width=size; canvas.height=size;
+        canvas.setAttribute("aria-label",`Scan to join room ${roomCode}`);
+        const ctx=canvas.getContext("2d",{alpha:false});
+        if(!ctx) throw new Error("Canvas unavailable");
+        ctx.imageSmoothingEnabled=false;
+        ctx.fillStyle="#fff"; ctx.fillRect(0,0,size,size);
+        ctx.fillStyle="#000";
+        for(let row=0;row<modules;row++) for(let col=0;col<modules;col++){
+          if(qr.isDark(row,col)) ctx.fillRect((col+quiet)*scale,(row+quiet)*scale,scale,scale);
+        }
+        target.replaceChildren(canvas);
+        target.dataset.qrUrl=finalUrl;
         return true;
-      } catch (err) {
-        console.warn("Local QR render failed; using scan-safe PNG fallback.", err);
-        const img = document.createElement("img");
-        img.alt = "QR code for buzzer page";
-        img.width = 512; img.height = 512;
-        img.decoding = "async";
-        img.referrerPolicy = "no-referrer";
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&ecc=M&margin=24&format=png&data=${encodeURIComponent(finalUrl)}`;
-        target.appendChild(img);
+      }catch(err){
+        console.error("QR render failed:",err);
+        target.textContent="QR unavailable — use the join link above.";
         return false;
       }
     }
-
 
     // ---------- open buzzer panel ----------
     function openBuzzerPanel() {
@@ -3285,7 +3298,13 @@
       buzzerRoomEl.textContent = `Room: ${roomCode}`;
       buzzerLinkEl.textContent = buzzerUrl.href;
       // QR and visible link use the exact same canonical room URL.
-      renderQrCode(buzzerUrl.href);
+      const qrReady = renderQrCode(buzzerUrl.href);
+      const qrBtn = $("lobbyBuzzerLinkBtn");
+      if(qrBtn && qrReady){
+        const originalLabel = "✦ Generate Player QR";
+        qrBtn.textContent = "✓ QR Ready";
+        setTimeout(()=>{ if(qrBtn) qrBtn.textContent = originalLabel; },1400);
+      }
       if(!realtimeEnabled){
         buzzStatusEl.textContent = "⚠️ Online relay not configured. Add your Supabase URL and publishable/anon key to config.js.";
       } else if(!realtimeReady){
