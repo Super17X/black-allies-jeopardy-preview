@@ -146,15 +146,29 @@
 
 
     #waitingRoomPane{
-      display:none;position:fixed;inset:0;margin:auto;transform:none;
-      width:min(94vw,900px);height:max-content;max-height:88vh;overflow-y:auto;box-sizing:border-box;
-      background:linear-gradient(180deg,var(--panel) 0%, var(--panel2) 100%);
-      border:1px solid var(--border);border-radius:14px;padding:16px;z-index:1600;
-      box-shadow:0 24px 80px rgba(0,0,0,.58)
+      display:none;position:fixed;inset:0;margin:0;transform:none;
+      width:100vw;height:100dvh;min-height:100vh;max-height:none;overflow-y:auto;box-sizing:border-box;
+      padding:clamp(28px,6vh,72px) max(24px,calc((100vw - 900px)/2)) 96px;
+      background:
+        radial-gradient(circle at 50% 18%,rgba(28,57,137,.42),transparent 36%),
+        linear-gradient(180deg,rgba(4,8,22,.90),rgba(3,4,12,.97)),
+        url("assets/black-excellence-background.webp") center/cover no-repeat;
+      border:0;border-radius:0;z-index:1600;
+      box-shadow:none;
     }
+    #waitingRoomPane::before{
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+      background:linear-gradient(90deg,rgba(0,0,0,.32),transparent 30%,transparent 70%,rgba(0,0,0,.32));
+    }
+    #waitingRoomPane>h2,#waitingRoomPane>.row,#waitingRoomPane>#roomGrid,#waitingRoomPane>#waitingError,#waitingRoomPane>.spacer{
+      width:min(900px,100%);margin-left:auto;margin-right:auto;
+    }
+    #waitingRoomPane>h2{font-size:clamp(2rem,4vw,3.4rem);color:var(--gold2);text-align:center;text-shadow:0 4px 24px #000}
+    #waitingRoomPane>.row{justify-content:center}
+    #roomGrid{padding:18px;border:1px solid rgba(247,201,72,.35);border-radius:22px;background:rgba(7,8,18,.82);backdrop-filter:blur(12px);box-shadow:0 22px 70px rgba(0,0,0,.48)}
     @media (max-width:700px){
-      #waitingRoomPane{width:94vw;max-height:82vh;padding:12px}
-      #roomGrid{grid-template-columns:1fr}
+      #waitingRoomPane{width:100vw;height:100dvh;padding:22px 12px 90px}
+      #roomGrid{grid-template-columns:1fr;padding:12px}
     }
     #roomGrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr))}
     .roomBox{border:1px solid var(--border);border-radius:14px;background:#0a0910;padding:12px}
@@ -824,6 +838,8 @@
     <div id="lobbyList" class="mono tiny"></div>
   </div>
 
+
+  <audio id="waitingRoomMusic" preload="auto" loop playsinline src="assets/black_allies_waiting_room_loop.mp3"></audio>
 
   <div id="waitingRoomPane" class="card">
     <h2 style="margin:0">Waiting Room <span class="tag" id="autoStartIn">—</span></h2>
@@ -1800,7 +1816,7 @@
     }
     $("musicToggleBtn").addEventListener("click",toggleLandingMusic);
     $("musicToggleTopBtn").addEventListener("click",toggleGameMusic);
-    volumeInput.addEventListener("change", ()=>{ syncLandingMusicVolume(); syncQuestionBeatVolume(); });
+    volumeInput.addEventListener("change", ()=>{ syncLandingMusicVolume(); syncQuestionBeatVolume(); if(waitingRoomMusic&&!waitingRoomMusic.paused) waitingRoomMusic.volume=clamp(Number(volumeInput.value||0.25)*0.72,0,0.55); });
     soundModeSel.addEventListener("change", ()=>{ if(soundModeSel.value === "off") stopLandingMusic(); else startLandingMusic(); });
     buzzerBtn.addEventListener("click", sfxPriceIsRightBuzzer);
 
@@ -1935,6 +1951,32 @@
     }
 
 
+    const waitingRoomMusic=$("waitingRoomMusic");
+    let waitingMusicFadeId=null;
+    function stopWaitingRoomMusic(fadeMs=650){
+      if(!waitingRoomMusic)return;
+      if(waitingMusicFadeId)clearInterval(waitingMusicFadeId);
+      const start=Number(waitingRoomMusic.volume)||0;
+      const steps=Math.max(1,Math.round(fadeMs/50)); let i=0;
+      waitingMusicFadeId=setInterval(()=>{
+        i++; waitingRoomMusic.volume=Math.max(0,start*(1-i/steps));
+        if(i>=steps){clearInterval(waitingMusicFadeId);waitingMusicFadeId=null;waitingRoomMusic.pause();waitingRoomMusic.currentTime=0;}
+      },50);
+    }
+    function startWaitingRoomMusic(){
+      if(!waitingRoomMusic||soundModeSel.value==="off")return;
+      if(waitingMusicFadeId)clearInterval(waitingMusicFadeId);
+      waitingRoomMusic.volume=0;
+      const target=clamp(Number(volumeInput.value||0.25)*0.72,0,0.55);
+      const play=waitingRoomMusic.play();
+      if(play&&typeof play.catch==="function")play.catch(()=>{});
+      let i=0,steps=14;
+      waitingMusicFadeId=setInterval(()=>{
+        i++; waitingRoomMusic.volume=Math.min(target,target*(i/steps));
+        if(i>=steps){clearInterval(waitingMusicFadeId);waitingMusicFadeId=null;}
+      },55);
+    }
+
     function enterWaitingRoom(){
       if (state.players.length < 2) {
         showLobbyError("Add at least 2 players before entering the waiting room.");
@@ -1942,6 +1984,7 @@
       }
       clearLobbyError();
       stopLandingMusic();
+      startWaitingRoomMusic();
       lobbyPane.style.display="none";
       waitingRoomPane.style.display="block";
       // Fixed overlay is already centered in the viewport; do not scroll the page to it.
@@ -1991,6 +2034,7 @@
     function backToLobby(){
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId=null;
+      stopWaitingRoomMusic(500);
       waitingRoomPane.style.display="none";
       lobbyPane.style.display="block";
       presentView(lobbyPane);
@@ -2283,6 +2327,7 @@
     function beginGame(){
       if(gameStartSequenceRunning) return;
       gameStartSequenceRunning=true;
+      stopWaitingRoomMusic(700);
       const overlay=$("gameCountdown");
       let steps=["3","2","1","LET’S PLAY!"]; let i=0;
       const tick=()=>{ overlay.textContent=steps[i]; overlay.classList.remove("show"); void overlay.offsetWidth; overlay.classList.add("show"); i++; if(i<steps.length) setTimeout(tick,720); else setTimeout(()=>{overlay.classList.remove("show"); overlay.style.display="none"; gameStartSequenceRunning=false; beginGameNow();},720); };
