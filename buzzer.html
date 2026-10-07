@@ -248,6 +248,10 @@
     let realtimeChannel = null;
     let realtimeReady = false;
     let outboundQueue = [];
+    const clientSessionId = sessionStorage.getItem("jeopardy-client-session") || (Date.now().toString(36)+Math.random().toString(36).slice(2,9));
+    sessionStorage.setItem("jeopardy-client-session",clientSessionId);
+    let actionSequence=0;
+    function nextActionId(kind){ actionSequence+=1; return clientSessionId+":"+kind+":"+actionSequence; }
 
 
     const loginSection  = document.getElementById("loginSection");
@@ -834,6 +838,9 @@
     }, { passive: false });
 
 
+    window.addEventListener("pagehide",()=>{
+      if(playerName) sendToHost({type:"leave",player:playerName,actionId:nextActionId("leave")});
+    });
   })();
   </script>
 </body>

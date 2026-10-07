@@ -2302,6 +2302,8 @@
       state.activeKey = null;
       state.ddLockedWager = null;
       state.final = { step:"off", idx:0, wagers:new Map(), answers:new Map(), timerId:null, timerRemaining:0 };
+      finalResultsApplied=false;
+      answerTransactionLocked=false;
       finalJeopardy = finalJeopardyBank[Math.floor(Math.random()*finalJeopardyBank.length)];
 
 
@@ -2388,6 +2390,8 @@
 
 
       state.activeKey = key;
+      clueTransactionId += 1;
+      answerTransactionLocked = false;
       state.clueAttempts = 0;
       state.clueStartIdx = state.controlIdx;
       // Keep normal clue selections silent. Only the highest-value clue in a category gets a reveal sting.
@@ -2449,6 +2453,7 @@
       boardPane.style.display="block";
       presentView(boardPane);
       state.activeKey=null;
+      answerTransactionLocked=false;
       state.ddLockedWager=null;
       state.clueAttempts=0;
       renderScoreboard();
@@ -2693,7 +2698,8 @@
     }
     function statInc(map,name,n=1){map.set(name,(map.get(name)||0)+n)}
     function handleSubmit(){
-      if (!state.activeKey) return;
+      if (!state.activeKey || answerTransactionLocked) return;
+      answerTransactionLocked=true;
       pushUndo("Answer result");
       stopQuestionBeat();
       const [cat,rowStr] = state.activeKey.split("::");
@@ -2705,6 +2711,7 @@
       const value = isDD ? (state.ddLockedWager ?? 0) : state.board.valueForRow(row);
       if (isDD && state.ddLockedWager === null) {
         showDdWagerError("Daily Double: lock your wager first.");
+        answerTransactionLocked=false;
         return;
       }
 
@@ -2753,12 +2760,14 @@
         // Third miss (or the final available player's miss) is the full-clue failure reaction.
         playWhoopsieSound();
       }
+      answerTransactionLocked=false;
       continueAfterMiss(clue,"Wrong.");
     }
 
 
     function handlePass(){
-      if (!state.activeKey) return;
+      if (!state.activeKey || answerTransactionLocked) return;
+      answerTransactionLocked=true;
       stopQuestionBeat();
       const [cat,rowStr] = state.activeKey.split("::");
       const row = Number(rowStr);
@@ -2766,6 +2775,7 @@
 
 
       playPassSound();
+      answerTransactionLocked=false;
       continueAfterMiss(clue,"Passed.");
     }
 
@@ -2819,6 +2829,7 @@
 
     function startFinalJeopardy(){
       if(state.final.step!=="off") return;
+      finalResultsApplied=false;
       stopGameClock();
       stopTimer();
       stopFinalTimer();
@@ -2942,6 +2953,8 @@
 
 
     function revealFinalResults(){
+      if(finalResultsApplied) return;
+      finalResultsApplied=true;
       stopFinalTimer();
       const lines = [];
       lines.push(`<strong>Final Jeopardy Category:</strong> ${escapeHtml(finalJeopardy.category)}`);
@@ -3116,7 +3129,35 @@
     let connectedBuzzers = new Set();
     const deviceHealth = new Map();
     const processedMessageIds = new Map();
+    const processedActionKeys = new Map();
+    const playerLastSeen = new Map();
+    let clueTransactionId = 0;
+    let answerTransactionLocked = false;
+    let finalResultsApplied = false;
     let proLastEvent = "—";
+
+    function actionKey(data){
+      if(data?._mid) return String(data._mid);
+      return [data?.type||"",String(data?.player||"").trim().toLowerCase(),data?.actionId||data?.submissionId||"",state.activeKey||"",clueTransactionId].join("|");
+    }
+    function claimAction(data){
+      const key=actionKey(data);
+      if(processedActionKeys.has(key)) return false;
+      processedActionKeys.set(key,Date.now());
+      if(processedActionKeys.size>500){
+        const cutoff=Date.now()-180000;
+        for(const [k,v] of processedActionKeys) if(v<cutoff) processedActionKeys.delete(k);
+      }
+      return true;
+    }
+    function touchPlayer(name){
+      const canonical=state.players[playerIndexByName(name)]?.name || String(name||"").trim();
+      if(canonical) playerLastSeen.set(canonical,Date.now());
+    }
+    function isPlayerConnected(name){
+      const last=playerLastSeen.get(String(name||"").trim());
+      return connectedBuzzers.has(String(name||"").trim()) && (!last || Date.now()-last<12000);
+    }
 
     function setGamePhase(phase){
       state.phase = phase;
@@ -3248,6 +3289,23 @@
     }
     function broadcastGameplaySync(){ broadcastToBuzzers(gameplaySyncPayload()); }
 
+    // Remove stale phone sessions and reopen a steal if its winner disconnects.
+    setInterval(()=>{
+      const now=Date.now();
+      for(const name of [...connectedBuzzers]){
+        const last=playerLastSeen.get(name);
+        if(last && now-last>12000){
+          connectedBuzzers.delete(name);
+          if(firstBuzzer && sameName(firstBuzzer,name) && state.phase==="ANSWERING"){
+            firstBuzzer=null;
+            answerTransactionLocked=false;
+            setGamePhase("STEAL_OPEN");
+            broadcastToBuzzers({type:"buzz-released",player:name,reason:"Connection lost. Steal reopened."});
+          }
+        }
+      }
+    },3000);
+
     // Periodic authoritative snapshot keeps every phone aligned with the host.
     setInterval(()=>{
       if(realtimeReady && state.players.length){
@@ -3261,7 +3319,7 @@
       if (!data || !data.type) return;
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
 
-      if(data.player) markDevice(data.player);
+      if(data.player){ markDevice(data.player); touchPlayer(data.player); }
       if(data._mid){
         broadcastToBuzzers({type:"transport-ack",mid:data._mid,player:data.player||""});
         if(processedMessageIds.has(data._mid)) return;
@@ -3322,7 +3380,14 @@
 
       if (data.type === "leave") {
         connectedBuzzers.delete(data.player);
+        playerLastSeen.delete(data.player);
         addBuzzerLog(`${data.player} left`);
+        if(firstBuzzer && sameName(firstBuzzer,data.player) && state.phase==="ANSWERING"){
+          firstBuzzer=null;
+          answerTransactionLocked=false;
+          setGamePhase("STEAL_OPEN");
+          broadcastToBuzzers({type:"buzz-released",player:data.player,reason:"Player disconnected. Steal reopened."});
+        }
       }
 
       if (data.type === "ready-toggle") {
@@ -3335,6 +3400,7 @@
       }
 
       if (data.type === "pass") {
+        if(!claimAction(data)){ broadcastToBuzzers({type:"answer-denied",player:data.player,reason:"Duplicate submission ignored."}); return; }
         const controller=state.players[state.controlIdx]?.name;
         const directControllerTurn = !!state.activeKey && state.phase==="CONTROL_ANSWER" && !firstBuzzer && sameName(data.player,controller);
         const stealWinner = state.phase==="ANSWERING" && firstBuzzer && sameName(data.player,firstBuzzer);
@@ -3395,6 +3461,7 @@
       }
 
       if (data.type === "answer") {
+        if(!claimAction(data)){ broadcastToBuzzers({type:"answer-denied",player:data.player,reason:"Duplicate submission ignored."}); return; }
         const controller=state.players[state.controlIdx]?.name;
         const directControllerTurn = state.phase==="CONTROL_ANSWER" && !firstBuzzer && sameName(data.player,controller);
         const stealWinner = state.phase==="ANSWERING" && firstBuzzer && sameName(data.player,firstBuzzer);
@@ -3413,6 +3480,7 @@
 
 
       if (data.type === "buzz") {
+        if(!claimAction(data)){ broadcastToBuzzers({type:"buzz-denied",player:data.player,reason:"Duplicate buzz ignored."}); return; }
         const questionIsActive = !!state.activeKey && state.phase==="STEAL_OPEN";
         if (!questionIsActive) {
           const reason = state.phase==="CONTROL_ANSWER"
