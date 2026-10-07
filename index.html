@@ -2306,6 +2306,17 @@
         timerEl.textContent = `${state.timer.remaining}s`;
         timerEl.classList.toggle("timer-danger", state.timer.remaining <= 5);
 
+        // Keep contestant phones synchronized with the host countdown.
+        // Phones decide locally whether they are the player in control before vibrating.
+        if ((state.timer.mode === "main" || state.timer.mode === "steal") && typeof broadcastToBuzzers === "function") {
+          broadcastToBuzzers({
+            type:"timer-tick",
+            seconds:state.timer.remaining,
+            mode:state.timer.mode,
+            controller:state.players[state.controlIdx]?.name || "—",
+            phase:state.phase
+          });
+        }
 
         if (state.timer.remaining <= 0){
           stopTimer();

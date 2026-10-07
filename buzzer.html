@@ -466,6 +466,23 @@
     function finishMobileRace(name){mobileRace.querySelectorAll(".m-race-lane").forEach(l=>{const win=sameName(l.dataset.racer,name),r=l.querySelector(".m-race-runner");r.style.width=win?"100%":"45%";r.classList.toggle("win",win)});setTimeout(()=>mobileRace.classList.remove("show"),2200)}
 
 
+    // ---- Haptic countdown warning for the player in control ----
+    let lastHapticSecond = null;
+    function vibrateControlCountdown(seconds, controller, phase){
+      const s=Number(seconds);
+      const iControl=!!playerName && sameName(controller,playerName);
+      if(!iControl || phase!=="CONTROL_ANSWER" || !Number.isFinite(s) || s>10 || s<=0) {
+        if(s>10 || s<=0) lastHapticSecond=null;
+        return;
+      }
+      if(lastHapticSecond===s) return;
+      lastHapticSecond=s;
+      if(!("vibrate" in navigator)) return;
+      // Escalate gently from 10–6s, then become more urgent at 5–1s.
+      const pattern = s<=3 ? [180,70,180] : s<=5 ? [140,60,140] : [90];
+      try{ navigator.vibrate(pattern); }catch(_){}
+    }
+
     // ---- Listen for messages from host ----
     function handleHostMessage(data) {
       if (!data || !data.type) return;
@@ -502,6 +519,14 @@
         } else {
           buzzerBtn.disabled=true;
           answerArea.style.display="none";
+        }
+      }
+
+      if(data.type === "timer-tick"){
+        vibrateControlCountdown(data.seconds,data.controller,data.phase);
+        if(sameName(data.controller,playerName) && data.phase==="CONTROL_ANSWER" && Number(data.seconds)<=10 && Number(data.seconds)>0){
+          statusMsg.textContent=`⏱ ${Number(data.seconds)}s left — answer now!`;
+          statusMsg.className=Number(data.seconds)<=5?"err":"";
         }
       }
 
@@ -568,6 +593,7 @@
       if(data.type === "final-results"){ finalStatusMobile.textContent=`Accepted answer: ${data.accepted || "—"}`; renderLiveScoreboard(data,true); }
 
       if (data.type === "question-start") {
+        lastHapticSecond=null;
         if(data.mode==="steal") showMobileRace(data.racers||[]);
         if(data.controller) controlBanner.textContent=`In control: ${data.controller}`;
         mobileBoard.style.display="none";
@@ -582,6 +608,8 @@
 
 
       if (data.type === "question-end") {
+        lastHapticSecond=null;
+        try{ if("vibrate" in navigator) navigator.vibrate(0); }catch(_){}
         buzzerBtn.disabled = true;
         questionInfo.textContent = "Waiting for next question…";
         statusMsg.textContent = "";
