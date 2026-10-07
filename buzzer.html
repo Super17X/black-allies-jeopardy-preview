@@ -759,7 +759,7 @@
       try{ if(navigator.vibrate) navigator.vibrate(35); }catch(_){}
       buzzerBtn.classList.add("pressed");
       setTimeout(() => buzzerBtn.classList.remove("pressed"), 200);
-      criticalSend("buzz",{player:playerName});
+      criticalSend("buzz",{player:playerName,actionId:nextActionId("buzz")});
       statusMsg.textContent = "Buzzed! Waiting for host…";
       buzzerBtn.disabled = true;
       setTimeout(()=>sendToHost({type:"sync-request",player:playerName}),250);
@@ -778,7 +778,7 @@
       passAnswerBtn.disabled=true;
       statusMsg.textContent="Sending answer…";
       statusMsg.className="";
-      criticalSend("answer",{player:playerName,answer});
+      criticalSend("answer",{player:playerName,answer,actionId:nextActionId("answer")});
       statusMsg.textContent="Sending answer to host…";
       statusMsg.className="";
       setTimeout(()=>sendToHost({type:"sync-request",player:playerName}),300);
@@ -787,7 +787,7 @@
     passAnswerBtn.addEventListener("click",()=>{
       if(!playerName) return;
       passAnswerBtn.disabled=true;
-      criticalSend("pass",{player:playerName});
+      criticalSend("pass",{player:playerName,actionId:nextActionId("pass")});
       statusMsg.textContent="Passing…"; statusMsg.className="";
       setTimeout(()=>sendToHost({type:"sync-request",player:playerName}),300);
     });
