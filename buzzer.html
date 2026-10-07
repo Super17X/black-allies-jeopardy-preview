@@ -214,7 +214,7 @@
     <div id="deliveryStatus" aria-live="polite"></div>
     <button class="btn" id="testBuzzerBtn" type="button">Test My Buzzer</button>
     <div id="answerArea">
-      <input id="remoteAnswerInput" placeholder="Type your answer" autocomplete="off" spellcheck="false" aria-label="Your answer" />
+      <input id="remoteAnswerInput" placeholder="Type your answer" autocomplete="off" autocapitalize="words" enterkeyhint="send" spellcheck="true" aria-label="Your answer" />
       <button class="btn ok" id="submitAnswerBtn">Submit Answer</button>
       <button class="btn" id="passAnswerBtn">Pass</button>
       <div class="sub" style="margin:0">Capitalization does not matter.</div>
@@ -522,6 +522,15 @@
         }
       }
 
+      if(data.type === "mascot-hint"){
+        const iControl=!!playerName && sameName(data.controller,playerName);
+        if(iControl){
+          statusMsg.textContent="💡 "+String(data.hint||"Hint available");
+          statusMsg.className="ok";
+          try{if(navigator.vibrate)navigator.vibrate([55,45,55]);}catch(_){}
+        }
+      }
+
       if(data.type === "timer-tick"){
         vibrateControlCountdown(data.seconds,data.controller,data.phase);
         if(sameName(data.controller,playerName) && data.phase==="CONTROL_ANSWER" && Number(data.seconds)<=10 && Number(data.seconds)>0){
@@ -754,12 +763,17 @@
 
     function submitRemoteAnswer(){
       const answer=(remoteAnswerInput.value||"").trim();
+      if(submitAnswerBtn.disabled) return;
       if(!playerName || !answer){
         statusMsg.textContent="Please type an answer first.";
         statusMsg.className="err";
         return;
       }
       submitAnswerBtn.disabled=true;
+      submitAnswerBtn.disabled=true;
+      passAnswerBtn.disabled=true;
+      statusMsg.textContent="Sending answer…";
+      statusMsg.className="";
       criticalSend("answer",{player:playerName,answer});
       statusMsg.textContent="Sending answer to host…";
       statusMsg.className="";

@@ -402,6 +402,9 @@
     #hostMascotV4B.react-daily-double{animation:mascotDDV4B 1s ease both}
     #hostMascotV4B.react-final{animation:mascotFinalV4B 1.2s ease both}
     #hostMascotV4B.react-winner{animation:mascotWinnerV4B 1.8s cubic-bezier(.15,.8,.2,1) both}
+    #mascotSpeechV4B{position:fixed;right:clamp(145px,13vw,245px);bottom:clamp(255px,37vh,430px);z-index:2052;max-width:min(330px,62vw);padding:12px 15px;border:2px solid #f7c948;border-radius:18px 18px 4px 18px;background:rgba(3,8,18,.97);color:#fff;font-weight:900;line-height:1.25;box-shadow:0 10px 28px #000a,0 0 18px #f7c94844;opacity:0;transform:translateY(8px) scale(.96);transition:.18s ease;pointer-events:none}
+    #mascotSpeechV4B.show{opacity:1;transform:none}
+    @media(max-width:760px){#mascotSpeechV4B{right:88px;bottom:185px;max-width:68vw;font-size:.82rem}}
     @keyframes mascotIdleV4B{0%,100%{transform:translateY(0) rotate(-.4deg)}50%{transform:translateY(-6px) rotate(.5deg)}}
     @keyframes mascotBuzzV4B{0%{transform:scale(1)}35%{transform:scale(1.08) translateY(-10px)}100%{transform:scale(1)}}
     @keyframes mascotCorrectV4B{0%{transform:scale(1)}35%{transform:translateY(-22px) scale(1.08) rotate(2deg)}65%{transform:translateY(-8px) rotate(-1deg)}100%{transform:none}}
@@ -1206,6 +1209,95 @@
     });
 
 
+    // Premium expansion bank: additional clues are merged into the featured categories.
+    // Combined with persistent rotation below, these reduce repeats for returning players.
+    const PREMIUM_BANK_EXPANSION = {
+      "Black Celebrity & Cultural Events": [
+        ["This singer headlined the 2018 Coachella performance widely nicknamed 'Beychella'.",["beyonce","beyoncé"]],
+        ["This comedian and actor created and starred in the sitcom The Bernie Mac Show.",["bernie mac"]],
+        ["This actor portrayed Jackie Robinson in the film 42.",["chadwick boseman","boseman"]],
+        ["This filmmaker directed Do the Right Thing and Malcolm X.",["spike lee","lee"]],
+        ["This singer and actress starred as Effie White in the film Dreamgirls.",["jennifer hudson","hudson"]],
+        ["This actor won an Oscar for Training Day.",["denzel washington","denzel","washington"]],
+        ["This musician's album Songs in the Key of Life was released in 1976.",["stevie wonder","wonder"]],
+        ["This poet performed 'The Hill We Climb' at the 2021 U.S. presidential inauguration.",["amanda gorman","gorman"]]
+      ],
+      "Employment & Civil Rights": [
+        ["This Supreme Court justice became the first Black person to serve on the Court in 1967.",["thurgood marshall","marshall"]],
+        ["This activist's refusal to give up her Montgomery bus seat helped launch a major boycott in 1955.",["rosa parks","parks"]],
+        ["This organization, founded in 1909, has long fought racial discrimination through advocacy and litigation.",["naacp","national association for the advancement of colored people"]],
+        ["This 1965 law targeted racial discrimination in voting.",["voting rights act","voting rights act of 1965"]],
+        ["This civil-rights leader delivered the 'I Have a Dream' speech at the 1963 March on Washington.",["martin luther king jr","martin luther king","mlk","king"]],
+        ["This activist founded the National Council of Negro Women in 1935.",["mary mcleod bethune","bethune"]],
+        ["This civil-rights organization was founded in 1957 with Martin Luther King Jr. as its first president.",["southern christian leadership conference","sclc"]],
+        ["This 1954 Supreme Court decision struck down racial segregation in public schools.",["brown v board of education","brown v. board of education","brown versus board of education"]]
+      ],
+      "Black Inventors & Innovation": [
+        ["This inventor received a patent for improvements to the traffic signal in 1923.",["garrett morgan","morgan"]],
+        ["This engineer helped develop the color IBM PC monitor and later contributed to gigahertz processors.",["mark dean","mark e dean","dean"]],
+        ["This chemist's synthesis of physostigmine made him a pioneer in chemical research and industry.",["percy julian","percy lavon julian","julian"]],
+        ["This inventor patented an improved ironing board designed to better press sleeves.",["sarah boone","boone"]],
+        ["This inventor patented an improved folding cabinet bed in 1885.",["sarah e goode","sarah goode","goode"]],
+        ["This engineer helped invent the three-light traffic signal and also developed a safety hood.",["garrett morgan","morgan"]],
+        ["This NASA mathematician calculated flight trajectories for Project Mercury and Apollo missions.",["katherine johnson","johnson"]],
+        ["This computer scientist was part of the team that developed IBM's first personal computer.",["mark dean","mark e dean","dean"]]
+      ],
+      "Black Entrepreneurs & Business": [
+        ["This entrepreneur founded World Wide Technology in 1990.",["david steward","steward"]],
+        ["This businessman founded the investment firm Vista Equity Partners.",["robert f smith","robert smith","smith"]],
+        ["This former NBA star became a billionaire businessman through investments including Starbucks franchises.",["magic johnson","earvin johnson","earvin magic johnson"]],
+        ["This entrepreneur founded Sundial Brands, known for SheaMoisture.",["richelieu dennis","dennis"]],
+        ["This entrepreneur co-founded the Black Entertainment Television network with Sheila Johnson.",["robert l johnson","robert johnson","bob johnson"]],
+        ["This music executive founded Bad Boy Records in 1993.",["sean combs","puff daddy","p diddy","diddy"]],
+        ["This entrepreneur founded The Honey Pot Company, a plant-derived personal-care brand.",["beatrice dixon","bea dixon","dixon"]],
+        ["This businessman founded the cable company that became BET's parent organization.",["robert l johnson","robert johnson","bob johnson"]]
+      ],
+      "Black Workforce Milestones": [
+        ["In 2021, she became the first Black woman to lead a Fortune 500 company since Ursula Burns when she became CEO of Walgreens Boots Alliance.",["roz brewer","rosalind brewer","brewer"]],
+        ["This astronaut became the first Black woman in space in 1992.",["mae jemison","jemison"]],
+        ["This jurist became the first Black woman confirmed to the U.S. Supreme Court in 2022.",["ketanji brown jackson","justice jackson","jackson"]],
+        ["This West Point graduate became the first Black chairman of the Joint Chiefs of Staff.",["colin powell","powell"]],
+        ["This educator and presidential adviser founded a school that became Bethune-Cookman University.",["mary mcleod bethune","bethune"]],
+        ["This journalist became the first Black woman to anchor a weekday network evening newscast when she co-anchored ABC World News Tonight.",["max robinson","robinson"]],
+        ["This astronaut became the first African American to command a Space Shuttle mission.",["frederick gregory","fred gregory","gregory"]],
+        ["This lawyer became the first Black U.S. Attorney General in 2015.",["loretta lynch","lynch"]]
+      ],
+      "90s Hip-Hop": [
+        ["This Brooklyn rapper released Ready to Die in 1994.",["the notorious big","notorious big","biggie","biggie smalls","christopher wallace"]],
+        ["This duo released the 1992 album Mecca and the Soul Brother.",["pete rock and cl smooth","pete rock & cl smooth","pete rock cl smooth"]],
+        ["This group released the 1992 album The Chronic—trick question: it was actually this solo producer and rapper.",["dr dre","dr. dre","dre"]],
+        ["This Queens group released The Low End Theory in 1991.",["a tribe called quest","tribe called quest","atcq"]],
+        ["This duo of Method Man and Redman collaborated frequently after rising to fame in the 1990s; Method Man belonged to this Staten Island group.",["wu tang clan","wu-tang clan","wu tang"]],
+        ["This rapper released Hard Core in 1996.",["lil kim","lil' kim","kimberly jones"]],
+        ["This rapper's 1998 album was titled It's Dark and Hell Is Hot.",["dmx","earl simmons"]],
+        ["This duo released the 1994 Southernplayalisticadillacmuzik album.",["outkast","outkast"]]
+      ],
+      "Black TV Shows": [
+        ["This sitcom followed the Winslow family and their unforgettable neighbor Steve Urkel.",["family matters"]],
+        ["This sitcom starred Sherman Hemsley as George Jefferson.",["the jeffersons","jeffersons"]],
+        ["This series followed four friends including Joan, Maya, Lynn, and Toni.",["girlfriends"]],
+        ["This sitcom starred Damon Wayans and Tisha Campbell as married parents Michael and Jay Kyle.",["my wife and kids"]],
+        ["This series starred Tracee Ellis Ross and Anthony Anderson as Rainbow and Dre Johnson.",["black ish","black-ish","blackish"]],
+        ["This sitcom centered on the Huxtable family.",["the cosby show","cosby show"]],
+        ["This sitcom featured Jamie King working at the King's Tower hotel.",["the jamie foxx show","jamie foxx show"]],
+        ["This UPN sitcom starred Flex Alexander as a sportscaster raising his teenage daughter.",["one on one","one-on-one"]]
+      ],
+      "Famous Black Sayings & Slang": [
+        ["Calling someone the 'GOAT' means they are this.",["greatest of all time","the greatest of all time","greatest"]],
+        ["If someone says 'no cap,' they usually mean this.",["no lie","not lying","for real","truth","seriously"]],
+        ["In slang, 'bet' often means this.",["okay","ok","agreed","deal","sure"]],
+        ["If something 'hits different,' it has this kind of effect compared with the usual.",["a different effect","different effect","feels different","a unique impact","unique impact"]],
+        ["Calling an outfit 'drip' refers to this.",["style","fashion","clothes","stylish clothing"]],
+        ["If someone says a person 'understood the assignment,' they mean the person did this.",["did a great job","did well","got it right","delivered","succeeded"]],
+        ["To 'throw shade' means to do this indirectly.",["insult someone","criticize someone","disrespect someone","insult","criticize"]],
+        ["If a person says 'we outside,' they are often signaling this.",["going out","ready to go out","being social","celebrating","outside having fun"]]
+      ]
+    };
+    Object.entries(PREMIUM_BANK_EXPANSION).forEach(([cat,items])=>{
+      if(!Array.isArray(seededBankRound1[cat])) seededBankRound1[cat]=[];
+      seededBankRound1[cat].push(...items);
+    });
+
     const ROUND2_BH_MOVIES_TV = "Movies & TV — Black History";
     const seededBankRound2 = {
       [ROUND2_BH_MOVIES_TV]: [
@@ -1410,10 +1502,38 @@
         .trim()
         .replace(/[^a-z0-9]/g,"");
     }
+    function answerCore(s){
+      return String(s||"")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+        .toLocaleLowerCase("en-US")
+        .replace(/^\s*(who|what|where|when)\s+(is|are|was|were)\s+/,"")
+        .replace(/\b(dr|doctor|mr|mrs|ms|jr|sr)\.?\b/g," ")
+        .replace(/^\s*(the|a|an)\s+/,"")
+        .replace(/&/g," and ")
+        .replace(/[^a-z0-9]+/g," ")
+        .trim().replace(/\s+/g," ");
+    }
+    function editDistance(a,b){
+      const m=a.length,n=b.length,prev=Array.from({length:n+1},(_,i)=>i),cur=new Array(n+1);
+      for(let i=1;i<=m;i++){cur[0]=i;for(let j=1;j<=n;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));for(let j=0;j<=n;j++)prev[j]=cur[j];}
+      return prev[n];
+    }
     function isCorrectAnswer(given, accepted) {
-      const g = normalize(given);
-      if (!g) return false;
-      return accepted.some(a => normalize(a) === g);
+      const g=answerCore(given);
+      if(!g) return false;
+      return accepted.some(raw=>{
+        const a=answerCore(raw);
+        if(!a) return false;
+        if(g===a) return true;
+        const gc=g.replace(/\s/g,""), ac=a.replace(/\s/g,"");
+        // Allow harmless typing errors, but stay strict on short answers.
+        const minLen=Math.min(gc.length,ac.length);
+        if(minLen>=8 && editDistance(gc,ac)<=1) return true;
+        if(minLen>=13 && editDistance(gc,ac)<=2) return true;
+        // Accept a full distinctive multi-word answer with an extra first/last name or article.
+        if(a.includes(" ") && minLen>=7 && ((" "+g+" ").includes(" "+a+" ") || (" "+a+" ").includes(" "+g+" "))) return true;
+        return false;
+      });
     }
     function shuffle(a){
       for (let i=a.length-1;i>0;i--){
@@ -1913,6 +2033,27 @@
     }
 
 
+    const QUESTION_ROTATION_KEY="black-allies-question-rotation-v3";
+    function loadQuestionRotation(){
+      try{const raw=JSON.parse(localStorage.getItem(QUESTION_ROTATION_KEY)||"{}");return raw&&typeof raw==="object"?raw:{};}catch(_){return {};}
+    }
+    function saveQuestionRotation(history){
+      try{localStorage.setItem(QUESTION_ROTATION_KEY,JSON.stringify(history));}catch(_){}
+    }
+    function clueId(cat,item){return cat+"::"+String(item?.[0]||"").trim();}
+    function rotatingPicks(cat,pool,count){
+      const history=loadQuestionRotation();
+      const recent=Array.isArray(history[cat])?history[cat]:[];
+      const age=new Map(recent.map((id,i)=>[id,i]));
+      const unseen=shuffle(pool.filter(item=>!age.has(clueId(cat,item))));
+      const seen=pool.filter(item=>age.has(clueId(cat,item))).sort((a,b)=>(age.get(clueId(cat,a))??0)-(age.get(clueId(cat,b))??0));
+      const picks=[...unseen,...seen].slice(0,count);
+      const pickedIds=picks.map(item=>clueId(cat,item));
+      history[cat]=[...recent.filter(id=>!pickedIds.includes(id)),...pickedIds].slice(-Math.max(pool.length,60));
+      saveQuestionRotation(history);
+      return picks;
+    }
+
     function buildBoard(cfg){
       const isRound2 = cfg.round === 2;
       const mustIncludeBH = "Black History & Notable Events";
@@ -1957,7 +2098,7 @@
 
       for (const cat of cats){
         const pool = baseBank[cat];
-        const picks = randomizeBoardSel.value === "on" ? shuffle([...pool]).slice(0, cfg.qPerCat) : pool.slice(0, cfg.qPerCat);
+        const picks = randomizeBoardSel.value === "on" ? rotatingPicks(cat,pool,cfg.qPerCat) : pool.slice(0, cfg.qPerCat);
         for (let i=0;i<cfg.qPerCat;i++){
           const row = rows[i];
           const [text, answers] = picks[i];
@@ -2305,6 +2446,18 @@
         state.timer.remaining -= 1;
         timerEl.textContent = `${state.timer.remaining}s`;
         timerEl.classList.toggle("timer-danger", state.timer.remaining <= 5);
+
+        if(state.timer.mode==="main" && state.timer.remaining===15 && state.activeKey){
+          const [hintCat,hintRowStr]=state.activeKey.split("::");
+          const hintClue=state.board.clueFor(hintCat,Number(hintRowStr));
+          const primary=answerCore(hintClue?.answers?.[0]||"");
+          if(primary){
+            const words=primary.split(" ").filter(Boolean);
+            const hint=`Hint: ${words.length>1?words.length+" words; ":""}starts with “${primary.charAt(0).toUpperCase()}”.`;
+            MascotV4B.say(hint,4200);
+            if(typeof broadcastToBuzzers==="function") broadcastToBuzzers({type:"mascot-hint",hint,controller:state.players[state.controlIdx]?.name||"—"});
+          }
+        }
 
         // Keep contestant phones synchronized with the host countdown.
         // Phones decide locally whether they are the player in control before vibrating.
@@ -2744,8 +2897,8 @@
         const correct = isCorrectAnswer(ans, finalJeopardy.answers);
 
 
-        if (correct){ p.score += wager; sfxCorrect(); playMoneySound(); }
-        else { p.score -= wager; sfxWrong(); playRizzSound(); }
+        if (correct){ p.score += wager; sfxCorrect(); playMoneySound(); MascotV4B.react("correct",900,`${p.name} nailed Final Jeopardy!`); }
+        else { p.score -= wager; sfxWrong(); playRizzSound(); MascotV4B.react("wrong",800,`${p.name} missed this one.`); }
 
 
         lines.push(
@@ -3463,14 +3616,29 @@
     // ===== V4B mascot reaction API =====
     const MascotV4B=(()=>{
       const el=document.getElementById("hostMascotV4B");
-      let timer=null;
+      const bubble=document.createElement("div"); bubble.id="mascotSpeechV4B"; bubble.setAttribute("role","status"); document.body.appendChild(bubble);
+      let timer=null,speechTimer=null;
       const classes=["react-buzz","react-correct","react-wrong","react-steal","react-daily-double","react-final","react-winner"];
-      function react(name,duration=900){
+      const lines={
+        correct:["That's it!","Right on the money!","You got it!","That's a board move!"],
+        wrong:["Not quite — steals are alive!","Close, but not this time.","Ooh, the board says no!","Shake it off — next play!"],
+        steal:["Steal secured!","That's how you take the board!","Big steal!"],
+        buzz:["Fast hands!","We have a buzzer!","Somebody came to play!"],
+        "daily-double":["Daily Double! Make it count!","Big wager energy!"],
+        winner:["That's the game!","We have a champion!"],
+        final:["Final Jeopardy — lock in!"]
+      };
+      function say(message,duration=2600){
+        if(!bubble||!message)return; clearTimeout(speechTimer); bubble.textContent=message; bubble.classList.add("show");
+        speechTimer=setTimeout(()=>bubble.classList.remove("show"),duration);
+      }
+      function react(name,duration=900,message=""){
         if(!el)return; clearTimeout(timer); el.classList.remove(...classes); void el.offsetWidth;
         const cls="react-"+name; if(classes.includes(cls))el.classList.add(cls);
+        const options=lines[name]||[]; say(message || options[Math.floor(Math.random()*options.length)] || "",Math.max(duration+700,2200));
         timer=setTimeout(()=>el.classList.remove(...classes),duration);
       }
-      return {react};
+      return {react,say};
     })();
 </script>
 
