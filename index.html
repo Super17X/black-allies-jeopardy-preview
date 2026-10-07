@@ -149,10 +149,15 @@
       display:none;position:fixed;inset:0;margin:0;transform:none;
       width:100vw;height:100dvh;min-height:100vh;max-height:none;overflow-y:auto;box-sizing:border-box;
       padding:clamp(28px,6vh,72px) max(24px,calc((100vw - 900px)/2)) 96px;
-      background:
-        radial-gradient(circle at 50% 18%,rgba(28,57,137,.42),transparent 36%),
-        linear-gradient(180deg,rgba(4,8,22,.90),rgba(3,4,12,.97)),
-        url("assets/black-excellence-background.webp") center/cover no-repeat;
+      background-color:#03040c;
+      background-image:
+        radial-gradient(circle at 50% 18%,rgba(28,57,137,.30),transparent 42%),
+        linear-gradient(180deg,rgba(3,6,18,.70),rgba(2,3,10,.92)),
+        url("assets/black-excellence-background.webp");
+      background-position:center center;
+      background-size:cover;
+      background-repeat:no-repeat;
+      background-attachment:fixed;
       border:0;border-radius:0;z-index:1600;
       box-shadow:none;
     }
@@ -165,7 +170,7 @@
     }
     #waitingRoomPane>h2{font-size:clamp(2rem,4vw,3.4rem);color:var(--gold2);text-align:center;text-shadow:0 4px 24px #000}
     #waitingRoomPane>.row{justify-content:center}
-    #roomGrid{padding:18px;border:1px solid rgba(247,201,72,.35);border-radius:22px;background:rgba(7,8,18,.82);backdrop-filter:blur(12px);box-shadow:0 22px 70px rgba(0,0,0,.48)}
+    #roomGrid{padding:20px;min-height:220px;align-content:start;border:1px solid rgba(247,201,72,.42);border-radius:22px;background:linear-gradient(180deg,rgba(8,10,24,.90),rgba(5,6,15,.86));backdrop-filter:blur(14px);box-shadow:0 22px 70px rgba(0,0,0,.58),0 0 42px rgba(28,57,137,.16)}
     @media (max-width:700px){
       #waitingRoomPane{width:100vw;height:100dvh;padding:22px 12px 90px}
       #roomGrid{grid-template-columns:1fr;padding:12px}
@@ -839,7 +844,7 @@
   </div>
 
 
-  <audio id="waitingRoomMusic" preload="auto" loop playsinline src="assets/black_allies_waiting_room_loop.mp3"></audio>
+  <audio id="waitingRoomMusic" preload="auto" loop playsinline src="assets/jeopardy-hip-hop-beat.mp3?v=waiting-room-20261007"></audio>
 
   <div id="waitingRoomPane" class="card">
     <h2 style="margin:0">Waiting Room <span class="tag" id="autoStartIn">—</span></h2>
@@ -1966,15 +1971,25 @@
     function startWaitingRoomMusic(){
       if(!waitingRoomMusic||soundModeSel.value==="off")return;
       if(waitingMusicFadeId)clearInterval(waitingMusicFadeId);
+      waitingRoomMusic.loop=true;
       waitingRoomMusic.volume=0;
-      const target=clamp(Number(volumeInput.value||0.25)*0.72,0,0.55);
+      if(waitingRoomMusic.readyState===0) waitingRoomMusic.load();
+      const target=clamp(Number(volumeInput.value||0.25)*0.72,0.08,0.55);
+      const beginFade=()=>{
+        let i=0,steps=14;
+        waitingMusicFadeId=setInterval(()=>{
+          i++; waitingRoomMusic.volume=Math.min(target,target*(i/steps));
+          if(i>=steps){clearInterval(waitingMusicFadeId);waitingMusicFadeId=null;}
+        },55);
+      };
       const play=waitingRoomMusic.play();
-      if(play&&typeof play.catch==="function")play.catch(()=>{});
-      let i=0,steps=14;
-      waitingMusicFadeId=setInterval(()=>{
-        i++; waitingRoomMusic.volume=Math.min(target,target*(i/steps));
-        if(i>=steps){clearInterval(waitingMusicFadeId);waitingMusicFadeId=null;}
-      },55);
+      if(play&&typeof play.then==="function"){
+        play.then(beginFade).catch(err=>{
+          console.warn("Waiting-room music was blocked:",err);
+          const retry=()=>{waitingRoomMusic.play().then(beginFade).catch(()=>{});document.removeEventListener("pointerdown",retry);};
+          document.addEventListener("pointerdown",retry,{once:true});
+        });
+      }else beginFade();
     }
 
     function enterWaitingRoom(){
@@ -1984,9 +1999,9 @@
       }
       clearLobbyError();
       stopLandingMusic();
-      startWaitingRoomMusic();
       lobbyPane.style.display="none";
       waitingRoomPane.style.display="block";
+      startWaitingRoomMusic();
       // Fixed overlay is already centered in the viewport; do not scroll the page to it.
       waitingRoomPane.classList.remove("page-enter");
       void waitingRoomPane.offsetWidth;
