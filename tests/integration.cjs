@@ -19,6 +19,8 @@ function setup(file){
  w.Audio=class{constructor(src){this.src=src;this.currentTime=0;this.volume=1;}play(){played.push(this.src);return Promise.resolve()}pause(){} addEventListener(){}};
  w.confirm=()=>true;w.alert=()=>{};w.matchMedia=()=>({matches:false,addEventListener(){}});
  w.QRCode=class{constructor(el){el.innerHTML='<canvas></canvas>'}static CorrectLevel={H:1}};
+ w.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="white"/><rect x="10" y="10" width="20" height="20" fill="black"/></svg>'}});
+
  w.BroadcastChannel=class{postMessage(){}addEventListener(){}};
  w.supabase={createClient:()=>({channel:name=>{
   const c={name,fn:null,statusCb:null,on(_,__,fn){this.fn=fn;return this},subscribe(fn){this.statusCb=fn;w.setTimeout(()=>fn('SUBSCRIBED'),0);return this},send({payload}){messages.push(payload);channels.filter(x=>x!==c&&x.name===name).forEach(x=>w.setTimeout(()=>x.fn({payload}),0));return Promise.resolve('ok')},unsubscribe(){}};channels.push(c);return c;
@@ -35,7 +37,8 @@ function visible(w,id){return el(w,id).style.display!=='none'}
 function last(type){return messages.filter(m=>m.type===type).at(-1)}
 click(host,'enterPremiereBtn');
 click(host,'lobbyBuzzerLinkBtn');
-assert.equal(el(host,'buzzerQr').tagName.toLowerCase(),'svg');
+assert.equal(el(host,'buzzerQr').querySelector('svg')?.tagName.toLowerCase(),'svg');
+assert.match(el(host,'buzzerQr').dataset.qrUrl,/buzzer\\.html\\?room=TEST01$/);
 
 click(host,'closeBuzzerPanelBtn');
 assert(!visible(host,'buzzerPanel'));
