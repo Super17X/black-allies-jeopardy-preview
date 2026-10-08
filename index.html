@@ -863,7 +863,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 #summaryPane.championship-summary .finalWinnerBanner{animation:championshipGlow 1.6s ease-in-out infinite alternate!important}
 @keyframes championshipGlow{from{filter:drop-shadow(0 0 4px #f3c66a)}to{filter:drop-shadow(0 0 24px #ffd66e)}}
 @media(prefers-reduced-motion:reduce){#summaryPane.championship-summary .finalWinnerBanner{animation:none!important}}
-</style></head>
+</style><style id="lobby-error-steal-fix">#waitingError:not(:empty){display:block!important;background:rgba(89,16,30,.82);border:1px solid #ff8a8a;border-radius:10px;padding:10px 12px;margin-top:10px;color:#ffd5d5!important;line-height:1.45}#premiumLobbyCountdown:not(.show){display:none!important}</style></head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
   <div id="gameCountdown"></div>
@@ -940,7 +940,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       <label for="qSeconds" class="mono tiny">Seconds per question:</label>
       <input id="qSeconds" type="number" min="3" max="90" value="45" style="width:90px" aria-label="Seconds per question" />
       <label for="stealSeconds" class="mono tiny">Steal seconds:</label>
-      <input id="stealSeconds" type="number" min="2" max="45" value="7" style="width:90px" aria-label="Steal seconds" />
+      <input id="stealSeconds" type="number" min="2" max="45" value="3" style="width:90px" aria-label="Steal seconds" />
       <label for="finalSeconds" class="mono tiny">Final round:</label>
       <input id="finalSeconds" type="number" min="120" max="120" value="120" readonly style="width:90px" aria-label="Final round is fixed at 120 seconds" />
       <span class="pill">Main game: 15:00</span>
@@ -2223,7 +2223,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         remaining -= 1;
         autoStartIn.textContent = `Auto-start: ${remaining}s`;
         const countdown=$("premiumLobbyCountdown");const number=$("premiumLobbyNumber");
-        if(remaining<=5 && remaining>0 && (!requireReadySel || requireReadySel.value!=="on" || allReady())){ countdown.classList.add("show");number.textContent=String(remaining);if(remaining===5)premiumActivity("🎬 Game starting in five seconds"); } else countdown.classList.remove("show");
+        // Auto-start remains a background readiness timer; the only visible launch countdown is 3-2-1.
+        countdown.classList.remove("show");
         if (remaining <= 0){
           clearInterval(waitingCountdownId);
           waitingCountdownId = null;
@@ -2324,7 +2325,10 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
       const eligible = baseCategories.filter(cat => Array.isArray(baseBank[cat]) && baseBank[cat].length >= cfg.qPerCat);
-      if (!eligible.includes(mustIncludeBH)) throw new Error(`Bank missing required category "${mustIncludeBH}".`);
+      if (!eligible.includes(mustIncludeBH)) {
+        const available = Array.isArray(baseBank[mustIncludeBH]) ? baseBank[mustIncludeBH].length : 0;
+        throw new Error(`Black History category has ${available} questions but ${cfg.qPerCat} were requested. Lower Questions per category to ${available} or fewer.`);
+      }
       if (isRound2 && !eligible.includes(ROUND2_BH_MOVIES_TV)) throw new Error(`Round 2 requires category "${ROUND2_BH_MOVIES_TV}".`);
 
 
@@ -2493,6 +2497,12 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
       const cfg = getConfig();
+      // Prevent impossible board sizes before the countdown completes.
+      const availableRequired = seededBankRound1["Black History & Notable Events"]?.length || 0;
+      if (availableRequired && cfg.qPerCat > availableRequired) {
+        cfg.qPerCat = availableRequired;
+        qPerCatInput.value = String(availableRequired);
+      }
       state.round = cfg.round;
       state.controlIdx = 0;
       state.used = new Set();
@@ -2543,7 +2553,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       gameStartSequenceRunning=true;
       stopWaitingRoomMusic(700);
       const overlay=$("gameCountdown");
-      let steps=["3","2","1","LET’S PLAY!"]; let i=0;
+      let steps=["3","2","1"]; let i=0;
       const tick=()=>{ overlay.textContent=steps[i]; overlay.classList.remove("show"); void overlay.offsetWidth; overlay.classList.add("show"); i++; if(i<steps.length) setTimeout(tick,720); else setTimeout(()=>{overlay.classList.remove("show"); overlay.style.display="none"; gameStartSequenceRunning=false; beginGameNow();},720); };
       overlay.style.display="flex"; tick();
     }
@@ -2836,7 +2846,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       setGamePhase("STEAL_DELAY");
 
       // STEAL LOCK: nobody may buzz for 7 seconds after a miss/pass.
-      const stealDelaySeconds = 7;
+      const stealDelaySeconds = 3;
       const stealPlayer = state.players[state.controlIdx].name;
       const activeKeyAtDelayStart = state.activeKey;
 
@@ -2880,7 +2890,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         setGamePhase("STEAL_OPEN");
         broadcastToBuzzers({type:"steal-open",controller:stealPlayer});
         playBruhSound();
-        startTimer(Number(stealSecondsInput.value||7),"steal",()=>{
+        startTimer(3,"steal",()=>{
           sfxTimesUp();
           playGamesSound();
           correctStreaks.set(state.players[state.controlIdx].name, 0);
