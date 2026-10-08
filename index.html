@@ -831,6 +831,28 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 }
 </style>
 
+
+<style id="premium-final-championship-2026">
+/* Isolated championship stage redesign; no changes to game state or Supabase. */
+#finalPane{position:relative!important;isolation:isolate;overflow:visible!important;box-sizing:border-box;max-width:1160px!important;width:min(96vw,1160px)!important;margin:20px auto!important;padding:clamp(22px,4vw,54px)!important;border:1px solid rgba(244,201,108,.68)!important;border-radius:28px!important;color:#f5f8ff!important;background:radial-gradient(ellipse at 50% -20%,rgba(39,111,225,.54),transparent 58%),radial-gradient(ellipse at 95% 85%,rgba(199,145,44,.19),transparent 40%),linear-gradient(155deg,#0b1c42,#060c20 65%,#030711)!important;box-shadow:0 26px 90px rgba(0,0,0,.66),inset 0 1px rgba(255,232,174,.22),0 0 45px rgba(40,95,206,.24)!important;text-align:center}
+#finalPane::before{content:"";pointer-events:none;position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 16%,rgba(255,255,255,.035) 40%,transparent 60%);z-index:-1}
+#finalPane .final-broadcast-kicker{font-weight:800;letter-spacing:.28em;color:#d9b76d!important;text-transform:uppercase;font-size:clamp(.65rem,1.2vw,.9rem)}
+#finalPane h2{font-size:clamp(2rem,5.8vw,4.6rem)!important;line-height:1.08!important;letter-spacing:-.045em;text-shadow:0 4px 24px rgba(0,0,0,.6);margin:14px 0 20px!important;background:linear-gradient(180deg,#fff8d9,#e9bb57);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#finalStatusPanel{max-width:920px!important;background:rgba(8,23,54,.85)!important;border:1px solid rgba(230,188,95,.45)!important;border-radius:18px!important;padding:clamp(16px,3vw,28px)!important;line-height:1.6;box-shadow:inset 0 1px rgba(255,255,255,.07)}
+#finalPane .row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:14px auto}
+#finalPane .pill{background:rgba(15,40,83,.85);border:1px solid rgba(190,213,255,.25);border-radius:999px;padding:9px 14px}
+#finalPane #finalTimer{display:inline-block;min-width:5ch;font-weight:900!important;font-variant-numeric:tabular-nums;color:#ffdc83!important;text-shadow:0 0 24px rgba(255,198,75,.28)}
+#finalPane #finalClueText{max-width:940px;margin:18px auto!important;padding:clamp(22px,4vw,46px)!important;border:1px solid rgba(114,163,255,.45)!important;border-radius:24px!important;background:linear-gradient(155deg,#173f8b,#081c4c)!important;color:#fff!important;font-size:clamp(1.25rem,2.8vw,2.4rem)!important;line-height:1.42!important;box-shadow:0 15px 45px rgba(0,0,0,.28)}
+#finalRevealStage{padding:16px;min-height:56px;letter-spacing:.015em}
+#finalPane .btn{min-height:48px!important;border-radius:12px!important;font-weight:800!important;letter-spacing:.02em;position:relative;z-index:1;white-space:normal}
+#finalPane #finalSubmitBtn,#finalPane #finalRevealBtn,#finalPane #finalNextRevealBtn{background:linear-gradient(120deg,#b78327,#ffe19a)!important;color:#09142c!important;border:1px solid #ffe3a5!important;box-shadow:0 5px 24px rgba(204,157,56,.26)}
+#finalPane #finalInput{background:#f7f9ff!important;color:#0a1530!important;border:2px solid #b6c9ec!important;border-radius:12px!important;min-height:52px!important;min-width:180px;flex:1 1 280px!important;font-size:1.05rem!important;padding:12px 16px!important;box-sizing:border-box}
+#finalPane #finalInput:focus-visible,#finalPane .btn:focus-visible{outline:3px solid #75baff!important;outline-offset:3px}
+#finalPane #finalError{font-weight:700;min-height:1.5em}
+#summaryPane.championship-summary{border:1px solid #dfb95d!important;border-radius:26px!important;box-shadow:0 28px 100px #0009,0 0 60px #c4943d22!important}
+@media(max-width:680px){#finalPane{padding:18px 12px!important;width:calc(100vw - 16px)!important;border-radius:18px!important}#finalPane .row{gap:8px}#finalPane .btn{font-size:.9rem!important;flex:1 1 130px}#finalPane #finalInput{flex-basis:100%!important}#finalPane #finalClueText{padding:20px 14px!important}}
+@media(prefers-reduced-motion:reduce){#finalPane *,#summaryPane.championship-summary *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
