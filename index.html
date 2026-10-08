@@ -853,7 +853,17 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 @media(max-width:680px){#finalPane{padding:18px 12px!important;width:calc(100vw - 16px)!important;border-radius:18px!important}#finalPane .row{gap:8px}#finalPane .btn{font-size:.9rem!important;flex:1 1 130px}#finalPane #finalInput{flex-basis:100%!important}#finalPane #finalClueText{padding:20px 14px!important}}
 @media(prefers-reduced-motion:reduce){#finalPane *,#summaryPane.championship-summary *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
-</head>
+<style id="championship-usability-v2">
+#finalPane #finalError{font-family:inherit!important;font-size:clamp(.85rem,1.4vw,1rem)!important;line-height:1.45!important;max-width:860px;margin:10px auto!important;overflow-wrap:anywhere}
+#finalPane #finalInput{background:#f9fbff!important;color:#09162e!important;caret-color:#09162e!important}
+#finalPane #finalInput::placeholder{color:#5d6881!important;opacity:1!important}
+#finalPane #finalSubmitBtn{background:linear-gradient(110deg,#ffe9a5,#d5a544)!important;color:#09162e!important}
+#finalPane #finalRevealBtn:disabled{opacity:.5!important;cursor:not-allowed!important}
+#hostFinalAnswerRevealBtn{margin:12px auto!important;min-height:48px!important;border:1px solid #e8bf63!important;background:#102d60!important;color:#ffe6a3!important}
+#summaryPane.championship-summary .finalWinnerBanner{animation:championshipGlow 1.6s ease-in-out infinite alternate!important}
+@keyframes championshipGlow{from{filter:drop-shadow(0 0 4px #f3c66a)}to{filter:drop-shadow(0 0 24px #ffd66e)}}
+@media(prefers-reduced-motion:reduce){#summaryPane.championship-summary .finalWinnerBanner{animation:none!important}}
+</style></head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
   <div id="gameCountdown"></div>
@@ -3121,6 +3131,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         if (state.final.idx >= state.players.length){
           state.final.step="answers";
           state.final.idx=0;
+          // The answer phase begins once, after the final wager is accepted.
+          if(!state.final.timerId) startFinalTimer();
         }
         flash("rgba(247,201,72,0.15)", 160, 0.95);
         renderFinalUI();
@@ -3241,7 +3253,22 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       $("finalStatusPanel").textContent="Host-controlled championship reveal";
       stopFinalTimer();
     }
-    finalRevealBtn.addEventListener("click", championshipBeginReveal);
+    // Host-only reveal: never expose the answer while contestants are wagering or answering.
+    const hostFinalAnswerBtn=document.createElement("button");
+    hostFinalAnswerBtn.id="hostFinalAnswerRevealBtn";
+    hostFinalAnswerBtn.type="button";
+    hostFinalAnswerBtn.className="btn alt";
+    hostFinalAnswerBtn.textContent="Reveal Correct Final Answer";
+    hostFinalAnswerBtn.style.display="none";
+    finalRevealBtn.insertAdjacentElement("afterend",hostFinalAnswerBtn);
+    hostFinalAnswerBtn.addEventListener("click",()=>{
+      if(state.final.step!=="reveal" || !finalResultsApplied && !finalRevealBtn.disabled){
+        $("finalError").textContent="Finish collecting answers and begin the host reveal first.";
+        return;
+      }
+      $("finalRevealStage").textContent="Correct answer: "+finalJeopardy.answers[0];
+    });
+    finalRevealBtn.addEventListener("click",()=>{championshipBeginReveal();hostFinalAnswerBtn.style.display=state.final.step==="reveal"?"inline-flex":"none";});
 
 
     // -----------------------------
