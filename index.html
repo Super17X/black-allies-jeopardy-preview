@@ -2951,7 +2951,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
             if(!state.final.wagers.has(i)) state.final.wagers.set(i,0);
             if(!state.final.answers.has(i)) state.final.answers.set(i,"");
           }
-          revealFinalResults();
+          state.final.step="reveal";state.final.idx=0;renderFinalUI();broadcastToBuzzers({type:"final-wait-reveal"});
         }
       }, 1000);
     }
@@ -3121,6 +3121,8 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
       finalPane.style.display="none";
       scoreBoard.style.display="none";
       summaryPane.style.display="block";
+      summaryPane.classList.add("championship-summary");
+      for(let c=0;c<65;c++){const el=document.createElement("i");el.className="champ-confetti";el.style.left=(Math.random()*100)+"%";el.style.background=["#f4c44b","#fff3b2","#2079ff"][c%3];el.style.animationDelay=(Math.random()*2)+"s";summaryPane.appendChild(el);setTimeout(()=>el.remove(),6500);}
 
 
       const ranked = getRankedPlayers();
@@ -3150,7 +3152,31 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
 
     finalSubmitBtn.addEventListener("click", finalSubmit);
     finalInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") finalSubmit(); });
-    finalRevealBtn.addEventListener("click", revealFinalResults);
+    let championshipRevealIndex=0;
+    function championshipRevealNext(){
+      if(state.final.step!=="reveal")return;
+      const i=championshipRevealIndex++;
+      if(i>=state.players.length){$("finalNextRevealBtn").style.display="none";revealFinalResults();return;}
+      const p=state.players[i],w=state.final.wagers.get(i)??0,ans=state.final.answers.get(i)??"";
+      const correct=isCorrectAnswer(ans,finalJeopardy.answers);
+      const projected=p.score+(correct?w:-w);
+      $("finalRevealStage").textContent=`🏆 ${p.name} • ${ans||"(No answer)"} • ${correct?"CORRECT":"INCORRECT"} • Wager ${w} • ${p.score} → ${projected}`;
+      $("finalStatusPanel").textContent=`Contestant ${i+1} of ${state.players.length} revealed`;
+      try{MascotV4B.react(correct?"correct":"wrong",1000)}catch(_){}
+      if(championshipRevealIndex===state.players.length)$("finalNextRevealBtn").textContent="Crown the Champion";
+    }
+    $("finalNextRevealBtn").addEventListener("click",championshipRevealNext);
+    function championshipBeginReveal(){
+      if(state.final.step!=="reveal")return;
+      championshipRevealIndex=0;
+      $("finalNextRevealBtn").textContent="Reveal Next Contestant";
+      $("finalNextRevealBtn").style.display="inline-flex";
+      finalRevealBtn.disabled=true;
+      $("finalRevealStage").textContent="The answers are locked. Let the reveal begin.";
+      $("finalStatusPanel").textContent="Host-controlled championship reveal";
+      stopFinalTimer();
+    }
+    finalRevealBtn.addEventListener("click", championshipBeginReveal);
 
 
     // -----------------------------
