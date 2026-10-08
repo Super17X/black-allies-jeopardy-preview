@@ -724,6 +724,17 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
 @keyframes champPulse{to{text-shadow:0 0 30px #ffe17a;transform:scale(1.02)}}
 .champ-confetti{position:absolute;top:-20px;width:9px;height:17px;pointer-events:none;animation:champFall 4s linear forwards;z-index:3}@keyframes champFall{to{transform:translateY(100vh) rotate(900deg);opacity:0}}
 @media(prefers-reduced-motion:reduce){#finalPane:before,#finalPane:after,.champ-confetti,#summaryPane.championship-summary .finalWinnerBanner{animation:none!important}}
+
+/* Broadcast mascot: greeting, hint and urgent alert gestures */
+#hostMascotV4B.react-greet{animation:mascotGreet 1.15s ease both!important}
+#hostMascotV4B.react-hint{animation:mascotHint 1.1s ease both!important}
+#hostMascotV4B.react-alert{animation:mascotAlert .72s ease both!important}
+#mascotSpeechV4B{z-index:2600!important;white-space:normal;overflow-wrap:anywhere}
+#mascotSpeechV4B:after{content:"";position:absolute;right:-11px;bottom:15px;border-left:12px solid #f7c948;border-top:10px solid transparent;border-bottom:10px solid transparent}
+@keyframes mascotGreet{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) translateY(-8px)}60%{transform:rotate(8deg) translateY(-12px)}}
+@keyframes mascotHint{0%,100%{transform:rotate(0)}35%{transform:rotate(-9deg) translateX(-10px)}65%{transform:rotate(7deg) translateX(6px)}}
+@keyframes mascotAlert{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px) rotate(-3deg)}40%,80%{transform:translateX(9px) rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){#hostMascotV4B.react-greet,#hostMascotV4B.react-hint,#hostMascotV4B.react-alert{animation:none!important}}
 </style>
 
 <style id="top-toolbar-final-fix">
@@ -2416,6 +2427,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
     // Game start
     // -----------------------------
     function beginGameNow(){
+      setTimeout(()=>MascotV4B.react("greet",1200),200);
       $("premiumLobbyCountdown").classList.remove("show");
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId = null;
@@ -2500,6 +2512,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
           stopGameClock();
           sfxTimesUp();
           playGameOverSound();
+          MascotV4B.react("alert",1000,"Main round over! Final Showdown incoming!");
           setTimeout(startFinalJeopardy, 900);
         }
       },1000);
@@ -2519,6 +2532,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
 
 
       state.activeKey = key;
+      MascotV4B.react("hint",950);
       clueTransactionId += 1;
       answerTransactionLocked = false;
       state.clueAttempts = 0;
@@ -2865,7 +2879,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
           playMoneySound();
           feedback.textContent="Correct!";
         }
-        if (nextStreak === 2) setTimeout(playBoomBittySound, 500);
+        if (nextStreak === 2) { setTimeout(playBoomBittySound, 500); MascotV4B.say("Two in a row! You are heating up!",2500); }
         if (nextStreak === 3) setTimeout(playStreakSound, 500);
         markUsed();
         state.players[state.controlIdx].score += value;
@@ -2883,11 +2897,14 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
       const wrongCountThisClue = state.clueAttempts + 1;
       if (wrongCountThisClue === 1) {
         playRizzSound();
+        MascotV4B.react("wrong",850,"Missed it! Get ready for the steal.");
       } else if (wrongCountThisClue === 2 && wrongCountThisClue < state.players.length) {
         playAyYaiYaiSound();
+        MascotV4B.react("alert",950,"Two misses! Can anyone save this clue?");
       } else {
         // Third miss (or the final available player's miss) is the full-clue failure reaction.
         playWhoopsieSound();
+        MascotV4B.react("wrong",900,"That one got the whole room!");
       }
       answerTransactionLocked=false;
       continueAfterMiss(clue,"Wrong.");
@@ -2944,6 +2961,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
         remaining -= 1;
         state.final.timerRemaining = remaining;
         finalTimerEl.textContent = `${remaining}s`;
+        if (remaining===30)MascotV4B.react("alert",950,"Thirty seconds! Lock in your answers!");
         if (remaining <= 0){
           stopFinalTimer();
           sfxTimesUp();
@@ -2963,6 +2981,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
 
     function startFinalJeopardy(){
       if(state.final.step!=="off") return;
+      MascotV4B.react("final",1200);
       finalResultsApplied=false;
       stopGameClock();
       stopTimer();
@@ -3917,28 +3936,26 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
   
     // ===== V4B mascot reaction API =====
     const MascotV4B=(()=>{
-      const el=document.getElementById("hostMascotV4B");
-      const bubble=document.createElement("div"); bubble.id="mascotSpeechV4B"; bubble.setAttribute("role","status"); document.body.appendChild(bubble);
-      let timer=null,speechTimer=null;
-      const classes=["react-buzz","react-correct","react-wrong","react-steal","react-daily-double","react-final","react-winner"];
+      const bubble=document.createElement("div");bubble.id="mascotSpeechV4B";bubble.setAttribute("role","status");bubble.setAttribute("aria-live","polite");document.body.appendChild(bubble);
+      let timer=null,speechTimer=null,sequence=0;
+      const classes=["react-buzz","react-correct","react-wrong","react-steal","react-daily-double","react-final","react-winner","react-alert","react-greet","react-hint"];
       const lines={
-        correct:["That's it!","Right on the money!","You got it!","That's a board move!"],
-        wrong:["Not quite — steals are alive!","Close, but not this time.","Ooh, the board says no!","Shake it off — next play!"],
-        steal:["Steal secured!","That's how you take the board!","Big steal!"],
-        buzz:["Fast hands!","We have a buzzer!","Somebody came to play!"],
-        "daily-double":["Daily Double! Make it count!","Big wager energy!"],
-        winner:["That's the game!","We have a champion!"],
-        final:["Final Jeopardy — lock in!"]
+        greet:["Welcome to Black & Allies Jeopardy!","Champions, are you ready?","The stage is yours. Let's play!"],
+        correct:["That's right! Big-time answer!","You know your history!","That's championship energy!"],
+        wrong:["Not quite! Steal opportunity ahead!","Ooh! Another player might know it.","Shake it off — next play!"],
+        steal:["STEAL ALERT!","The board is up for grabs!","Who wants those points?"],
+        buzz:["Buzzer locked in!","Fast hands!","We have a challenger!"],
+        "daily-double":["Daily Double! Big decision!","High stakes! Choose wisely!"],
+        winner:["We have a champion!","Make some noise for our winners!"],
+        final:["The Final Showdown starts now!","Lock in your secret wager!"],
+        alert:["Time is running out!","Eyes on the clock!","Heads up, players!"],
+        hint:["Think about the era and the category.","Read every word — details matter.","Connect the clue to the category.","Think of a person, place, or milestone."]
       };
-      function say(message,duration=2600){
-        if(!bubble||!message)return; clearTimeout(speechTimer); bubble.textContent=message; bubble.classList.add("show");
-        speechTimer=setTimeout(()=>bubble.classList.remove("show"),duration);
-      }
+      function say(message,duration=2600){if(!message)return;clearTimeout(speechTimer);bubble.textContent=String(message);bubble.classList.add("show");speechTimer=setTimeout(()=>bubble.classList.remove("show"),duration);}
       function react(name,duration=900,message=""){
-        if(!el)return; clearTimeout(timer); el.classList.remove(...classes); void el.offsetWidth;
-        const cls="react-"+name; if(classes.includes(cls))el.classList.add(cls);
-        const options=lines[name]||[]; say(message || options[Math.floor(Math.random()*options.length)] || "",Math.max(duration+700,2200));
-        timer=setTimeout(()=>el.classList.remove(...classes),duration);
+        const el=document.getElementById("hostMascotV4B");
+        clearTimeout(timer);if(el){el.classList.remove(...classes);void el.offsetWidth;const cls="react-"+name;if(classes.includes(cls))el.classList.add(cls);timer=setTimeout(()=>el.classList.remove(...classes),duration);}
+        const options=lines[name]||[];say(message||options[sequence++%Math.max(options.length,1)]||"",Math.max(duration+1000,2500));
       }
       return {react,say};
     })();
