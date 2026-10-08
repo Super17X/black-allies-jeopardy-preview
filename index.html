@@ -666,6 +666,29 @@
 #buzzerLink{display:none!important}#buzzerQr{width:min(310px,66vw)!important;border-width:12px!important;box-shadow:0 0 22px rgba(247,201,72,.26)!important;margin:10px auto!important}
 @media(max-width:780px){.premium-room-layout{grid-template-columns:1fr}.premium-join-qr{width:160px;height:160px}.premium-room-header h2{font-size:1.75rem}#waitingRoomPane{padding:16px 12px 48px!important}.premium-join-card,.premium-roster-card,.premium-feed-card{padding:15px}}
 
+/* Preserve screenshot's three-column broadcast lobby */
+#waitingRoomPane{position:fixed!important;inset:0!important;z-index:1700!important;width:100vw!important;height:100dvh!important;max-width:none!important;border:0!important;border-radius:0!important;padding:24px clamp(12px,1.5vw,26px) 62px!important;overflow:auto!important;display:none;gap:15px!important;background:radial-gradient(ellipse at 48% 45%,#07142b 0%,#020712 72%)!important}
+#waitingRoomPane[style*="block"]{display:flex!important;flex-direction:column!important}
+#waitingRoomPane>.lobby-show-header{width:min(830px,100%);margin:0 auto!important;border:1px solid #c59a32;border-radius:0 0 20px 20px;padding:12px;text-align:center;background:#040c20}
+.lobby-show-header h2{margin:0;color:#ffce4e;font-size:clamp(1.7rem,4vw,3.6rem);line-height:1.1}.lobby-show-header p{margin:4px 0 0;font-weight:900;font-size:clamp(.65rem,1vw,.85rem);color:#ffe08a}
+#waitingRoomPane>.premium-status{width:min(1220px,100%);margin:0 auto!important;padding:9px 16px}
+#waitingRoomPane>.lobby-three{width:100%;max-width:1550px;margin:0 auto!important;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+.lobby-side{min-width:0;border:1px solid #c49b32;border-radius:16px;padding:17px 15px;background:linear-gradient(180deg,#06142a,#030918);box-shadow:0 15px 35px rgba(0,0,0,.25)}
+.lobby-side h3{margin:0 0 14px;color:#ffcf55;font-size:clamp(1.15rem,1.7vw,1.55rem);text-align:center}.lobby-side>p{font-size:.85rem}
+.lobby-join{border:2px solid #1e82ff;box-shadow:0 0 0 3px rgba(30,130,255,.13);text-align:center}
+#waitingRoomPane .premium-join-qr{width:min(210px,70%);height:auto;aspect-ratio:1/1;margin:13px auto;border:7px solid #fff;box-shadow:0 0 0 3px #ffcf55,0 0 20px rgba(255,204,72,.23)}
+#waitingRoomPane .premium-code{border:1px solid #bf922b;border-radius:12px;padding:6px;margin:8px auto;letter-spacing:.08em;font-size:clamp(1.6rem,3vw,2.3rem)}
+#waitingRoomPane .premium-join-link{display:block;max-width:100%;color:#bbd4ff}
+#waitingRoomPane #roomGrid{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;width:100%!important;margin:12px 0!important}
+#waitingRoomPane #roomGrid .roomBox{padding:10px!important;gap:7px!important}#waitingRoomPane #roomGrid .roomTitle{font-size:.88rem}#waitingRoomPane .premium-avatar{width:30px;height:30px;font-size:.8rem}
+#waitingRoomPane .lobby-buttons{display:grid;gap:9px}#waitingRoomPane .lobby-buttons .btn{width:100%}.lobby-ready-line{color:#e2e8f5;font-weight:800}.lobby-ready-line span{color:#ffda70}
+#waitingRoomPane .premium-host-settings{width:100%;margin-top:10px}.premium-host-settings details span{display:block;margin-top:5px;font-size:.74rem;color:#b4c3dc}
+#waitingRoomPane .premium-category-preview{text-align:left}.lobby-join-steps{text-align:left;margin-top:14px}.lobby-join-steps strong{color:#ffdb77}.lobby-join-steps p{margin:7px 0;font-size:.85rem}
+#lobbySettingsSummary .lobby-setting-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(247,201,72,.18);padding:10px 3px;font-size:.83rem}#lobbySettingsSummary .lobby-setting-row strong{color:#ffce55;text-align:right}
+#waitingRoomPane .premium-feed{display:block;max-height:150px;overflow:auto}#waitingRoomPane .premium-feed-item{display:block}
+#waitingRoomPane #waitingError{color:#ff8e8e;font-size:.8rem}
+@media(max-width:950px){#waitingRoomPane>.lobby-three{grid-template-columns:repeat(2,minmax(0,1fr))}.lobby-settings{grid-column:1/-1}}
+@media(max-width:620px){#waitingRoomPane>.lobby-three{grid-template-columns:1fr}.lobby-settings{grid-column:auto}#waitingRoomPane{padding:12px 10px 40px!important}.lobby-side{padding:14px}}
 </style>
 
 <style id="top-toolbar-final-fix">
@@ -929,17 +952,16 @@
 
 <div id="premiumLobbyCountdown" aria-live="assertive"><span>Starting in</span><strong id="premiumLobbyNumber">5</strong></div>
   <div id="waitingRoomPane" class="card">
-    <div class="premium-room-header"><h2>THE GREEN ROOM</h2><p>Black &amp; Allies Jeopardy · Get ready for showtime</p><div class="premium-status" aria-live="polite"><span><i class="premium-status-dot"></i><strong id="premiumLobbyStatus">WAITING FOR PLAYERS</strong></span><span class="premium-status-count" id="premiumLobbyFraction">0 / 8 Connected</span></div></div>
-    <div class="premium-room-layout">
-      <section class="premium-join-card" aria-label="Join game"><h3>SCAN TO JOIN</h3><div id="premiumLobbyQr" class="premium-join-qr" role="img" aria-label="Player join QR code"></div><div class="premium-small">ROOM CODE</div><div class="premium-code" id="premiumLobbyCode">—</div><button id="premiumCopyJoin" type="button" class="btn alt">Copy Join Link</button><a id="premiumLobbyLink" class="premium-join-link" href="#" target="_blank" rel="noopener">Join Link</a><div class="premium-countline" id="premiumLobbyWaiting">Waiting for players</div><div class="premium-small" id="premiumLobbyConnected">0 players connected</div><div class="premium-category-preview"><strong>✦ Featured Categories</strong><div><span>✊ Black History</span><span>🎵 Music</span><span>📺 Black TV</span><span>🎬 Entertainment</span><span>🏆 Culture</span></div></div></section>
-      <div class="premium-right"><section class="premium-roster-card"><h3>👥 PLAYERS &amp; READY STATUS</h3><div id="roomGrid"></div></section><section class="premium-feed-card"><h3>⚡ LIVE GAME ACTIVITY</h3><div id="premiumActivityFeed" class="premium-feed" role="log" aria-live="polite"><div class="premium-feed-item">Waiting for the first player to join…</div></div></section></div>
+    <header class="lobby-show-header"><h2>Black &amp; Allies Jeopardy</h2><p>A CELEBRATION OF BLACK HISTORY, CULTURE, KNOWLEDGE, AND COMMUNITY.</p></header>
+    <div class="premium-status" aria-live="polite"><span><i class="premium-status-dot"></i><strong id="premiumLobbyStatus">WAITING FOR PLAYERS</strong></span><span class="premium-status-count" id="premiumLobbyFraction">0 / 8 Players</span></div>
+    <div class="lobby-three">
+      <section class="lobby-side lobby-players"><h3>👥 Waiting Room <span id="lobbySideCount">(0/8)</span></h3><p class="premium-small">Players join by scanning the QR code or using the room link.</p><div id="roomGrid"></div><p class="lobby-ready-line">🟢 <span id="readyCount">0</span> of <span id="readyTotal">0</span> players ready</p><div class="lobby-buttons"><button id="beginGameBtn" class="btn ok">Start Game</button><button id="backToLobbyBtn" class="btn">← Back to Lobby</button><button id="resetBtnWaiting" class="btn warn">Reset Game</button></div><div id="waitingError" role="alert" aria-live="polite"></div><div class="premium-host-settings"><details><summary>Host shortcuts and advanced controls</summary><span>Keys 1–8: ready · P: privacy</span><span>Players: <span id="waitingCount">0</span> · <span id="readyRuleLabel">—</span></span><span id="autoStartIn">—</span></details></div></section>
+      <section class="lobby-side lobby-join"><h3>👥 Join the Game</h3><p>Scan this QR code with your phone<br>or use the link below</p><div id="premiumLobbyQr" class="premium-join-qr" role="img" aria-label="Player join QR code"></div><div class="premium-small lobby-gold">ROOM CODE</div><div class="premium-code" id="premiumLobbyCode">—</div><button id="premiumCopyJoin" class="btn alt" type="button">Copy Join Link</button><a id="premiumLobbyLink" class="premium-join-link" href="#" target="_blank" rel="noopener">Join Link</a><div class="premium-countline" id="premiumLobbyWaiting">Waiting for players</div><div class="premium-small" id="premiumLobbyConnected">0 phones connected</div><div class="premium-category-preview"><strong>✦ Featured Categories</strong><div><span>✊ Black History</span><span>🎵 Music</span><span>📺 Black TV</span><span>🎬 Entertainment</span><span>🏆 Culture</span></div></div><div class="lobby-join-steps"><strong>✦ How to Join:</strong><p>① Open your phone camera</p><p>② Scan the QR code</p><p>③ Enter your name</p><p>④ Start buzzing!</p></div></section>
+      <section class="lobby-side lobby-settings"><h3>⚙ Game Settings</h3><div id="lobbySettingsSummary"></div><p class="premium-small">Settings remain editable in the Game Lobby.</p><button type="button" class="btn alt" id="lobbyEditSettings">⚙ Edit Game Settings</button><div class="premium-category-preview"><strong>⚡ Live Game Activity</strong><div id="premiumActivityFeed" class="premium-feed" role="log" aria-live="polite"><div class="premium-feed-item">Waiting for players…</div></div></div></section>
     </div>
-    <div class="premium-host-settings"><details><summary>Host controls &amp; advanced settings</summary><div class="row tiny" style="margin-top:10px"><span class="pill">Players: <span id="waitingCount">0</span></span><span class="pill">Ready: <span id="readyCount">0</span>/<span id="readyTotal">0</span></span><span class="pill">Rule: <span id="readyRuleLabel">—</span></span><span class="pill">Keys 1–8: toggle ready</span><span class="pill">P: privacy</span><span class="pill" id="autoStartIn">—</span></div></details></div>
-    <div id="waitingError" class="mono tiny" style="color:var(--danger);min-height:1.2em" role="alert" aria-live="polite"></div>
-    <div class="row"><button id="beginGameBtn" class="btn ok">Begin Game</button><button id="backToLobbyBtn" class="btn">Back</button><button id="resetBtnWaiting" class="btn warn">Reset Game</button></div>
   </div>
 
-  <div id="scoreBoard" class="card control-only-card" style="display:none">
+    <div id="scoreBoard" class="card control-only-card" style="display:none">
     <div class="control-only-wrap" aria-live="polite">
       <span class="control-only-label">PLAYER IN CONTROL</span>
       <strong id="controlName" class="control-only-name">—</strong>
@@ -1985,8 +2007,12 @@
     function premiumJoinUrl(){const url=new URL("buzzer.html",location.href);url.search="";url.hash="";url.searchParams.set("room",roomCode);return url;}
     function premiumRenderQr(){const target=$("premiumLobbyQr");if(!target)return;const url=premiumJoinUrl();$("premiumLobbyCode").textContent=roomCode;const link=$("premiumLobbyLink");link.href=url.href;link.textContent="Open Player Join Link";target.innerHTML="";try{if(typeof window.qrcode!=="function")throw Error("QR library unavailable");const qr=window.qrcode(0,"L");qr.addData(url.href,"Byte");qr.make();target.innerHTML=qr.createSvgTag(5,4);const svg=target.querySelector("svg");if(svg){svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("preserveAspectRatio","xMidYMid meet");svg.setAttribute("aria-hidden","true");}}catch(err){target.textContent="Use the join link below";console.warn("Lobby QR unavailable",err)}}
     $("premiumCopyJoin").addEventListener("click",async()=>{const url=premiumJoinUrl().href;try{await navigator.clipboard.writeText(url);$("premiumCopyJoin").textContent="✓ Link Copied";setTimeout(()=>$("premiumCopyJoin").textContent="Copy Join Link",1800)}catch(e){$("premiumLobbyLink").textContent=url;premiumActivity("Copy unavailable — use the player join link")}});
+    function renderLobbySettingsSummary(){const rows=[["Seconds per question",($("qSeconds")?.value||"45")+"s"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",String(typeof ROUND1_CATEGORIES!=="undefined"?ROUND1_CATEGORIES.length:"—")],["Questions per category",$("questionsPerCategory")?.value||"—"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStart")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReady")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
+    $("lobbyEditSettings").addEventListener("click",()=>backToLobby());
     function renderWaitingRoom(){
+      renderLobbySettingsSummary();
       waitingCount.textContent=String(state.players.length);
+      const sideCount=$("lobbySideCount");if(sideCount)sideCount.textContent="("+state.players.length+"/8)";
       readyTotal.textContent=String(state.players.length);
       readyRuleLabel.textContent=requireReadySel.value==="on"?"All must be ready":"Optional";
       const ready=state.players.reduce((n,_,i)=>n+Number(!!state.ready.get(i)),0);
