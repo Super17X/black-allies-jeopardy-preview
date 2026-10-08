@@ -2711,6 +2711,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function startTimer(seconds, mode, onExpire){
       stopTimer();
       state.timer.remaining = seconds;
+      lastHeartbeatSecond=null;
       state.timer.mode = mode;
       state.timer.paused = false;
       timerEl.textContent = `${state.timer.remaining}s`;
@@ -2720,6 +2721,10 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       state.timer.id = setInterval(()=>{
         if (state.timer.paused) return;
         state.timer.remaining -= 1;
+        if(state.timer.remaining>0 && state.timer.remaining<=10 && (state.timer.mode==="main" || (state.timer.mode==="steal" && state.phase==="ANSWERING")) && lastHeartbeatSecond!==state.timer.remaining){
+          lastHeartbeatSecond=state.timer.remaining;
+          playCue("heartbeat");
+        }
         timerEl.textContent = `${state.timer.remaining}s`;
         timerEl.classList.toggle("timer-danger", state.timer.remaining <= 5);
 
@@ -2772,7 +2777,19 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         }
       }, 1000);
     }
+    // Countdown heartbeat plays once per remaining second, only during an active answer turn.
+    let lastHeartbeatSecond=null;
+    const cueAudio={heartbeat:new Audio("assets/heart_beat_sms.mp3"),winner:new Audio("assets/winner.mp3"),boondocks:new Audio("assets/boondocks.mp3")};
+    function playCue(name){
+      if(soundModeSel.value==="off")return;
+      const el=cueAudio[name];if(!el)return;
+      el.volume=Math.max(0,Math.min(1,Number(volumeInput.value||0.25)));
+      try{el.pause();el.currentTime=0;el.play().catch(()=>{});}catch(_){}
+    }
+    function stopCue(name){const el=cueAudio[name];if(el){el.pause();try{el.currentTime=0;}catch(_){}}}
     function stopTimer(){
+      lastHeartbeatSecond=null;
+      stopCue("heartbeat");
       if (state.timer.id) clearInterval(state.timer.id);
       state.timer.id=null;
       state.timer.paused=false;
@@ -3072,6 +3089,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       qaPane.style.display="none";
       summaryPane.style.display="none";
       finalPane.style.display="block";
+      playCue("boondocks");
 
 
       finalCategoryEl.textContent = finalJeopardy.category;
@@ -3216,6 +3234,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       scoreBoard.style.display="none";
       summaryPane.style.display="block";
       summaryPane.classList.add("championship-summary");
+      playCue("winner");
       for(let c=0;c<65;c++){const el=document.createElement("i");el.className="champ-confetti";el.style.left=(Math.random()*100)+"%";el.style.background=["#f4c44b","#fff3b2","#2079ff"][c%3];el.style.animationDelay=(Math.random()*2)+"s";summaryPane.appendChild(el);setTimeout(()=>el.remove(),6500);}
 
 
