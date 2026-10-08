@@ -643,6 +643,29 @@
       background:rgba(2,7,18,.94)!important;
     }
     #boardGrid{position:relative!important;z-index:1!important;}
+/* Premium lobby enhancement: additive skin, game logic preserved */
+#waitingRoomPane{background:linear-gradient(135deg,rgba(2,5,19,.97),rgba(6,12,32,.96)),radial-gradient(ellipse at 40% 0%,#18376a,#080b17);overflow-y:auto;justify-content:flex-start!important;gap:12px!important}
+#waitingRoomPane>.premium-room-header,#waitingRoomPane>.premium-room-layout{width:min(1120px,100%);margin:0 auto}
+.premium-room-header{text-align:center;padding:4px 0 0}.premium-room-header h2{font-size:clamp(1.8rem,3.4vw,3rem);margin:0;color:#ffe29b;letter-spacing:.04em}.premium-room-header p{color:#c2cde4;margin:5px 0 12px}
+.premium-status{border:1px solid rgba(247,201,72,.42);border-radius:13px;padding:13px 18px;background:linear-gradient(100deg,rgba(21,34,62,.94),rgba(9,15,33,.95));display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-weight:800}.premium-status strong{color:#ffe29b}.premium-status-count{font-size:1.15rem;color:#fff}.premium-status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#f7c948;margin-right:8px;box-shadow:0 0 15px #f7c948}
+.premium-room-layout{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.5fr);gap:16px;align-items:start}
+.premium-join-card,.premium-roster-card,.premium-feed-card{background:rgba(5,10,25,.94);border:1px solid rgba(247,201,72,.32);border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.premium-join-card{text-align:center}.premium-join-card h3,.premium-roster-card h3,.premium-feed-card h3{margin:0 0 13px;color:#ffe29b;font-size:1.08rem}
+.premium-code{font-size:clamp(1.9rem,4vw,2.8rem);font-weight:950;letter-spacing:.13em;color:#ffe29b;margin:9px 0}
+.premium-join-qr{width:190px;height:190px;max-width:85%;background:#fff;border:8px solid #fff;border-radius:9px;margin:12px auto;display:grid;place-items:center;box-shadow:0 0 28px rgba(247,201,72,.19)}.premium-join-qr svg{width:100%;height:100%;display:block}
+.premium-small{font-size:.86rem;color:#bccbe0}.premium-join-link{font-size:.81rem;overflow-wrap:anywhere;color:#a9c8ff;display:block;margin:8px auto;max-width:290px}.premium-countline{font-weight:900;margin-top:10px}.premium-category-preview{border-top:1px solid rgba(247,201,72,.2);padding-top:13px;margin-top:16px;text-align:left}.premium-category-preview strong{color:#ffe29b}.premium-category-preview div{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.premium-category-preview span{border-radius:999px;padding:6px 10px;background:#18243d;color:#e4eaf5;font-size:.76rem}
+.premium-right{display:flex;flex-direction:column;gap:13px;min-width:0}.premium-roster-card #roomGrid{width:100%;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));padding:0;background:transparent;border:0;box-shadow:none;gap:11px}
+#waitingRoomPane .roomBox{background:linear-gradient(145deg,#162342,#0c142a)!important;border:1px solid rgba(247,201,72,.29)!important}
+#waitingRoomPane .roomTitle{display:flex;align-items:center;gap:10px}#waitingRoomPane .roomTitle .tag{display:none}
+.premium-avatar{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#f6cf64,#986522);color:#121629;font-weight:950;font-size:1.1rem}
+.premium-playername{overflow-wrap:anywhere;flex:1;min-width:0}.premium-playerstatus{font-size:.7rem}
+.premium-feed{display:flex;flex-direction:column;gap:8px;max-height:140px;overflow-y:auto}.premium-feed-item{border-bottom:1px solid rgba(247,201,72,.1);padding:4px 0;font-size:.86rem;color:#d4e2f6}.premium-feed-item time{color:#95abc9;margin-right:9px}
+.premium-host-settings{margin-left:auto;width:min(1120px,100%);margin-right:auto}.premium-host-settings summary{cursor:pointer;color:#aebfda;font-size:.82rem}
+#premiumLobbyCountdown{display:none;position:fixed;inset:0;z-index:2400;align-items:center;justify-content:center;flex-direction:column;background:rgba(3,7,18,.89);backdrop-filter:blur(12px);pointer-events:none;color:#ffe29b;text-align:center}#premiumLobbyCountdown.show{display:flex}#premiumLobbyCountdown strong{font-size:clamp(5rem,17vw,11rem);text-shadow:0 0 50px #a6782a;animation:premium-count-beat .8s ease-out}#premiumLobbyCountdown span{font-size:1.2rem;text-transform:uppercase;letter-spacing:.23em}
+@keyframes premium-count-beat{0%{transform:scale(1.35);opacity:.2}70%{transform:scale(.95);opacity:1}100%{transform:scale(1)}}
+#buzzerLink{display:none!important}#buzzerQr{width:min(310px,66vw)!important;border-width:12px!important;box-shadow:0 0 22px rgba(247,201,72,.26)!important;margin:10px auto!important}
+@media(max-width:780px){.premium-room-layout{grid-template-columns:1fr}.premium-join-qr{width:160px;height:160px}.premium-room-header h2{font-size:1.75rem}#waitingRoomPane{padding:16px 12px 48px!important}.premium-join-card,.premium-roster-card,.premium-feed-card{padding:15px}}
+
 </style>
 
 <style id="top-toolbar-final-fix">
@@ -904,32 +927,17 @@
 
   <audio id="waitingRoomMusic" preload="auto" loop playsinline src="assets/black_allies_waiting_room_loop.mp3?v=20261007"></audio>
 
+<div id="premiumLobbyCountdown" aria-live="assertive"><span>Starting in</span><strong id="premiumLobbyNumber">5</strong></div>
   <div id="waitingRoomPane" class="card">
-    <h2 style="margin:0">Waiting Room <span class="tag" id="autoStartIn">—</span></h2>
-    <div class="row tiny" style="margin-top:10px">
-      <span class="pill">Players: <span id="waitingCount">0</span></span>
-      <span class="pill">Ready: <span id="readyCount">0</span>/<span id="readyTotal">0</span></span>
-      <span class="pill">Rule: <span id="readyRuleLabel">—</span></span>
-      <span class="pill">Quick Ready Keys: <span class="kbd">1</span>–<span class="kbd">8</span> toggle ready</span>
-      <span class="pill">Privacy: <span class="kbd">P</span></span>
+    <div class="premium-room-header"><h2>THE GREEN ROOM</h2><p>Black &amp; Allies Jeopardy · Get ready for showtime</p><div class="premium-status" aria-live="polite"><span><i class="premium-status-dot"></i><strong id="premiumLobbyStatus">WAITING FOR PLAYERS</strong></span><span class="premium-status-count" id="premiumLobbyFraction">0 / 8 Connected</span></div></div>
+    <div class="premium-room-layout">
+      <section class="premium-join-card" aria-label="Join game"><h3>SCAN TO JOIN</h3><div id="premiumLobbyQr" class="premium-join-qr" role="img" aria-label="Player join QR code"></div><div class="premium-small">ROOM CODE</div><div class="premium-code" id="premiumLobbyCode">—</div><button id="premiumCopyJoin" type="button" class="btn alt">Copy Join Link</button><a id="premiumLobbyLink" class="premium-join-link" href="#" target="_blank" rel="noopener">Join Link</a><div class="premium-countline" id="premiumLobbyWaiting">Waiting for players</div><div class="premium-small" id="premiumLobbyConnected">0 players connected</div><div class="premium-category-preview"><strong>✦ Featured Categories</strong><div><span>✊ Black History</span><span>🎵 Music</span><span>📺 Black TV</span><span>🎬 Entertainment</span><span>🏆 Culture</span></div></div></section>
+      <div class="premium-right"><section class="premium-roster-card"><h3>👥 PLAYERS &amp; READY STATUS</h3><div id="roomGrid"></div></section><section class="premium-feed-card"><h3>⚡ LIVE GAME ACTIVITY</h3><div id="premiumActivityFeed" class="premium-feed" role="log" aria-live="polite"><div class="premium-feed-item">Waiting for the first player to join…</div></div></section></div>
     </div>
-
-
-    <div class="spacer"></div>
-    <div id="roomGrid"></div>
-
-
+    <div class="premium-host-settings"><details><summary>Host controls &amp; advanced settings</summary><div class="row tiny" style="margin-top:10px"><span class="pill">Players: <span id="waitingCount">0</span></span><span class="pill">Ready: <span id="readyCount">0</span>/<span id="readyTotal">0</span></span><span class="pill">Rule: <span id="readyRuleLabel">—</span></span><span class="pill">Keys 1–8: toggle ready</span><span class="pill">P: privacy</span><span class="pill" id="autoStartIn">—</span></div></details></div>
     <div id="waitingError" class="mono tiny" style="color:var(--danger);min-height:1.2em" role="alert" aria-live="polite"></div>
-
-
-    <div class="spacer"></div>
-    <div class="row">
-      <button id="beginGameBtn" class="btn ok">Begin Game</button>
-      <button id="backToLobbyBtn" class="btn">Back</button>
-      <button id="resetBtnWaiting" class="btn warn">Reset Game</button>
-    </div>
+    <div class="row"><button id="beginGameBtn" class="btn ok">Begin Game</button><button id="backToLobbyBtn" class="btn">Back</button><button id="resetBtnWaiting" class="btn warn">Reset Game</button></div>
   </div>
-
 
   <div id="scoreBoard" class="card control-only-card" style="display:none">
     <div class="control-only-wrap" aria-live="polite">
@@ -1968,51 +1976,48 @@
     }
 
 
-    function renderWaitingRoom(){
-      waitingCount.textContent = String(state.players.length);
-      readyTotal.textContent = String(state.players.length);
-      readyRuleLabel.textContent = requireReadySel.value === "on" ? "All must be ready" : "Optional";
-      readyCount.textContent = String(state.players.reduce((acc,_,i)=>acc + (state.ready.get(i)?1:0), 0));
-
-
-      roomGrid.innerHTML = "";
-      state.players.forEach((p,i)=>{
-        const box = document.createElement("div");
-        box.className = "roomBox";
-
-
-        const title = document.createElement("div");
-        title.className = "roomTitle";
-        title.innerHTML =
-          `${escapeHtml(p.name)} ` +
-          `<span class="${state.ready.get(i) ? "readyYes":"readyNo"}">${state.ready.get(i) ? "READY" : "NOT READY"}</span>` +
-          ` <span class="tag">Key <span class="kbd">${i+1}</span></span>`;
-        box.appendChild(title);
-
-
-        const row = document.createElement("div");
-        row.className="row";
-
-
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "btn " + (state.ready.get(i) ? "warn":"ok");
-        toggleBtn.textContent = state.ready.get(i) ? "Set Not Ready" : "Set Ready";
-        toggleBtn.addEventListener("click", ()=>toggleReadyByIndex(i));
-
-
-        const privacyBtn = document.createElement("button");
-        privacyBtn.className="btn alt";
-        privacyBtn.textContent="Privacy Screen";
-        privacyBtn.addEventListener("click", ()=>setPrivacy(true));
-
-
-        row.appendChild(toggleBtn);
-        row.appendChild(privacyBtn);
-        box.appendChild(row);
-        roomGrid.appendChild(box);
-      });
+    const premiumEvents=[];let premiumLastReady=new Map();let premiumRosterSeen=new Set();
+    function premiumActivity(message){
+      premiumEvents.unshift({message,time:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})});
+      if(premiumEvents.length>15)premiumEvents.pop();
+      const el=$("premiumActivityFeed");if(el)el.innerHTML=premiumEvents.map(e=>'<div class="premium-feed-item"><time>'+escapeHtml(e.time)+'</time>'+escapeHtml(e.message)+'</div>').join("");
     }
-
+    function premiumJoinUrl(){const url=new URL("buzzer.html",location.href);url.search="";url.hash="";url.searchParams.set("room",roomCode);return url;}
+    function premiumRenderQr(){const target=$("premiumLobbyQr");if(!target)return;const url=premiumJoinUrl();$("premiumLobbyCode").textContent=roomCode;const link=$("premiumLobbyLink");link.href=url.href;link.textContent="Open Player Join Link";target.innerHTML="";try{if(typeof window.qrcode!=="function")throw Error("QR library unavailable");const qr=window.qrcode(0,"L");qr.addData(url.href,"Byte");qr.make();target.innerHTML=qr.createSvgTag(5,4);const svg=target.querySelector("svg");if(svg){svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("preserveAspectRatio","xMidYMid meet");svg.setAttribute("aria-hidden","true");}}catch(err){target.textContent="Use the join link below";console.warn("Lobby QR unavailable",err)}}
+    $("premiumCopyJoin").addEventListener("click",async()=>{const url=premiumJoinUrl().href;try{await navigator.clipboard.writeText(url);$("premiumCopyJoin").textContent="✓ Link Copied";setTimeout(()=>$("premiumCopyJoin").textContent="Copy Join Link",1800)}catch(e){$("premiumLobbyLink").textContent=url;premiumActivity("Copy unavailable — use the player join link")}});
+    function renderWaitingRoom(){
+      waitingCount.textContent=String(state.players.length);
+      readyTotal.textContent=String(state.players.length);
+      readyRuleLabel.textContent=requireReadySel.value==="on"?"All must be ready":"Optional";
+      const ready=state.players.reduce((n,_,i)=>n+Number(!!state.ready.get(i)),0);
+      readyCount.textContent=String(ready);
+      const total=state.players.length,capacity=8,connected=state.players.filter(p=>typeof isPlayerConnected==="function"&&isPlayerConnected(p.name)).length;
+      $("premiumLobbyFraction").textContent=total+" / "+capacity+" Players";
+      $("premiumLobbyStatus").textContent=total>=2&&ready===total?"ALL PLAYERS READY":"WAITING FOR PLAYERS";
+      $("premiumLobbyWaiting").textContent=total<2?"Waiting for "+(2-total)+" more player"+(2-total===1?"":"s"):ready<total?"Waiting for "+(total-ready)+" ready check"+(total-ready===1?"":"s"):"All players ready!";
+      $("premiumLobbyConnected").textContent=connected+" phone"+(connected===1?"":"s")+" connected · "+total+" registered";
+      if(!$("premiumLobbyQr").querySelector("svg"))premiumRenderQr();
+      const nowSeen=new Set();
+      state.players.forEach((p,i)=>{nowSeen.add(p.name);const isReady=!!state.ready.get(i);
+        if(!premiumRosterSeen.has(p.name))premiumActivity("🔔 "+p.name+" joined the game");
+        else if(premiumLastReady.has(p.name)&&premiumLastReady.get(p.name)!==isReady)premiumActivity((isReady?"✅ ":"⏳ ")+p.name+(isReady?" is ready":" is waiting"));
+        premiumLastReady.set(p.name,isReady);
+      });
+      premiumRosterSeen=nowSeen;
+      roomGrid.innerHTML="";
+      state.players.forEach((p,i)=>{
+        const box=document.createElement("div");box.className="roomBox";
+        const title=document.createElement("div");title.className="roomTitle";
+        const avatar=document.createElement("span");avatar.className="premium-avatar";avatar.textContent=(p.name||"?").trim().charAt(0).toUpperCase();
+        const name=document.createElement("strong");name.className="premium-playername";name.textContent=p.name;
+        const status=document.createElement("span");status.className="premium-playerstatus "+(state.ready.get(i)?"readyYes":"readyNo");status.textContent=state.ready.get(i)?"✓ READY":"⏳ WAITING";
+        title.append(avatar,name,status);box.appendChild(title);
+        const row=document.createElement("div");row.className="row";
+        const toggle=document.createElement("button");toggle.className="btn "+(state.ready.get(i)?"warn":"ok");toggle.textContent=state.ready.get(i)?"Not Ready":"Set Ready";toggle.addEventListener("click",()=>toggleReadyByIndex(i));
+        row.appendChild(toggle);box.appendChild(row);roomGrid.appendChild(box);
+      });
+      if(!total){roomGrid.innerHTML='<div class="premium-small">Players appear here as they join with the QR code.</div>';}
+    }
 
     const waitingRoomMusic=$("waitingRoomMusic");
     let waitingMusicFadeId=null;
@@ -2078,6 +2083,7 @@
         autoStartIn.textContent = "Auto-start: Off";
         if (waitingCountdownId) clearInterval(waitingCountdownId);
         waitingCountdownId = null;
+        $("premiumLobbyCountdown").classList.remove("show");
         return;
       }
 
@@ -2088,6 +2094,8 @@
       waitingCountdownId = setInterval(()=>{
         remaining -= 1;
         autoStartIn.textContent = `Auto-start: ${remaining}s`;
+        const countdown=$("premiumLobbyCountdown");const number=$("premiumLobbyNumber");
+        if(remaining<=5 && remaining>0 && (!requireReadySel || requireReadySel.value!=="on" || allReady())){ countdown.classList.add("show");number.textContent=String(remaining);if(remaining===5)premiumActivity("🎬 Game starting in five seconds"); } else countdown.classList.remove("show");
         if (remaining <= 0){
           clearInterval(waitingCountdownId);
           waitingCountdownId = null;
@@ -2107,6 +2115,7 @@
     function backToLobby(){
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId=null;
+      $("premiumLobbyCountdown").classList.remove("show");
       stopWaitingRoomMusic(500);
       waitingRoomPane.style.display="none";
       lobbyPane.style.display="block";
@@ -2346,6 +2355,7 @@
     // Game start
     // -----------------------------
     function beginGameNow(){
+      $("premiumLobbyCountdown").classList.remove("show");
       if (waitingCountdownId) clearInterval(waitingCountdownId);
       waitingCountdownId = null;
 
@@ -3425,6 +3435,7 @@
           ready:!!state.ready.get(registration.index)
         });
         addBuzzerLog(`${registration.player} ${registration.added ? "was added to the game and connected" : "connected"}`);
+        if (waitingRoomPane.style.display !== "none") renderWaitingRoom();
         if (registration.added) playJoinSound();
         buzzStatusEl.textContent = `📱 ${registration.player} connected and ready`;
         broadcastBoardState();
@@ -3440,6 +3451,8 @@
         connectedBuzzers.delete(data.player);
         playerLastSeen.delete(data.player);
         addBuzzerLog(`${data.player} left`);
+        premiumActivity("📴 "+String(data.player||"Player")+" disconnected");
+        if (waitingRoomPane.style.display !== "none") renderWaitingRoom();
         if(firstBuzzer && sameName(firstBuzzer,data.player) && state.phase==="ANSWERING"){
           firstBuzzer=null;
           answerTransactionLocked=false;
