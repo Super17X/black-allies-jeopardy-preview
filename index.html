@@ -759,6 +759,16 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
   backdrop-filter:blur(9px);
 }
 @media(max-width:760px){body:has(#qaPane[style*="display: block"]),body:has(#boardPane[style*="display: block"]){background-size:100% 100%,auto 64vh,100% 100%,100% 100%,100% 100%!important}}
+
+/* Final host input always visible and accessible */
+#finalPane{overflow:visible!important;min-height:0!important;padding-bottom:40px!important}
+#finalPane #finalRevealStage{min-height:24px;margin:12px auto!important}
+#finalPane #finalHostEntry{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin:14px auto 22px;max-width:960px;position:relative;z-index:10;padding:16px;background:#06132eea;border:1px solid #e6b94c;border-radius:15px}
+#finalPane #finalInput{display:block!important;flex:1 1 240px;min-width:0;max-width:520px;position:relative;z-index:11}
+#finalPane #finalSubmitBtn{display:inline-flex!important;position:relative!important;z-index:12!important;min-width:160px;justify-content:center;flex-shrink:0}
+#finalPane #finalHostPlayer{flex:1 1 160px;max-width:260px;min-height:44px;padding:8px;color:#fff4c4;background:#06142e;border:1px solid #e0b54a;border-radius:9px}
+#finalPane .row{position:relative;z-index:2}
+@media(max-width:650px){#finalPane #finalHostEntry{flex-direction:column;align-items:stretch}#finalPane #finalHostPlayer,#finalPane #finalInput,#finalPane #finalSubmitBtn{width:100%!important;max-width:none!important}#finalPane{padding:16px 12px 38px!important}}
 </style>
 
 <style id="top-toolbar-final-fix">
@@ -1146,7 +1156,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     <div class="row">
       <label for="finalInput" class="mono tiny sr-only">Wager or answer:</label>
       <input id="finalInput" placeholder="Enter wager / answer…" style="flex:1" aria-label="Final Jeopardy wager or answer (secret)" />
-      <button id="finalSubmitBtn" class="btn ok">Submit (secret)</button>
+      <button id="finalSubmitBtn" class="btn ok">Host Submit (Secret)</button>
     </div>
 
 
@@ -1843,6 +1853,11 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     }
     function playMoneySound(){ playResultSound(moneySound); }
     function playStealSound(){ playResultSound(stealSound); }
+    function playGotEmSound(){
+      if(soundModeSel.value==="off")return;
+      try{if("speechSynthesis" in window){window.speechSynthesis.cancel();const voice=new SpeechSynthesisUtterance("Got 'em!");voice.rate=1.06;voice.pitch=.8;voice.volume=Math.max(.25,Math.min(1,Number(volumeInput.value||.5)));window.speechSynthesis.speak(voice);return;}}catch(_){}
+      playStealSound();
+    }
     function playRizzSound(){ playResultSound(rizzSound); }
     function playBoomSound(){ playResultSound(boomSound); }
     function playBuzzSound(){ playResultSound(buzzSound); }
@@ -2897,7 +2912,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         if(state.clueAttempts>0) statInc(premiereStats.steals,currentPlayer.name);
         if(isDD) statInc(premiereStats.dailyDoubleWins,currentPlayer.name);
         if (state.clueAttempts > 0) {
-          playMoneySound();
+          playGotEmSound();
           feedback.textContent="STEAL! Correct!";
         } else {
           playMoneySound();
@@ -2994,6 +3009,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
             if(!state.final.answers.has(i)) state.final.answers.set(i,"");
           }
           state.final.step="reveal";state.final.idx=0;renderFinalUI();broadcastToBuzzers({type:"final-wait-reveal"});
+          $("finalRevealStage").textContent="Time! Answers locked. Host, begin the reveal.";
         }
       }, 1000);
     }
@@ -3033,7 +3049,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       renderScoreboard();
       renderFinalUI();
       broadcastToBuzzers({type:"final-wager",category:finalJeopardy.category,scores:Object.fromEntries(state.players.map(p=>[p.name,p.score]))});
-      startFinalTimer();
+      finalTimerEl.textContent="Wager phase";
     }
 
 
@@ -3043,94 +3059,68 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       if(confirm("Skip the remaining board and go directly to Final Jeopardy?")) startFinalJeopardy();
     });
 
+    function finalSyncHostPicker(){
+      const picker=$("finalHostPlayer");const previous=picker.value;
+      picker.replaceChildren();
+      state.players.forEach((p,i)=>{const opt=document.createElement("option");opt.value=String(i);const done=state.final.step==="wagers"?state.final.wagers.has(i):state.final.answers.has(i);opt.textContent=p.name+(done?" • Locked":" • Pending");picker.appendChild(opt);});
+      const map=state.final.step==="wagers"?state.final.wagers:state.final.answers;
+      const next=state.players.findIndex((p,i)=>!map.has(i));
+      picker.value=next>=0?String(next):(previous||"0");
+      state.final.idx=Number(picker.value)||0;
+    }
+    $("finalHostPlayer").addEventListener("change",()=>{state.final.idx=Number($("finalHostPlayer").value)||0;finalInput.value="";clearFinalError();});
+    function finalAdvanceToAnswers(){
+      if(state.final.step!=="wagers"||state.final.wagers.size<state.players.length)return;
+      state.final.step="answers";state.final.idx=0;
+      $("finalRevealStage").textContent="All wagers locked. The final question is live!";
+      renderFinalUI();broadcastToBuzzers({type:"final-answer",category:finalJeopardy.category,clue:finalJeopardy.text});
+      startFinalTimer();
+    }
+    function finalAdvanceToReveal(){
+      if(state.final.step!=="answers"||state.final.answers.size<state.players.length)return;
+      state.final.step="reveal";state.final.idx=0;
+      stopFinalTimer();renderFinalUI();broadcastToBuzzers({type:"final-wait-reveal"});
+      $("finalRevealStage").textContent="All answers are locked. Host: begin the dramatic reveal.";
+    }
     function renderFinalUI(){
-      finalStepEl.textContent = state.final.step;
+      finalStepEl.textContent=state.final.step;
       $("finalClueText").classList.toggle("final-concealed",state.final.step==="wagers");
-      $("finalStatusPanel").textContent=state.final.step==="wagers"?`Secret wagers locked: ${state.final.wagers.size} of ${state.players.length}`:state.final.step==="answers"?`Private answers received: ${state.final.answers.size} of ${state.players.length}`:"Contestants are locked in. Host controls the reveal.";
-      const player = state.players[state.final.idx];
-      finalPlayerEl.textContent = player ? player.name : "—";
-
-
-      if (state.final.step === "wagers"){
-        const minFloor = state.board.valueForRow(state.board.rows[0]);
-        const max = Math.max(0, player.score);
-        finalPromptEl.textContent = `Enter wager for ${player.name}. Max: $${max} (min $0).`;
-        finalInput.type="password";
-        finalInput.value="";
-        finalInput.placeholder="Secret wager (whole number)";
-        finalSubmitBtn.disabled=false;
+      $("finalHostEntry").style.display=(state.final.step==="wagers"||state.final.step==="answers")?"flex":"none";
+      $("finalPauseBtn").style.display=state.final.step==="answers"?"inline-flex":"none";
+      $("finalStatusPanel").textContent=state.final.step==="wagers"?`Secret wagers locked: ${state.final.wagers.size} of ${state.players.length}`:state.final.step==="answers"?`Private answers received: ${state.final.answers.size} of ${state.players.length}`:"All submissions locked. Host controls the reveal.";
+      if(state.final.step==="reveal"){
+        finalPromptEl.textContent="Ready for the contestant-by-contestant reveal.";
+        finalInput.value="";finalSubmitBtn.disabled=true;finalRevealBtn.disabled=false;
         return;
       }
-      if (state.final.step === "answers"){
-        finalPromptEl.textContent = `Enter final answer for ${player.name}. (Secret)`;
-        finalInput.type="password";
-        finalInput.value="";
-        finalInput.placeholder="Secret final answer";
-        finalSubmitBtn.disabled=false;
-        return;
-      }
-      if (state.final.step === "reveal"){
-        finalPromptEl.textContent = "All wagers and answers collected. Ready to reveal.";
-        finalInput.value="";
-        finalSubmitBtn.disabled=true;
-        finalRevealBtn.disabled=false;
+      finalSyncHostPicker();
+      const player=state.players[state.final.idx];finalPlayerEl.textContent=player?.name||"—";
+      if(state.final.step==="wagers"){
+        finalPromptEl.textContent=`Host backup: enter a private wager for ${player?.name||"player"}. Maximum $${Math.max(0,player?.score||0)}. Players may also submit on their phones.`;
+        finalInput.type="password";finalInput.value="";finalInput.placeholder="Wager amount (secret)";finalSubmitBtn.disabled=false;
+      }else if(state.final.step==="answers"){
+        finalPromptEl.textContent=`Host backup: enter ${player?.name||"player"}'s private answer. Players may also submit on their phones.`;
+        finalInput.type="password";finalInput.value="";finalInput.placeholder="Final answer (secret)";finalSubmitBtn.disabled=false;
       }
     }
-
-
     function finalSubmit(){
-      const idx = state.final.idx;
-      const player = state.players[idx];
-      if (!player) return;
-
-
-      if (state.final.step === "wagers"){
-        const wager = parseWholeNumber(finalInput.value);
-        if (wager === null) { showFinalError("Wager must be a whole number."); return; }
-        if (wager < 0) { showFinalError("Wager cannot be negative."); return; }
-        const minFloor = state.board.valueForRow(state.board.rows[0]);
-        const max = Math.max(minFloor, player.score);
-        if (wager > max) { showFinalError(`Wager cannot exceed $${max}.`); return; }
-        clearFinalError();
-        state.final.wagers.set(idx, wager);
-
-
-        state.final.idx += 1;
-        if (state.final.idx >= state.players.length){
-          state.final.step="answers";
-          state.final.idx=0;
-        }
-        flash("rgba(247,201,72,0.15)", 160, 0.95);
-        renderFinalUI();
-        return;
-      }
-
-
-      if (state.final.step === "answers"){
-        const ans = String(finalInput.value || "").trim();
-        if (!ans){
-          // Show inline prompt instead of confirm() dialog
-          const confirmEl = $("finalError");
-          if (!confirmEl.dataset.pendingBlank){
-            confirmEl.dataset.pendingBlank = "1";
-            showFinalError("Answer is blank — it will count as incorrect. Submit again to confirm.");
-            return;
-          }
-          delete confirmEl.dataset.pendingBlank;
-        }
-        clearFinalError();
-        state.final.answers.set(idx, ans);
-        state.final.idx += 1;
-        if (state.final.idx >= state.players.length){
-          state.final.step="reveal";
-          state.final.idx=0;
-        }
-        flash("rgba(247,201,72,0.15)", 160, 0.95);
-        renderFinalUI();
+      const idx=Number($("finalHostPlayer").value);const player=state.players[idx];if(!player)return;
+      if(state.final.step==="wagers"){
+        const wager=parseWholeNumber(finalInput.value),max=Math.max(0,player.score);
+        if(wager===null||wager<0||wager>max){showFinalError(`Wager must be a whole number from $0 to $${max}.`);return;}
+        if(state.final.wagers.has(idx)&&!confirm(`Replace the locked wager for ${player.name}?`))return;
+        state.final.wagers.set(idx,wager);clearFinalError();
+        broadcastToBuzzers({type:"final-wager-ack",player:player.name});
+        if(state.final.wagers.size>=state.players.length)finalAdvanceToAnswers();else renderFinalUI();
+      }else if(state.final.step==="answers"){
+        const ans=String(finalInput.value||"").trim();
+        if(!ans&&!confirm(`Submit a blank answer for ${player.name}? It will count as incorrect.`))return;
+        if(state.final.answers.has(idx)&&!confirm(`Replace the locked answer for ${player.name}?`))return;
+        state.final.answers.set(idx,ans);clearFinalError();
+        broadcastToBuzzers({type:"final-answer-ack",player:player.name});
+        if(state.final.answers.size>=state.players.length)finalAdvanceToReveal();else renderFinalUI();
       }
     }
-
-
     function revealFinalResults(){
       if(finalResultsApplied) return;
       finalResultsApplied=true;
@@ -3650,8 +3640,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         state.final.wagers.set(idx,wager);
         broadcastToBuzzers({type:"final-wager-ack",player:data.player});
         if(state.final.wagers.size>=state.players.length){
-          state.final.step="answers"; state.final.idx=0; renderFinalUI();
-          broadcastToBuzzers({type:"final-answer",category:finalJeopardy.category,clue:finalJeopardy.text});
+          finalAdvanceToAnswers();
         }
         return;
       }
@@ -3662,8 +3651,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         state.final.answers.set(idx,String(data.answer||"").trim());
         broadcastToBuzzers({type:"final-answer-ack",player:data.player});
         if(state.final.answers.size>=state.players.length){
-          state.final.step="reveal"; state.final.idx=0; renderFinalUI();
-          broadcastToBuzzers({type:"final-wait-reveal"});
+          finalAdvanceToReveal();
         }
         return;
       }
