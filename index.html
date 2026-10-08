@@ -735,6 +735,30 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
 @keyframes mascotHint{0%,100%{transform:rotate(0)}35%{transform:rotate(-9deg) translateX(-10px)}65%{transform:rotate(7deg) translateX(6px)}}
 @keyframes mascotAlert{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px) rotate(-3deg)}40%,80%{transform:translateX(9px) rotate(3deg)}}
 @media(prefers-reduced-motion:reduce){#hostMascotV4B.react-greet,#hostMascotV4B.react-hint,#hostMascotV4B.react-alert{animation:none!important}}
+
+/* Premium full-height game-show stage: preserve existing artwork, remove empty black floor */
+body:has(#qaPane[style*="display: block"]),body:has(#boardPane[style*="display: block"]){
+  min-height:100vh!important;
+  background-color:#020919!important;
+  background-image:
+    linear-gradient(180deg,rgba(2,8,23,.03) 0%,rgba(2,8,23,.05) 42%,rgba(2,9,28,.28) 59%,rgba(2,7,20,.1) 100%),
+    url("assets/black-excellence-background.webp"),
+    radial-gradient(ellipse 80% 25% at 50% 84%,rgba(244,187,64,.23),transparent 75%),
+    repeating-linear-gradient(90deg,transparent 0,transparent calc(12.5% - 2px),rgba(234,173,52,.18) calc(12.5% - 1px),transparent 12.5%),
+    linear-gradient(180deg,#071534 0%,#091c43 46%,#031029 61%,#01040e 100%)!important;
+  background-size:100% 100%,100% 66vh,100% 100%,100% 100%,100% 100%!important;
+  background-position:center center,center top,center center,center center,center center!important;
+  background-repeat:no-repeat!important;
+  background-attachment:fixed!important;
+}
+body:has(#qaPane[style*="display: block"]) #qaPane,
+body:has(#boardPane[style*="display: block"]) #boardPane{
+  background:linear-gradient(135deg,rgba(3,9,24,.96),rgba(4,15,40,.94))!important;
+  border:1px solid rgba(245,194,78,.83)!important;
+  box-shadow:0 20px 65px rgba(0,0,0,.62),0 0 35px rgba(24,96,212,.24),inset 0 1px 0 rgba(255,230,148,.12)!important;
+  backdrop-filter:blur(9px);
+}
+@media(max-width:760px){body:has(#qaPane[style*="display: block"]),body:has(#boardPane[style*="display: block"]){background-size:100% 100%,auto 64vh,100% 100%,100% 100%,100% 100%!important}}
 </style>
 
 <style id="top-toolbar-final-fix">
