@@ -689,6 +689,18 @@
 #waitingRoomPane #waitingError{color:#ff8e8e;font-size:.8rem}
 @media(max-width:950px){#waitingRoomPane>.lobby-three{grid-template-columns:repeat(2,minmax(0,1fr))}.lobby-settings{grid-column:1/-1}}
 @media(max-width:620px){#waitingRoomPane>.lobby-three{grid-template-columns:1fr}.lobby-settings{grid-column:auto}#waitingRoomPane{padding:12px 10px 40px!important}.lobby-side{padding:14px}}
+/* Uploaded index (24)(1).html visual reference: Black Excellence backdrop */
+#waitingRoomPane{background:radial-gradient(circle at 50% 18%,rgba(28,57,137,.42),transparent 36%),linear-gradient(180deg,rgba(4,8,22,.88),rgba(3,4,12,.96)),url("assets/black-excellence-background.webp") center center/cover no-repeat!important;background-attachment:fixed!important}
+#waitingRoomPane .lobby-show-header{background:linear-gradient(180deg,rgba(1,6,18,.97),rgba(2,9,24,.93))!important;box-shadow:0 10px 34px #0008,0 0 20px #1267ff33!important}
+#waitingRoomPane .lobby-side{background:linear-gradient(180deg,rgba(2,7,18,.94),rgba(3,8,20,.94))!important;backdrop-filter:blur(12px);border-color:rgba(246,196,62,.75)!important}
+#waitingRoomPane .lobby-join{border-color:#208cff!important;box-shadow:0 0 22px rgba(20,110,255,.28)!important}
+#waitingRoomPane .lobby-buttons .btn.ok{background:linear-gradient(180deg,#173a85,#071942)!important;color:#ffe35a!important;border-color:#e9b93f!important}
+#waitingRoomPane .lobby-buttons .btn{min-height:43px;font-weight:850}
+#waitingRoomPane .lobby-show-header h2{text-shadow:0 2px 0 #8f5900,0 0 18px #ffc92844}
+#waitingRoomPane .lobby-players,#waitingRoomPane .lobby-settings{align-self:stretch}
+#waitingRoomPane .premium-join-qr svg{background:white;shape-rendering:crispEdges}
+body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomPane[style*="block"]) #mascotSpeechV4B{display:none!important}
+@media(max-width:620px){#waitingRoomPane{background-attachment:scroll!important}}
 </style>
 
 <style id="top-toolbar-final-fix">
@@ -2007,7 +2019,7 @@
     function premiumJoinUrl(){const url=new URL("buzzer.html",location.href);url.search="";url.hash="";url.searchParams.set("room",roomCode);return url;}
     function premiumRenderQr(){const target=$("premiumLobbyQr");if(!target)return;const url=premiumJoinUrl();$("premiumLobbyCode").textContent=roomCode;const link=$("premiumLobbyLink");link.href=url.href;link.textContent="Open Player Join Link";target.innerHTML="";try{if(typeof window.qrcode!=="function")throw Error("QR library unavailable");const qr=window.qrcode(0,"L");qr.addData(url.href,"Byte");qr.make();target.innerHTML=qr.createSvgTag(5,4);const svg=target.querySelector("svg");if(svg){svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("preserveAspectRatio","xMidYMid meet");svg.setAttribute("aria-hidden","true");}}catch(err){target.textContent="Use the join link below";console.warn("Lobby QR unavailable",err)}}
     $("premiumCopyJoin").addEventListener("click",async()=>{const url=premiumJoinUrl().href;try{await navigator.clipboard.writeText(url);$("premiumCopyJoin").textContent="✓ Link Copied";setTimeout(()=>$("premiumCopyJoin").textContent="Copy Join Link",1800)}catch(e){$("premiumLobbyLink").textContent=url;premiumActivity("Copy unavailable — use the player join link")}});
-    function renderLobbySettingsSummary(){const rows=[["Seconds per question",($("qSeconds")?.value||"45")+"s"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",String(typeof ROUND1_CATEGORIES!=="undefined"?ROUND1_CATEGORIES.length:"—")],["Questions per category",$("questionsPerCategory")?.value||"—"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStart")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReady")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
+    function renderLobbySettingsSummary(){const rows=[["Seconds per question",($("qSeconds")?.value||"45")+"s"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
     $("lobbyEditSettings").addEventListener("click",()=>backToLobby());
     function renderWaitingRoom(){
       renderLobbySettingsSummary();
