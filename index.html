@@ -3954,7 +3954,7 @@ body:has(#waitingRoomPane[style*="block"]) #hostMascotV4B,body:has(#waitingRoomP
       function say(message,duration=2600){if(!message)return;clearTimeout(speechTimer);bubble.textContent=String(message);bubble.classList.add("show");speechTimer=setTimeout(()=>bubble.classList.remove("show"),duration);}
       function react(name,duration=900,message=""){
         const el=document.getElementById("hostMascotV4B");
-        clearTimeout(timer);if(el){el.classList.remove(...classes);void el.offsetWidth;const cls="react-"+name;if(classes.includes(cls))el.classList.add(cls);timer=setTimeout(()=>el.classList.remove(...classes),duration);}
+        clearTimeout(timer);if(el){el.classList.remove(...classes);void el.offsetWidth;const cls="react-"+name;if(name==="wrong" && classes.includes(cls))el.classList.add(cls);timer=setTimeout(()=>el.classList.remove(...classes),duration);}
         const options=lines[name]||[];say(message||options[sequence++%Math.max(options.length,1)]||"",Math.max(duration+1000,2500));
       }
       return {react,say};
