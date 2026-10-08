@@ -2602,6 +2602,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       clueTransactionId += 1;
       answerTransactionLocked = false;
       state.clueAttempts = 0;
+      attemptedPlayersThisClue.clear();
       state.clueStartIdx = state.controlIdx;
       // Keep normal clue selections silent. Only the highest-value clue in a category gets a reveal sting.
       const highestClueValue = Math.max(...state.board.rows.map(r => state.board.valueForRow(r)));
@@ -2665,6 +2666,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       answerTransactionLocked=false;
       state.ddLockedWager=null;
       state.clueAttempts=0;
+      attemptedPlayersThisClue.clear();
       renderScoreboard();
       renderBoard();
       broadcastBoardState();
@@ -2832,15 +2834,22 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       },10000);
     }
 
+    const multiStealAttemptLimit=5;
+    const multiStealBuzzSeconds=5;
+    let attemptedPlayersThisClue=new Set();
     function continueAfterMiss(clue,message){
       stopTimer();
+      attemptedPlayersThisClue.add(state.controlIdx);
+      firstBuzzer=null;
       state.clueAttempts+=1;
-      if(state.clueAttempts>=state.players.length){
+      if(state.clueAttempts>=Math.min(multiStealAttemptLimit,state.players.length)){
         revealAnswerAndClose(clue);
         return;
       }
 
-      state.controlIdx=(state.controlIdx+1)%state.players.length;
+      const nextEligible=state.players.findIndex((p,i)=>!attemptedPlayersThisClue.has(i));
+      if(nextEligible<0){revealAnswerAndClose(clue);return;}
+      state.controlIdx=nextEligible;
       renderScoreboard();
 
       setGamePhase("STEAL_DELAY");
@@ -2881,20 +2890,18 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         // Do nothing if the host left/closed this clue during the delay.
         if(!state.activeKey || state.activeKey!==activeKeyAtDelayStart || state.final.step!=="off") return;
 
-        qaHeader.textContent=`${stealPlayer} (Steal ${state.clueAttempts+1}/${state.players.length})`;
-        feedback.textContent=`STEAL OPEN — buzz now!`;
-        answerInput.disabled=false;
-        submitBtn.disabled=false;
-        passBtn.disabled=false;
+        qaHeader.textContent=`Steal ${state.clueAttempts+1}/${Math.min(multiStealAttemptLimit,state.players.length)} — buzz now`;
+        feedback.textContent=`STEAL OPEN — ${multiStealBuzzSeconds} seconds to buzz!`;
+        answerInput.disabled=true;
+        submitBtn.disabled=true;
+        passBtn.disabled=true;
 
         setGamePhase("STEAL_OPEN");
         broadcastToBuzzers({type:"steal-open",controller:stealPlayer});
         playBruhSound();
-        startTimer(Number(stealSecondsInput.value||10),"steal",()=>{
+        startTimer(multiStealBuzzSeconds,"steal",()=>{
           sfxTimesUp();
-          playGamesSound();
-          correctStreaks.set(state.players[state.controlIdx].name, 0);
-          continueAfterMiss(clue,"Steal window expired.");
+          revealAnswerAndClose(clue);
         });
       },stealDelaySeconds*1000);
     }
@@ -3763,6 +3770,10 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           broadcastToBuzzers({ type:"buzz-denied", player:data.player });
           return;
         }
+        if (attemptedPlayersThisClue.has(registration.index)) {
+          broadcastToBuzzers({type:"buzz-denied",player:data.player,reason:"You already attempted this question."});
+          return;
+        }
         if (firstBuzzer) {
           // Already have a buzzer — deny this one
           broadcastToBuzzers({ type: "buzz-denied", player: data.player });
@@ -3770,7 +3781,16 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           return;
         }
         firstBuzzer = registration.player;
+        stopTimer();
         setGamePhase("ANSWERING");
+        // The first eligible buzzer receives a fresh, independent answer clock.
+        startTimer(Number(stealSecondsInput.value||10),"steal",()=>{
+          sfxTimesUp();
+          const key=state.activeKey;
+          if(!key || state.phase!=="ANSWERING")return;
+          const [cat,row]=key.split("::");
+          continueAfterMiss(state.board.clueFor(cat,Number(row)),"Steal answer time expired.");
+        });
         statInc(premiereStats.buzzes,registration.player);
         broadcastToBuzzers({type:"buzz-lock",player:registration.player,at:Date.now(),racers:state.players.map(p=>p.name)});
         showHostRaceWinner(registration.player);
