@@ -940,7 +940,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       <label for="qSeconds" class="mono tiny">Seconds per question:</label>
       <input id="qSeconds" type="number" min="3" max="90" value="45" style="width:90px" aria-label="Seconds per question" />
       <label for="stealSeconds" class="mono tiny">Steal seconds:</label>
-      <input id="stealSeconds" type="number" min="2" max="45" value="3" style="width:90px" aria-label="Steal seconds" />
+      <input id="stealSeconds" type="number" min="2" max="45" value="10" style="width:90px" aria-label="Steal seconds" />
       <label for="finalSeconds" class="mono tiny">Final round:</label>
       <input id="finalSeconds" type="number" min="120" max="120" value="120" readonly style="width:90px" aria-label="Final round is fixed at 120 seconds" />
       <span class="pill">Main game: 15:00</span>
@@ -2890,7 +2890,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         setGamePhase("STEAL_OPEN");
         broadcastToBuzzers({type:"steal-open",controller:stealPlayer});
         playBruhSound();
-        startTimer(3,"steal",()=>{
+        startTimer(Number(stealSecondsInput.value||10),"steal",()=>{
           sfxTimesUp();
           playGamesSound();
           correctStreaks.set(state.players[state.controlIdx].name, 0);
