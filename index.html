@@ -937,8 +937,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
     <div class="row">
-      <label for="qSeconds" class="mono tiny">Seconds per question:</label>
-      <input id="qSeconds" type="number" min="3" max="90" value="45" style="width:90px" aria-label="Seconds per question" />
+      <label for="qSeconds" class="mono tiny">Player-in-control answer time (3–30 seconds):</label>
+      <input id="qSeconds" type="number" min="3" max="30" step="1" value="30" style="width:90px" aria-label="Player-in-control answer time, 3 to 30 seconds" /><span class="mono tiny">Applies to the next question. Maximum: 30 seconds.</span>
       <label for="stealSeconds" class="mono tiny">Steal seconds:</label>
       <input id="stealSeconds" type="number" min="2" max="45" value="10" style="width:90px" aria-label="Steal seconds" />
       <label for="finalSeconds" class="mono tiny">Final round:</label>
@@ -1553,6 +1553,13 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
     const nameInput = $("nameInput");
     const qSecondsInput = $("qSeconds");
+    function controlAnswerSeconds(){
+      const raw=Number(qSecondsInput.value);
+      const seconds=Number.isFinite(raw)&&qSecondsInput.value.trim()!==""?Math.max(3,Math.min(30,Math.floor(raw))):30;
+      qSecondsInput.value=String(seconds);
+      return seconds;
+    }
+    qSecondsInput.addEventListener("change",()=>{controlAnswerSeconds();renderLobbySettingsSummary();});
     const stealSecondsInput = $("stealSeconds");
     const finalSecondsInput = $("finalSeconds");
     const categoryCountInput = $("categoryCount");
@@ -2107,7 +2114,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function premiumJoinUrl(){const url=new URL("buzzer.html",location.href);url.search="";url.hash="";url.searchParams.set("room",roomCode);return url;}
     function premiumRenderQr(){const target=$("premiumLobbyQr");if(!target)return;const url=premiumJoinUrl();$("premiumLobbyCode").textContent=roomCode;const link=$("premiumLobbyLink");link.href=url.href;link.textContent="Open Player Join Link";target.innerHTML="";try{if(typeof window.qrcode!=="function")throw Error("QR library unavailable");const qr=window.qrcode(0,"L");qr.addData(url.href,"Byte");qr.make();target.innerHTML=qr.createSvgTag(5,4);const svg=target.querySelector("svg");if(svg){svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("preserveAspectRatio","xMidYMid meet");svg.setAttribute("aria-hidden","true");}}catch(err){target.textContent="Use the join link below";console.warn("Lobby QR unavailable",err)}}
     $("premiumCopyJoin").addEventListener("click",async()=>{const url=premiumJoinUrl().href;try{await navigator.clipboard.writeText(url);$("premiumCopyJoin").textContent="✓ Link Copied";setTimeout(()=>$("premiumCopyJoin").textContent="Copy Join Link",1800)}catch(e){$("premiumLobbyLink").textContent=url;premiumActivity("Copy unavailable — use the player join link")}});
-    function renderLobbySettingsSummary(){const rows=[["Seconds per question",($("qSeconds")?.value||"45")+"s"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
+    function renderLobbySettingsSummary(){const rows=[["Player-in-control answer time",controlAnswerSeconds()+"s (max 30)"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
     $("lobbyEditSettings").addEventListener("click",()=>backToLobby());
     function renderWaitingRoom(){
       renderLobbySettingsSummary();
@@ -2639,13 +2646,13 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         ddWagerInput.type="password";
         ddWagerInput.value="";
         ddWagerInput.focus();
-        startTimer(Number(qSecondsInput.value || 45), "dd-wager");
+        startTimer(controlAnswerSeconds(), "dd-wager");
       } else {
         answerInput.disabled = false;
         submitBtn.disabled = false;
         passBtn.disabled = false;
         answerInput.focus();
-        startTimer(Number(qSecondsInput.value || 45), "main");
+        startTimer(controlAnswerSeconds(), "main");
         startQuestionBeat();
       }
     }
@@ -2702,12 +2709,13 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       ddWagerRow.style.display="none";
       ddBadge.style.display="inline-block";
       answerInput.focus();
-      startTimer(Number(qSecondsInput.value||45),"main");
+      startTimer(controlAnswerSeconds(),"main");
       startQuestionBeat();
     });
 
 
     function startTimer(seconds, mode, onExpire){
+      if(mode==="main")seconds=Math.max(3,Math.min(30,Math.floor(Number(seconds)||30)));
       stopTimer();
       state.timer.remaining = seconds;
       lastHeartbeatSecond=null;

@@ -40,7 +40,7 @@ const st=host.__engineTest.state;
 click(host,'enterPremiereBtn');for(const [w,n]of [[a,'Alpha'],[b,'Beta']]){fill(w,'nameInput',n);click(w,'joinBtn')}
 el(host,'dailyDoubles').value='off';click(host,'enterWaitingRoomBtn');click(a,'readyBtn');click(b,'readyBtn');advance(14000);
 function open(){host.document.querySelector('#boardGrid button:not(:disabled)').click();advance(1);assert.equal(st.phase,'CONTROL_ANSWER')}
-open();assert.match(el(a,'turnTitle').textContent,/Your turn/);assert.match(el(a,'remoteClock').textContent,/s/);
+fill(host,'qSeconds','99');open();assert.equal(st.timer.remaining,30);assert.equal(el(host,'qSeconds').value,'30');assert.match(el(a,'turnTitle').textContent,/Your turn/);assert.match(el(a,'remoteClock').textContent,/s/);
 fill(a,'remoteAnswerInput','saved draft');el(a,'remoteAnswerInput').dispatchEvent(new a.Event('input'));advance(1600);assert.equal(el(a,'remoteAnswerInput').value,'saved draft');
 click(host,'pauseQuestionTimerBtn');assert(el(a,'submitAnswerBtn').disabled);assert.match(el(a,'turnTitle').textContent,/paused/);const frozen=el(a,'remoteClock').textContent;advance(2000);assert.equal(el(a,'remoteClock').textContent,frozen);click(host,'pauseQuestionTimerBtn');assert(!el(a,'submitAnswerBtn').disabled);
 // Correct answers are automatically judged and scored; no host acceptance.
@@ -50,7 +50,7 @@ const answer=messages.filter(m=>m.type==='answer').at(-1),score=st.players[0].sc
 channels[1].send({payload:answer});advance(1);assert.equal(st.players[0].score,score);assert.equal(messages.filter(m=>m.type==='action-result'&&m.mid===answer._mid).length,2);
 // Human correction is optional, logged, and updates everyone.
 fill(host,'overrideReason','Review: incorrect interpretation');click(host,'overrideIncorrect');assert.equal(st.players[0].score,initial);assert(host.__engineTest.decisionHistory.at(-1).overridden);assert.match(el(a,'deliveryStage').textContent,/Host correction/);
-open();const newKey=st.activeKey;channels[1].send({payload:{...answer,_mid:'late-old-question'}});advance(1);assert.equal(last('action-result').accepted,false);assert.equal(st.activeKey,newKey);
+fill(host,'qSeconds','12');open();assert.equal(st.timer.remaining,12);assert.match(el(a,'remoteClock').textContent,/12s/);const newKey=st.activeKey;channels[1].send({payload:{...answer,_mid:'late-old-question'}});advance(1);assert.equal(last('action-result').accepted,false);assert.equal(st.activeKey,newKey);
 send(b,'answer',{answer:accepted});assert.equal(last('action-result').accepted,false);assert.equal(st.activeKey,newKey);
 // Reconnect recovers a draft, then the eligible steal winner gets their own timer.
 fill(a,'remoteAnswerInput','reconnection draft');el(a,'remoteAnswerInput').dispatchEvent(new a.Event('input'));channels[1].statusCb('CHANNEL_ERROR');assert(el(a,'submitAnswerBtn').disabled);channels[1].statusCb('SUBSCRIBED');advance(1);assert.equal(el(a,'remoteAnswerInput').value,'reconnection draft');assert(!el(a,'submitAnswerBtn').disabled);
