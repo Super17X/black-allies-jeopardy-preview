@@ -964,7 +964,7 @@
     const reviewBox=document.createElement("section");reviewBox.className="card";reviewBox.innerHTML='<h3>Request an answer review</h3><p>Play continues automatically. The host can review a decision later.</p><input id="reviewReason" maxlength="300" aria-label="Review reason" placeholder="Why should this answer be reviewed?"><button id="requestReview" class="btn">Request review of my latest answer</button><p id="reviewStatus" role="status"></p><a href="practice.html" target="_blank" rel="noopener">Try the practice round</a>';document.body.appendChild(reviewBox);
     let latestDecisionId=null;
     const originalHostHandler=handleHostMessage;
-    handleHostMessage=function(data){if(data.type==="answer-decision"&&sameName(data.player,playerName))latestDecisionId=data.id;return originalHostHandler(data);};
+    handleHostMessage=function(data){if(data.type==="action-result"&&data.action==="review-request"&&sameName(data.player,playerName))document.getElementById("reviewStatus").textContent=data.accepted?"Review queued. Play continues.":data.reason;if(data.type==="game-reset")latestDecisionId=null;if(data.type==="answer-decision"&&sameName(data.player,playerName))latestDecisionId=data.id;return originalHostHandler(data);};
     document.getElementById("requestReview").onclick=()=>{sendToHost({type:"review-request",player:playerName,decisionId:latestDecisionId,reason:document.getElementById("reviewReason").value});document.getElementById("reviewStatus").textContent=latestDecisionId?"Review requested. Keep playing; automatic results remain active.":"Submit an answer before requesting review.";};
   })();
   </script>
