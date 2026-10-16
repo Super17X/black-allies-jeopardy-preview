@@ -51,6 +51,7 @@ const answer=messages.filter(m=>m.type==='answer').at(-1),score=st.players[0].sc
 channels[1].send({payload:answer});advance(1);assert.equal(st.players[0].score,score);assert.equal(messages.filter(m=>m.type==='action-result'&&m.mid===answer._mid).length,2);
 // Human correction is optional, logged, and updates everyone.
 fill(host,'overrideReason','Review: incorrect interpretation');click(host,'overrideIncorrect');assert.equal(st.players[0].score,initial);assert(host.__engineTest.decisionHistory.at(-1).overridden);assert.match(el(a,'deliveryStage').textContent,/Host correction/);
+const beforeReview=st.phase;click(a,'requestReview');assert.match(el(host,'reviewQueue').textContent,/Alpha/);assert.equal(st.phase,beforeReview);
 fill(host,'qSeconds','12');open();assert.equal(st.timer.remaining,12);assert.match(el(a,'remoteClock').textContent,/12s/);const newKey=st.activeKey;channels[1].send({payload:{...answer,_mid:'late-old-question'}});advance(1);assert.equal(last('action-result').accepted,false);assert.equal(st.activeKey,newKey);
 send(b,'answer',{answer:accepted});assert.equal(last('action-result').accepted,false);assert.equal(st.activeKey,newKey);
 // Reconnect recovers a draft, then the eligible steal winner gets their own timer.

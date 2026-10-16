@@ -1,0 +1,196 @@
+{
+  "status": "Not cleared for distribution; no permission evidence supplied",
+  "assets": [
+    {
+      "path": "boss-move-mascot.png",
+      "sha256": "7316539592bb232c1d8cfccdfefaa8d1e204da9cf5e340dc7f4809555d163089",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/whoopsie_2.mp3",
+      "sha256": "f1c4dab7bfe83892a10fbfad99847208b0c9df119119f9eefb1fd3b1edfab9c0",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/games.mp3",
+      "sha256": "88e02dc0bbe15b91ecaeab8116e3b6a37adfb60fa6b344cb55b65f6ccf447b7a",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/money_sound_effect.mp3",
+      "sha256": "b82d8abec335414ff09a6903612c856191a22bee8be538ebcbeb2fb988b66eb0",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/boondocks.mp3",
+      "sha256": "cf89286f6e180d6c627154306a02ac76f297fe638d14fe466dfcd969bfc89242",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/jeopardy-hip-hop-beat.mp3",
+      "sha256": "0fd5a43eeed590a4144db9b099a4b13a6772711a7994ee16bda9e4f0016a2e5c",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/lose_street_fighter.mp3",
+      "sha256": "d055875404df53dd7a5f34443a99ac716f8431819ba27276c3af71b46dae3560",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/gavin_feeling_lucky.mp3",
+      "sha256": "804fe40029e3fcaa256462e066539dd24279bb55f45e10b55389c7cdbc96a421",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/boom_sound_effect.mp3",
+      "sha256": "18f538dc9aa4abce7ff203efe9c420edee8decdad11048e19e0ea27c099512a7",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/wii_shop_music.mp3",
+      "sha256": "162e3ffa4dd0f22ee308d025b4bba24b1dc81346706e0f55a6a1c69f50cd2666",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/game_over.mp3",
+      "sha256": "fe8e471f008bda4aa8fb70b8610682d1c98c5cf822c6dc64687951a2555ae71c",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/boom_bitty.mp3",
+      "sha256": "b202cef2dba4ef7b7dc21a48ed1d618f17e1f6d58080772d33fe8cf3d481151c",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/rizz.mp3",
+      "sha256": "d2fcb43446b6a763c3724234cdd8101bbb80e775c63026f5f076cb24fef2899a",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/ay_yai_yai.mp3",
+      "sha256": "50a30c9d123aed41c146d56d86cf807388b99f88c2eaf239a2d1895ae316401d",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/funcooker.mp3",
+      "sha256": "c1ada6ed574cdd2f35069d13691a9b287c1a84e8d9f7857af407f9885733bcff",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/heart_beat_sms.mp3",
+      "sha256": "438761224dfabbfebbe9c7114c66d5dcd67147ddfddb45cfcc28d17bfbba3ccf",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/black-excellence-background.webp",
+      "sha256": "ee722303c9e514214bf2a1eccdb3671da199f5cf724089a0fdcfd7c8f357f767",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/sound_effect_1.mp3",
+      "sha256": "1a978a7842d156dea289794b6bf305db80ed5ffb6fd6dd8554dac8212957a326",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/black_allies_waiting_room_loop.mp3",
+      "sha256": "c4797c2b5ad8b0264b803a17e2c6397d55d2da287e3ea13c5b2421853c63fb64",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/avengers_war.mp3",
+      "sha256": "3f8c6bf1d176e03f96a1c1b1c24a9e158c7dba21e496c9d261dc7447636503d0",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/bruh.mp3",
+      "sha256": "fd830e689b8f1953120d137fdf73b02f922b3c18cf5274482fecedbec6ec55ce",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/fahhhhh.mp3",
+      "sha256": "d8542d44653dcede39752e89a094eaa1ed12c75f91a0ea7c4d96a6c8252d9b8f",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/allow_me_to_retort.mp3",
+      "sha256": "c0caf62209c01a7edf57159354d0eb811a601f46203a7581914b551bb1623b44",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/winner.mp3",
+      "sha256": "cb78c451a3093869c873b6e170c5014cee6376ad7cd766da0e6c873c98e38215",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/metal_gear_solid.mp3",
+      "sha256": "88d2f790506a8914c502b0a0949f667dd7cb9a21d528dffaac2ea6a967028fe6",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "assets/mario_coin.mp3",
+      "sha256": "3663343bfff00a944c0fab39fb0e456cb3c6ca3b6d968bf0ff25dbba226ac3ae",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "bobblehead-widget/assets/derrick-bobblehead.png",
+      "sha256": "4d3b59350f3a8962c89dd2a7f141172ef34fb34f516ab1361feedfd12de23b41",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "bobblehead-widget/assets/derrick-head.png",
+      "sha256": "b0143e2023d9b7b0fcabd5c92dda7872ab0270a738a10d9c770ebe9e9d002bbd",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "bobblehead-widget/assets/derrick-bobblehead-clean.png",
+      "sha256": "ca24f9c1a72e8a4d769b2f8fb59cdec8284fa7e73c43047b618de4ddcf3ba8c0",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "bobblehead-widget/assets/derrick-body.png",
+      "sha256": "8fa0b62017142d2949c69fb4aabe7e8af7caecad0f1687f3ae79c0bf0d7b54b9",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "bobblehead-widget/assets/boss-move-host.png",
+      "sha256": "26cbf9ecff3532de1acbb97b473118438936301cea213210a78f25b6fa3de490",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "path": "index.html embedded artwork",
+      "status": "unverified",
+      "evidence": null
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "node tests/integration.cjs",
-    "test:remote": "node tests/remote-answers.cjs && node tests/automatic-remote.cjs && node tests/urban-slang.cjs"
+    "test:remote": "node tests/remote-answers.cjs && node tests/automatic-remote.cjs && node tests/urban-slang.cjs && node tests/recovery.cjs"
   },
   "devDependencies": {
     "jsdom": "30.1.2"

@@ -250,8 +250,8 @@
     let realtimeChannel = null;
     let realtimeReady = false;
     let outboundQueue = [];
-    const clientSessionId = sessionStorage.getItem("jeopardy-client-session") || (Date.now().toString(36)+Math.random().toString(36).slice(2,9));
-    sessionStorage.setItem("jeopardy-client-session",clientSessionId);
+    const clientSessionId = localStorage.getItem("jeopardy-client-session") || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
+    localStorage.setItem("jeopardy-client-session",clientSessionId);
     let actionSequence=0;
     function nextActionId(kind){ actionSequence+=1; return clientSessionId+":"+kind+":"+actionSequence; }
 
@@ -391,7 +391,7 @@
     }
 
     function sendToHost(msg) {
-      msg = {...(["answer","pass","buzz","select-clue","final-wager-submit","final-answer-submit","dd-wager-submit"].includes(msg.type) && !("gameId" in msg)?envelope(msg.type,msg):msg), room: roomCode};
+      msg = {...(["answer","pass","buzz","select-clue","final-wager-submit","final-answer-submit","dd-wager-submit"].includes(msg.type) && !("gameId" in msg)?envelope(msg.type,msg):msg), room: roomCode, deviceToken:clientSessionId};
       if(realtimeEnabled && realtimeChannel){
         if(!realtimeReady){ outboundQueue.push(msg); return; }
         realtimeChannel.send({type:"broadcast",event:"message",payload:msg});
@@ -555,6 +555,8 @@
     }
     // ---- Listen for messages from host ----
     function handleHostMessage(data) {
+      if(data.type==="player-removed" && data.deviceToken===clientSessionId){playerName="";localStorage.removeItem(`jeopardy-player-${roomCode}`);statusMsg.textContent="The host removed this device from the room.";loginSection.style.display="block";buzzerSection.style.display="none";loginError.textContent=statusMsg.textContent;return;}
+
       if (!data || !data.type) return;
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
       if(!["gameplay-sync","timer-tick","action-result","transport-ack","heartbeat-ack","board-state","ready-state","scoreboard-update","final-state","join-ack","buzz-ack","answer-correct","answer-wrong","decision-override","game-reset"].includes(data.type) && ["answer","buzz","pass","heartbeat","sync-request","join","select-clue","final-wager-submit","final-answer-submit"].includes(data.type))return;
@@ -766,7 +768,7 @@
       }
 
 
-      if (data.type === "join-ack" && sameName(data.player,playerName)) {
+      if (data.type === "join-ack" && data.deviceToken===clientSessionId && sameName(data.player,playerName)) {
         if (data.registered) {
           const displayName = data.canonicalPlayer || data.player;
           playerName = displayName;
@@ -778,7 +780,8 @@
             : `✅ Connected as ${displayName}. You are ready to buzz.`;
           statusMsg.className = "ok";
         } else {
-          statusMsg.textContent = "Enter a valid player name to join.";
+          statusMsg.textContent = data.reason || "Enter a valid player name to join.";
+          loginSection.style.display="block";buzzerSection.style.display="none";loginError.textContent=data.reason||"Name unavailable";playerName="";
           statusMsg.className = "err";
         }
       }
@@ -958,6 +961,11 @@
     window.addEventListener("pagehide",()=>{
       if(playerName) sendToHost({type:"leave",player:playerName,actionId:nextActionId("leave")});
     });
+    const reviewBox=document.createElement("section");reviewBox.className="card";reviewBox.innerHTML='<h3>Request an answer review</h3><p>Play continues automatically. The host can review a decision later.</p><input id="reviewReason" maxlength="300" aria-label="Review reason" placeholder="Why should this answer be reviewed?"><button id="requestReview" class="btn">Request review of my latest answer</button><p id="reviewStatus" role="status"></p><a href="practice.html" target="_blank" rel="noopener">Try the practice round</a>';document.body.appendChild(reviewBox);
+    let latestDecisionId=null;
+    const originalHostHandler=handleHostMessage;
+    handleHostMessage=function(data){if(data.type==="answer-decision"&&sameName(data.player,playerName))latestDecisionId=data.id;return originalHostHandler(data);};
+    document.getElementById("requestReview").onclick=()=>{sendToHost({type:"review-request",player:playerName,decisionId:latestDecisionId,reason:document.getElementById("reviewReason").value});document.getElementById("reviewStatus").textContent=latestDecisionId?"Review requested. Keep playing; automatic results remain active.":"Submit an answer before requesting review.";};
   })();
   </script>
 </body>

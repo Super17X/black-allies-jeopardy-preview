@@ -2710,6 +2710,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
     function closeClue(){
+      recoveryTransition=null;clearTimeout(transitionTimeout);clearInterval(transitionInterval);
       stopQuestionBeat();
       stopTimer();
       qaPane.style.display="none";
@@ -2740,7 +2741,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
       const current = state.players[state.controlIdx].score;
-      const minFloor = state.board.valueForRow(state.board.rows[0]);
+      const minFloor = (state.board?state.board.valueForRow(state.board.rows[0]):200);
       const max = Math.max(minFloor, current);
       if (wager < 0) { showDdWagerError("Wager cannot be negative."); return; }
       if (wager > max) { showDdWagerError(`Wager cannot exceed $${max}.`); return; }
@@ -2816,7 +2817,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
             sfxTimesUp();
             feedback.textContent = "Time. Daily Double wager not locked — clue forfeited.";
             markUsed();
-            state.controlIdx = (state.controlIdx + 1) % state.players.length;
+            state.controlIdx = nextAvailablePlayer(state.controlIdx);
             closeClue();
             return;
           }
@@ -2876,6 +2877,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
     function revealAnswerAndClose(clue){
+      recoveryTransition={kind:"reveal",deadline:Date.now()+10000};
       stopQuestionBeat();
       stopTimer();
       markUsed();
@@ -2893,14 +2895,14 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
       let secondsLeft=10;
       countdown.textContent=`Returning to the board in ${secondsLeft} seconds…`;
-      const countdownId=setInterval(()=>{
+      const countdownId=transitionInterval=setInterval(()=>{
         secondsLeft-=1;
         if(secondsLeft>0) countdown.textContent=`Returning to the board in ${secondsLeft} seconds…`;
       },1000);
 
       const completedKey=state.activeKey;
-      state.controlIdx=(state.clueStartIdx+1)%state.players.length;
-      setTimeout(()=>{
+      state.controlIdx=nextAvailablePlayer(state.clueStartIdx);
+      transitionTimeout=setTimeout(()=>{
         clearInterval(countdownId);
         overlay.classList.remove("show");
         if(state.activeKey===completedKey && state.final.step==="off") closeClue();
@@ -2920,7 +2922,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         return;
       }
 
-      const nextEligible=state.players.findIndex((p,i)=>!attemptedPlayersThisClue.has(i));
+      const nextEligible=state.players.findIndex((p,i)=>!attemptedPlayersThisClue.has(i)&&!removedPlayers.has(p.name));
       if(nextEligible<0){revealAnswerAndClose(clue);return;}
       state.controlIdx=nextEligible;
       renderScoreboard();
@@ -2929,6 +2931,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
       // STEAL LOCK: nobody may buzz for 7 seconds after a miss/pass.
       const stealDelaySeconds = 3;
+      recoveryTransition={kind:"steal-delay",deadline:Date.now()+3000};
       const stealPlayer = state.players[state.controlIdx].name;
       const activeKeyAtDelayStart = state.activeKey;
 
@@ -2949,7 +2952,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       });
 
       let remaining=stealDelaySeconds;
-      const delayTick=setInterval(()=>{
+      const delayTick=transitionInterval=setInterval(()=>{
         remaining-=1;
         if(remaining>0){
           qaHeader.textContent=`Steal opens in ${remaining}s — ${stealPlayer}`;
@@ -2958,7 +2961,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         }
       },1000);
 
-      setTimeout(()=>{
+      transitionTimeout=setTimeout(()=>{
         clearInterval(delayTick);
         // Do nothing if the host left/closed this clue during the delay.
         if(!state.activeKey || state.activeKey!==activeKeyAtDelayStart || state.final.step!=="off") return;
@@ -2969,6 +2972,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         submitBtn.disabled=true;
         passBtn.disabled=true;
 
+        recoveryTransition=null;
         setGamePhase("STEAL_OPEN");
         broadcastToBuzzers({type:"steal-open",controller:stealPlayer});
         playBruhSound();
@@ -3129,10 +3133,10 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       if(state.final.step!=="answers")return;
       stopFinalTimer();state.final.step="reveal";state.final.idx=0;renderFinalUI();
       $("finalStatusPanel").textContent="Automatic judging complete — results reveal in 4 seconds. Pause to review.";
-      let remaining=4;championshipPaused=false;
+      state.final.revealRemaining=4;championshipPaused=false;
       clearInterval(autoRevealTimer);autoRevealTimer=setInterval(()=>{
         if(championshipPaused)return;
-        if(--remaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(state.final.step==="reveal")revealFinalResults();}
+        if(--state.final.revealRemaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(state.final.step==="reveal")revealFinalResults();}
       },1000);broadcastFinalState();
     }
     finalStartTimerBtn.addEventListener("click", startFinalTimer);
@@ -3193,7 +3197,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
       if (state.final.step === "wagers"){
-        const minFloor = state.board.valueForRow(state.board.rows[0]);
+        const minFloor = (state.board?state.board.valueForRow(state.board.rows[0]):200);
         const max = Math.max(0, player.score);
         finalPromptEl.textContent = `Enter wager for ${player.name}. Max: $${max} (min $0).`;
         finalInput.type="password";
@@ -3229,7 +3233,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         const wager = parseWholeNumber(finalInput.value);
         if (wager === null) { showFinalError("Wager must be a whole number."); return; }
         if (wager < 0) { showFinalError("Wager cannot be negative."); return; }
-        const minFloor = state.board.valueForRow(state.board.rows[0]);
+        const minFloor = (state.board?state.board.valueForRow(state.board.rows[0]):200);
         const max = Math.max(minFloor, player.score);
         if (wager > max) { showFinalError(`Wager cannot exceed $${max}.`); return; }
         clearFinalError();
@@ -3410,6 +3414,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       setPrivacy(false);
 
 
+      state.board=null;recoveryTransition=null;clearTimeout(transitionTimeout);clearInterval(transitionInterval);
       // reset core game state but keep players list (common expectation)
       state.used = new Set();
       state.activeKey = null;
@@ -3506,6 +3511,14 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     }
 
 
+    const playerSessions = new Map();
+    const removedDevices = new Set();
+    const removedPlayers = new Set();
+    function nextAvailablePlayer(index){for(let n=1;n<=state.players.length;n++){const i=(index+n)%state.players.length;if(!removedPlayers.has(state.players[i].name))return i;}return index;}
+    const reviewRequests = [];
+    let roomLocked = false;
+    let recoveryTransition = null;
+    let transitionTimeout=null,transitionInterval=null;
     // Track buzz-in state
     let buzzerActive   = false;   // true while a question is open
     let firstBuzzer    = null;    // name of the first buzzer this question
@@ -3532,7 +3545,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     }
     function recordDecision(player,answer,correct,value,key=state.activeKey,kind="clue"){
       const item={id:`decision-${Date.now()}-${decisionHistory.length}`,player,answer,correct,value,key,kind,at:Date.now(),overridden:false};
-      decisionHistory.push(item);if(decisionHistory.length>100)decisionHistory.shift();renderOverrides();return item;
+      broadcastToBuzzers({type:"answer-decision",player,id:item.id});decisionHistory.push(item);if(decisionHistory.length>100)decisionHistory.shift();renderOverrides();return item;
     }
     function renderOverrides(){
       const list=$("overrideDecision");if(!list)return;
@@ -3718,7 +3731,8 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         serverTime:Date.now()
       };
     }
-    function broadcastGameplaySync(){ broadcastToBuzzers(gameplaySyncPayload()); broadcastFinalState(); }
+    function broadcastGameplaySync(){
+      for(const p of state.players){const d=decisionHistory.slice().reverse().find(d=>d.player===p.name);if(d)broadcastToBuzzers({type:"answer-decision",player:p.name,id:d.id});} broadcastToBuzzers(gameplaySyncPayload()); broadcastFinalState(); }
 
     // Remove stale phone sessions and reopen a steal if its winner disconnects.
     setInterval(()=>{
@@ -3730,7 +3744,8 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
           if(firstBuzzer && sameName(firstBuzzer,name) && state.phase==="ANSWERING"){
             firstBuzzer=null;
             answerTransactionLocked=false;
-            setGamePhase("STEAL_OPEN");
+            recoveryTransition=null;
+        setGamePhase("STEAL_OPEN");
             broadcastToBuzzers({type:"buzz-released",player:name,reason:"Connection lost. Steal reopened."});
           }
         }
@@ -3746,9 +3761,22 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     },1500);
 
     // ---------- handle message from buzzer pages ----------
-    function handleBuzzerMessage(data) {
+    function handleBuzzerMessage(data) { try { return processBuzzerMessage(data); } finally { premiereSave(); } }
+    function processBuzzerMessage(data) {
       if (!data || !data.type) return;
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
+      if(data.player && data.type!=="join"){
+        const owner=playerSessions.get(String(data.player).trim().toLocaleLowerCase());
+        if(!owner || owner!==data.deviceToken || removedDevices.has(data.deviceToken)){
+          actionResult(data,false,{reason:"This device is not registered for that player. Join again."});return;
+        }
+      }
+      if(data.type==="review-request"){
+        const decision=decisionHistory.find(d=>d.id===data.decisionId && d.player===data.player);
+        if(!decision){actionResult(data,false,{reason:"Choose one of your recorded decisions."});return;}
+        if(!reviewRequests.some(r=>r.decisionId===decision.id))reviewRequests.push({decisionId:decision.id,player:data.player,reason:String(data.reason||"Please review this answer").slice(0,300),status:"pending"});
+        renderRoomControls();premiereSave();actionResult(data,true,{message:"Review queued. Play continues automatically."});return;
+      }
       const mutations=["answer","pass","buzz","select-clue","final-wager-submit","final-answer-submit","dd-wager-submit"];
       if(data._mid && actionResults.has(data._mid)){broadcastToBuzzers(actionResults.get(data._mid));return;}
       if(mutations.includes(data.type)){
@@ -3791,6 +3819,13 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
       if (data.type === "join") {
+        const identityKey=String(data.player||"").trim().slice(0,40).toLocaleLowerCase();
+        const owner=playerSessions.get(identityKey);
+        if([...playerSessions].some(([name,token])=>token===data.deviceToken&&name!==identityKey)){broadcastToBuzzers({type:"join-ack",player:data.player,deviceToken:data.deviceToken,registered:false,reason:"This device already has a player identity in this room."});return;}
+        if(!data.deviceToken || removedDevices.has(data.deviceToken) || (owner && owner!==data.deviceToken) || (!owner && roomLocked)){
+          broadcastToBuzzers({type:"join-ack",player:data.player,deviceToken:data.deviceToken,registered:false,reason:owner?"That name belongs to another device. Choose a different name or ask the host to release it.":"This room is locked or this device was removed."});return;
+        }
+        removedPlayers.delete(String(data.player).trim());playerSessions.set(identityKey,data.deviceToken);
         const registration = registerBuzzerPlayer(data.player);
         if (!registration.ok) {
           broadcastToBuzzers({ type:"join-ack", player:data.player, registered:false });
@@ -3802,6 +3837,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
           type:"join-ack",
           player:data.player,
           registered:true,
+          deviceToken:data.deviceToken,
           canonicalPlayer:registration.player,
           added:registration.added,
           ready:!!state.ready.get(registration.index)
@@ -3828,7 +3864,8 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         if(firstBuzzer && sameName(firstBuzzer,data.player) && state.phase==="ANSWERING"){
           firstBuzzer=null;
           answerTransactionLocked=false;
-          setGamePhase("STEAL_OPEN");
+          recoveryTransition=null;
+        setGamePhase("STEAL_OPEN");
           broadcastToBuzzers({type:"buzz-released",player:data.player,reason:"Player disconnected. Steal reopened."});
         }
       }
@@ -3880,7 +3917,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       }
 
       if(data.type==="dd-wager-submit"){
-        const wager=parseWholeNumber(data.wager),max=Math.max(state.board.valueForRow(state.board.rows[0]),state.players[state.controlIdx]?.score||0);
+        const wager=parseWholeNumber(data.wager),max=Math.max((state.board?state.board.valueForRow(state.board.rows[0]):200),state.players[state.controlIdx]?.score||0);
         if(state.phase!=="DD_WAGER" || state.timer.paused || !sameName(data.player,state.players[state.controlIdx]?.name) || wager===null || wager<0 || wager>max){actionResult(data,false,{reason:"Wager must be a whole number within your Daily Double limit, on your turn."});return;}
         ddWagerInput.value=String(wager);actionResult(data,true,{result:"wager-locked"});ddWagerSubmitBtn.click();return;
       }
@@ -4137,6 +4174,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
     // Small reliability improvement: stop timers/audio cleanly when the host leaves or reloads.
     window.addEventListener("pagehide", ()=>{
+      premiereSave();
       try { stopTimer(); stopGameClock(); stopQuestionBeat(); } catch(_) {}
       try { if (waitingCountdownId) clearInterval(waitingCountdownId); } catch(_) {}
     });
@@ -4199,11 +4237,59 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     let mutedByHost=false;
     function toast(msg){const el=$("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
     function showAchievement(html,ms=2200){const o=$("achievementOverlay");$("achievementCard").innerHTML=html;o.classList.add("show");setTimeout(()=>o.classList.remove("show"),ms)}
+    const recoveryKey="jeopardy-complete-session-v3-"+roomCode;
+    let recoveryReady=false;
     function premiereSave(){
-      try{if(!state.players.length)return;localStorage.setItem("black-allies-jeopardy-premiere-state",JSON.stringify({ts:Date.now(),players:state.players.map(p=>({name:p.name,score:p.score})),controlIdx:state.controlIdx,used:[...state.used],round:state.round,finalStep:state.final?.step||"off",gameMode:state.gameMode,teams:[...state.teams]}))}catch(_){}
+      if(!recoveryReady)return;
+      try{
+        const board=state.board;
+        const d={version:3,room:roomCode,ts:Date.now(),players:state.players,ready:[...state.ready],round:state.round,controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,
+          board:board?{cfg:board.cfg,categories:board.categories,rows:board.rows,clues:board.categories.flatMap(c=>board.rows.map(r=>[board.keyFor(c,r),board.clueFor(c,r)])),dailyDoubles:[...board.dailyDoubles]}:null,
+          timer:{remaining:state.timer.remaining,mode:state.timer.mode,paused:state.timer.paused,running:!!state.timer.id},gameClock:{remaining:state.gameClock.remaining,running:!!state.gameClock.id},
+          final:{...state.final,timerId:null,wagers:[...state.final.wagers],answers:[...state.final.answers]},finalJeopardy,championshipPaused,finalResultsApplied,finalAnswerRevealed,finalJudgments:[...finalJudgments],finalHTML:$("summaryText").innerHTML,stats:Object.fromEntries(Object.entries(premiereStats).map(([k,v])=>[k,[...v]])),
+          phase:state.phase,clueAttempts:state.clueAttempts,clueStartIdx:state.clueStartIdx,ddLockedWager:state.ddLockedWager,attempted:[...attemptedPlayersThisClue],firstBuzzer,buzzerActive,answerTransactionLocked,
+          engineGameId,engineTurn,clueTransactionId,decisions:decisionHistory,actionResults:[...actionResults],sessions:[...playerSessions],removed:[...removedDevices],removedPlayers:[...removedPlayers],roomLocked,reviews:reviewRequests,
+          transition:recoveryTransition,checklist:[...$("eventChecklist").querySelectorAll("input")].map(e=>e.checked),gameMode:state.gameMode,teams:[...state.teams],inputs:[...document.querySelectorAll("input[id],select[id]")].filter(e=>e.id!=="nameInput").map(e=>[e.id,e.value,e.checked]),answerDraft:answerInput.value};
+        const text=JSON.stringify(d);localStorage.setItem(recoveryKey,text);
+        $("recoveryHealth").textContent="Recovery saved · "+new Date(d.ts).toLocaleTimeString();
+      }catch(e){if($("recoveryHealth"))$("recoveryHealth").textContent="Recovery unavailable: browser storage is full or blocked. Export a recovery file.";}
+    }
+    function restoreSession(d){
+      if(d.version!==3||d.room!==roomCode||!Array.isArray(d.players))throw Error("Invalid recovery file for this room");
+      recoveryReady=false;clearTimeout(transitionTimeout);clearInterval(transitionInterval);
+      stopTimer();stopGameClock();clearInterval(finalWagerTimer);clearInterval(autoRevealTimer);stopFinalTimer();
+      for(const [id,value,checked] of d.inputs||[]){const e=$(id);if(e){e.value=value;e.checked=checked;}}
+      Object.assign(state,{players:d.players,ready:new Map(d.ready),round:d.round,controlIdx:d.controlIdx,used:new Set(d.used),activeKey:d.activeKey,phase:d.phase,clueAttempts:d.clueAttempts,clueStartIdx:d.clueStartIdx,ddLockedWager:d.ddLockedWager,gameMode:d.gameMode,teams:new Map(d.teams)});
+      for(const [k,v] of Object.entries(d.stats||{}))if(premiereStats[k]){premiereStats[k].clear();for(const [a,b] of v)premiereStats[k].set(a,b);}
+      if(d.board){const b=d.board,m=new Map(b.clues),dd=new Set(b.dailyDoubles);state.board={...b,dailyDoubles:dd,keyFor:(c,r)=>keyFor(c,r,b.cfg.round),clueFor:(c,r)=>m.get(keyFor(c,r,b.cfg.round)),valueForRow:r=>valueForRow(r,b.cfg),isDailyDouble:k=>dd.has(k)};}
+      state.final={...d.final,wagers:new Map(d.final.wagers),answers:new Map(d.final.answers),timerId:null};finalJeopardy=d.finalJeopardy;
+      engineGameId=d.engineGameId;engineTurn=d.engineTurn;clueTransactionId=d.clueTransactionId;firstBuzzer=d.firstBuzzer;buzzerActive=d.buzzerActive;answerTransactionLocked=d.answerTransactionLocked;attemptedPlayersThisClue=new Set(d.attempted);
+      for(const [map,entries] of [[playerSessions,d.sessions],[finalJudgments,d.finalJudgments],[actionResults,d.actionResults]]){map.clear();for(const [k,v] of entries||[])map.set(k,v);}
+      removedPlayers.clear();for(const n of d.removedPlayers||[])removedPlayers.add(n);removedDevices.clear();for(const t of d.removed||[])removedDevices.add(t);roomLocked=d.roomLocked;reviewRequests.splice(0,reviewRequests.length,...d.reviews||[]);decisionHistory.splice(0,decisionHistory.length,...d.decisions||[]);
+      finalResultsApplied=d.finalResultsApplied;finalAnswerRevealed=d.finalAnswerRevealed;championshipPaused=d.championshipPaused;recoveryTransition=d.transition;
+      $("premiereIntro").classList.add("hidden");lobbyPane.style.display=d.board?"none":"block";boardPane.style.display=d.board&&!d.activeKey&&d.final.step==="off"?"block":"none";qaPane.style.display=d.activeKey?"block":"none";finalPane.style.display=d.final.step!=="off"&&d.final.step!=="complete"?"block":"none";summaryPane.style.display=d.final.step==="complete"?"block":"none";
+      renderLobbyList();renderScoreboard();if(state.board)renderBoard();renderOverrides();renderRoomControls();
+      if(d.activeKey){const [c,r]=d.activeKey.split("::"),clue=state.board.clueFor(c,Number(r));questionText.textContent=clue.text;clueCatEl.textContent=c;clueValueEl.textContent="$"+state.board.valueForRow(Number(r));qaHeader.textContent=state.players[state.controlIdx].name+"'s Question";ddBadge.style.display=state.board.isDailyDouble(d.activeKey)?"inline-block":"none";ddWagerRow.style.display=d.timer.mode==="dd-wager"?"block":"none";answerInput.value=d.answerDraft||"";answerInput.disabled=submitBtn.disabled=passBtn.disabled=d.timer.mode==="dd-wager"||d.phase==="STEAL_OPEN";
+        if(d.timer.running){startTimer(d.timer.remaining,d.timer.mode,d.timer.mode==="steal"?()=>revealAnswerAndClose(clue):undefined,d.firstBuzzer);state.timer.remaining=d.timer.remaining;state.timer.paused=d.timer.paused;engineTurn=d.engineTurn;state.phase=d.phase;firstBuzzer=d.firstBuzzer;timerEl.textContent=d.timer.remaining+"s";updateQuestionPauseButton();}
+        if(d.transition){const remaining=Math.max(0,d.transition.deadline-d.ts);recoveryTransition={...d.transition,deadline:Date.now()+remaining};if(d.transition.kind==="reveal"){ $("correctAnswerText").textContent=clue.answers[0];$("correctAnswerOverlay").classList.add("show");transitionTimeout=setTimeout(()=>{$("correctAnswerOverlay").classList.remove("show");closeClue();},remaining);}else transitionTimeout=setTimeout(()=>{recoveryTransition=null;setGamePhase("STEAL_OPEN");startTimer(5,"steal",()=>revealAnswerAndClose(clue));},remaining);}
+      }
+      if(d.gameClock.running){startGameClock();state.gameClock.remaining=d.gameClock.remaining;gameClockEl.textContent=formatClock(d.gameClock.remaining);}
+      if(d.final.step!=="off"){
+        if(d.final.step==="complete")$("summaryText").innerHTML=d.finalHTML;
+        else renderFinalUI();
+        if(d.final.step==="answers"&&d.final.timerRemaining>0){startFinalTimer();state.final.timerRemaining=d.final.timerRemaining;championshipPaused=d.championshipPaused;finalTimerEl.textContent=d.final.timerRemaining+"s";}
+        if(d.final.step==="wagers")finalWagerTimer=setInterval(()=>{if(championshipPaused)return;if(--state.final.wagerRemaining<=0)beginFinalAnswers();broadcastFinalState();},1000);
+        if(d.final.step==="reveal")autoRevealTimer=setInterval(()=>{if(championshipPaused)return;if(--state.final.revealRemaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(!finalResultsApplied)revealFinalResults();}},1000);
+        renderFinalAnswerBanner();
+      }
+      (d.checklist||[]).forEach((v,i)=>{const e=$("eventChecklist").querySelectorAll("input")[i];if(e)e.checked=v;});
+      document.documentElement.classList.toggle("verified-media",!!$("verifiedMediaOnly").checked);
+      scoreBoard.style.display=d.board?"block":"none";waitingRoomPane.style.display="none";
+      recoveryReady=true;premiereSave();broadcastGameplaySync();broadcastScoreboard(false);broadcastBoardState();toast("Complete room session restored. Timers resume from their saved remaining time.");
     }
     function offerRecovery(){
-      try{const raw=localStorage.getItem("black-allies-jeopardy-premiere-state");if(!raw)return;const d=JSON.parse(raw);if(!d.players?.length||Date.now()-d.ts>86400000)return;const b=document.createElement("div");b.className="resume-banner";b.innerHTML=`<strong>Game in progress found</strong> — ${d.players.length} players. <button class="btn ok" id="resumePremiere">Restore scores</button> <button class="btn" id="dismissPremiere">Dismiss</button>`;lobbyPane.prepend(b);$("resumePremiere").onclick=()=>{state.players=d.players;state.controlIdx=Math.min(d.controlIdx||0,state.players.length-1);state.used=new Set(d.used||[]);renderLobbyList();renderScoreboard();b.remove();toast("Previous scores restored");};$("dismissPremiere").onclick=()=>{localStorage.removeItem("black-allies-jeopardy-premiere-state");b.remove();};}catch(_){}
+      try{const raw=localStorage.getItem(recoveryKey);if(raw){restoreSession(JSON.parse(raw));return;}}catch(e){toast("Recovery needs attention. Keep your recovery file.");}
+      recoveryReady=true;
     }
     function runDiagnostics(){
       const assets=["assets/black-excellence-background.webp","assets/jeopardy-hip-hop-beat.mp3","assets/money_sound_effect.mp3","assets/metal_gear_solid.mp3","assets/mario_coin.mp3","assets/funcooker.mp3"];
@@ -4224,7 +4310,18 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     document.querySelectorAll('[data-host-action]').forEach(b=>b.onclick=()=>{const a=b.dataset.hostAction;if(a==='correct'){if(state.activeKey){const [c,r]=state.activeKey.split('::');answerInput.value=state.board.clueFor(c,Number(r)).answers[0];handleSubmit()}}else if(a==='wrong')handleSubmit();else if(a==='pass')handlePass();else if(a==='pause')toggleQuestionTimerPause();else if(a==='reveal'){if(state.activeKey){const [c,r]=state.activeKey.split('::');revealAnswerAndClose(state.board.clueFor(c,Number(r)))}}else if(a==='board'&&state.activeKey)closeClue();});
     document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;const k=e.key.toLowerCase();if(k==='escape'){document.body.classList.remove('presentation-mode');$("hostDrawer").classList.remove('open')}if(k===' '){e.preventDefault();toggleQuestionTimerPause()}if(k==='c'&&state.activeKey){const [c,r]=state.activeKey.split('::');answerInput.value=state.board.clueFor(c,Number(r)).answers[0];handleSubmit()}if(k==='x'&&state.activeKey)handleSubmit();if(k==='p'&&state.activeKey)handlePass();if(k==='r'&&state.activeKey){const [c,r]=state.activeKey.split('::');revealAnswerAndClose(state.board.clueFor(c,Number(r)))}if(k==='f')document.documentElement.requestFullscreen?.().catch(()=>{});if(k==='m')$("muteAllBtn").click();if(k==='q')openBuzzerPanel?.();});
     $("enterPremiereBtn").onclick=()=>{$("premiereIntro").classList.add("hidden");startLandingMusic();setTimeout(()=>presentView(lobbyPane),300)};
-    setTimeout(offerRecovery,350);
+    const roomTools=document.createElement("section");roomTools.innerHTML=`<h3>Room security & recovery</h3><button class="btn" id="roomLock">Lock room</button><select id="removePlayerChoice" aria-label="Player to remove"></select><button class="btn" id="removeRoomPlayer">Remove player</button><p class="tiny">Removal revokes this device. Its score stays in the game history. A locked room accepts only previously registered devices.</p><p id="recoveryHealth" role="status">Recovery initializing…</p><button class="btn" id="exportRecovery">Export recovery file</button><label class="btn">Import recovery file<input id="importRecovery" type="file" accept="application/json"></label><h3>Player review queue</h3><p class="tiny">Requests never pause or change automatic results. Use the override controls for a correction.</p><div id="reviewQueue"></div><h3>Event preparation</h3><button class="btn" id="tutorialBtn">Short tutorial</button> <a class="btn" href="practice.html" target="_blank" rel="noopener">Practice round</a><p><a href="ASSET-PERMISSIONS.md" target="_blank">Media permission inventory</a></p><label><input type="checkbox" id="verifiedMediaOnly"> Verified-media-only mode (mutes clips and hides supplied artwork)</label><div id="eventChecklist"><h4>Pre-event checklist</h4>${["Connect board to power and test screen sharing","Verify room QR link on every phone","Test every buzzer using Live Engine","Run a practice round and confirm answer time","Export recovery file before the event","Confirm written distribution rights for all media; use verified-media-only mode until cleared"].map(t=>`<label style="display:block"><input type="checkbox"> ${t}</label>`).join("")}</div>`;$("hostDrawer").appendChild(roomTools);
+    function renderRoomControls(){if(!$("roomLock"))return;$("roomLock").textContent=roomLocked?"Unlock room":"Lock room";$("removePlayerChoice").innerHTML=state.players.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");$("reviewQueue").innerHTML=reviewRequests.map((r,i)=>`<p>${escapeHtml(r.player)}: ${escapeHtml(r.reason)} · ${r.status} <button class="btn" data-review="${i}">Mark reviewed</button></p>`).join("")||"No review requests.";$("reviewQueue").querySelectorAll("[data-review]").forEach(b=>b.onclick=()=>{reviewRequests[+b.dataset.review].status="reviewed";renderRoomControls();premiereSave();});}
+    $("roomLock").onclick=()=>{roomLocked=!roomLocked;renderRoomControls();premiereSave();};
+    $("removeRoomPlayer").onclick=()=>{const name=$("removePlayerChoice").value,k=name.toLocaleLowerCase(),token=playerSessions.get(k);if(token)removedDevices.add(token);playerSessions.delete(k);removedPlayers.add(name);connectedBuzzers.delete(name);if(state.players[state.controlIdx]?.name===name&&state.activeKey)handlePass();else if(state.players[state.controlIdx]?.name===name)state.controlIdx=nextAvailablePlayer(state.controlIdx);broadcastScoreboard(false);broadcastBoardState();broadcastToBuzzers({type:"player-removed",player:name,deviceToken:token});premiereSave();toast(name+" removed. Score retained.");};
+    $("importRecovery").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());restoreSession(d);}catch(err){toast("Recovery import failed: "+err.message);}};
+    $("exportRecovery").onclick=()=>{premiereSave();const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([localStorage.getItem(recoveryKey)],{type:"application/json"}));a.download="jeopardy-"+roomCode+"-recovery.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+    $("tutorialBtn").onclick=()=>{const d=document.createElement("dialog");d.innerHTML='<h2>Play in four steps</h2><ol><li>Host: choose categories and answer time, then show the room QR code.</li><li>Players: join on your phone with a unique name, test your buzzer and tap Ready.</li><li>The player in control picks a clue and answers. After a miss, eligible players can buzz for a steal. Answers and scoring run automatically.</li><li>Final: submit a secret wager, then a secret answer. Request a review if needed; play continues. The host can override a recorded decision.</li></ol><p>Board refresh restores this browser’s saved room. Keep an exported recovery file before your event.</p><button class="btn">Got it</button>';document.body.appendChild(d);d.querySelector("button").onclick=()=>d.remove();d.showModal();};
+    $("verifiedMediaOnly").onchange=()=>{const on=$("verifiedMediaOnly").checked;document.documentElement.classList.toggle("verified-media",on);if(on){soundModeSel.value="off";soundModeSel.dispatchEvent(new Event("change"));document.querySelectorAll("audio,video").forEach(e=>e.pause());}premiereSave();};
+    const rightsStyle=document.createElement("style");rightsStyle.textContent='.verified-media *,.verified-media *:before,.verified-media *:after{background-image:none!important}.verified-media [id*=mascot],.verified-media [id*=Mascot]{visibility:hidden!important}.verified-media img,.verified-media #mascotStage,.verified-media #bobbleheadWidget{visibility:hidden!important}.verified-media body,.verified-media .hero,.verified-media .app{background-image:none!important}';document.head.appendChild(rightsStyle);
+    const originalMediaPlay=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if($("verifiedMediaOnly")?.checked)return Promise.resolve();return originalMediaPlay.apply(this,arguments);};
+    renderRoomControls();offerRecovery();setInterval(premiereSave,250);
+
   })();
   
     // ===== V4B mascot reaction API =====
