@@ -171,7 +171,8 @@
     .phase-pill{display:inline-block;border:1px solid var(--gold);border-radius:999px;padding:4px 10px;color:var(--gold2);font-weight:900;margin:5px 0}
     #testBuzzerBtn{width:100%;margin-top:10px}
     #deliveryStatus{font-size:.8rem;min-height:1.1em;color:var(--muted);margin-top:5px}
-  </style>
+  #remoteTurnCard{order:-4;width:100%;padding:16px;border:1px solid var(--gold);border-radius:14px;background:linear-gradient(135deg,#132235,#0a101a);text-align:center}#turnTitle{font-size:1.25rem;color:#fff;font-weight:800}#remoteClock{font-size:2.6rem;font-weight:900;font-variant-numeric:tabular-nums;color:var(--gold2)}#remoteClock.urgent{color:#ff6868}#deliveryStage{min-height:22px;color:#9ae6ba;font-size:.9rem}#buzzerSection{gap:12px}#playerLabel,#myStanding,#controlBanner{order:-5}#questionInfo{order:-3;font-size:1.1rem;line-height:1.5}#answerArea,#finalMobile,#dailyDoubleMobile{order:-2}#statusMsg,#deliveryStatus{order:-1}#liveScoreboard{max-height:220px;overflow:auto;width:100%}#phonePhase{display:none}#buzzerBtn{width:150px;height:150px;font-size:1.4rem}#remoteSettings{font-size:.85rem;width:100%;color:#c0bba9}#remoteSettings input{width:auto;min-height:22px;margin:0 8px 0 0}#remoteSettings label{display:block;padding:8px}#mobileBoardGrid button{min-height:48px}body.large-text{font-size:120%}body.high-contrast{--muted:#fff;--border:#aaa;--text:#fff;background:#000}button:disabled{cursor:not-allowed}#remoteSettings button{min-height:44px}
+</style>
 </head>
 <body><div id="connectionBadge">● Connecting</div>
   <div id="buzzerFlash"><span class="flash-label">BUZZ!</span></div>
@@ -194,7 +195,7 @@
   <div class="card" id="buzzerSection" style="display:none">
     <p id="playerLabel">—</p><div id="myStanding">Score: $0 • Rank: —</div>
     <button class="btn" id="readyBtn" style="display:none">Set Ready</button>
-    <div id="controlBanner">In control: —</div>
+    <div id="remoteTurnCard"><div id="turnTitle">Waiting for game</div><div id="remoteClock" aria-label="Time remaining">—</div><div id="deliveryStage" role="status" aria-live="polite">Automatic referee · host corrections available</div></div><div id="controlBanner">In control: —</div>
     <div id="mobileRace" aria-live="polite"><strong>⚡ BUZZER RACE</strong><div id="mobileRaceRows"></div></div>
     <div id="liveScoreboard" aria-live="polite">
       <div id="liveScoreboardTitle">Live Scoreboard</div>
@@ -206,15 +207,15 @@
       <div id="mobileBoardGrid"></div>
     </div>
     <div id="questionInfo">Waiting for a question…</div>
-    <div style="margin:20px 0">
+    <div id="buzzControls" style="margin:12px 0">
       <button id="buzzerBtn" disabled>BUZZ!</button>
       <div class="sub" style="margin:10px 0 0">In control? Answer directly. The buzzer activates for steals.</div>
     </div>
     <div id="phonePhase" class="sub" aria-live="polite">Waiting for host</div>
     <div id="statusMsg" role="status" aria-live="polite"></div>
     <div id="deliveryStatus" aria-live="polite"></div>
-    <button class="btn" id="testBuzzerBtn" type="button">Test My Buzzer</button>
-    <div id="answerArea">
+    <div id="remoteSettings"><label><input id="hapticsEnabled" type="checkbox" checked/>Vibration alerts</label><label><input id="largeText" type="checkbox"/>Larger text</label><label><input id="highContrast" type="checkbox"/>High contrast</label></div><button class="btn" id="testBuzzerBtn" type="button">Test My Buzzer</button>
+    <div id="dailyDoubleMobile" style="display:none;width:100%"><strong>Daily Double — secret wager</strong><input id="ddMobileWager" type="number" min="0" step="1" aria-label="Daily Double wager"/><button class="btn ok" id="ddMobileSubmit">Lock Daily Double wager</button></div><div id="answerArea">
       <input id="remoteAnswerInput" placeholder="Type your answer" autocomplete="off" autocapitalize="words" enterkeyhint="send" spellcheck="true" aria-label="Your answer" />
       <button class="btn ok" id="submitAnswerBtn">Submit Answer</button>
       <button class="btn" id="passAnswerBtn">Pass</button>
@@ -268,6 +269,24 @@
     const phonePhase = document.getElementById("phonePhase");
     let currentQuestionKey = null;
     let answerPending = false;
+    let engineState={gameId:null,questionId:null,turnId:null}, lastSnapshot=null, lastHostAt=0, lastLatency=0;
+    let localDeadline=0,clockPaused=false,clockRemaining=0,finalStep="off";
+    let lastVerdictUntil=0;
+    const criticalActions=new Map();
+    function envelope(type,payload){return {type,...payload,gameId:engineState.gameId,questionId:engineState.questionId,turnId:engineState.turnId,expiresAt:Date.now()+10000};}
+    function saveDraft(){if(currentQuestionKey)try{sessionStorage.setItem(`answer-draft-${roomCode}`,JSON.stringify({key:currentQuestionKey,text:remoteAnswerInput.value}));}catch(_){}}
+    function updateClock(data){if(!Number.isFinite(Number(data.remaining??data.seconds)))return;clockRemaining=Math.max(0,Number(data.remaining??data.seconds));clockPaused=!!data.paused;localDeadline=Date.now()+clockRemaining*1000;paintClock();}
+    function paintClock(){
+      const left=clockPaused?clockRemaining:Math.max(0,Math.ceil((localDeadline-Date.now())/1000));
+      const clock=document.getElementById("remoteClock");clock.textContent=localDeadline?(clockPaused?`${left}s · paused`:`${left}s`):"—";clock.classList.toggle("urgent",left>0&&left<=5);
+    }
+    function stage(text){document.getElementById("deliveryStage").textContent=text;}
+    function connectionLost(){
+      connectionBadge.textContent="● Reconnecting — progress preserved";connectionBadge.style.color="var(--danger)";
+      [submitAnswerBtn,passAnswerBtn,buzzerBtn,finalWagerBtn,finalAnswerBtn].forEach(b=>b.disabled=true);
+      document.getElementById("turnTitle").textContent="Reconnecting…";saveDraft();
+    }
+
     const answerArea    = document.getElementById("answerArea");
     const remoteAnswerInput = document.getElementById("remoteAnswerInput");
     const submitAnswerBtn = document.getElementById("submitAnswerBtn");
@@ -345,7 +364,9 @@
     const pendingCritical = new Map();
     function criticalSend(type,payload={}){
       const mid=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
-      const msg={type,...payload,_mid:mid};
+      const msg={...envelope(type,payload),_mid:mid};
+      criticalActions.set(mid,{type,questionId:engineState.questionId});
+      stage("Sending…");
       let tries=0;
       const attempt=()=>{
         tries+=1;
@@ -370,7 +391,7 @@
     }
 
     function sendToHost(msg) {
-      msg = {...msg, room: roomCode};
+      msg = {...(["answer","pass","buzz","select-clue","final-wager-submit","final-answer-submit","dd-wager-submit"].includes(msg.type) && !("gameId" in msg)?envelope(msg.type,msg):msg), room: roomCode};
       if(realtimeEnabled && realtimeChannel){
         if(!realtimeReady){ outboundQueue.push(msg); return; }
         realtimeChannel.send({type:"broadcast",event:"message",payload:msg});
@@ -384,30 +405,41 @@
     function escapeHtml(value){ return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
     function sameName(a,b){ return String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase(); }
     function setPlayState(data){
-      const questionKey = data?.activeKey || (data?.category && data?.clue ? `${data.category}::${data.clue}` : null);
+      const questionKey = data?.questionId || data?.activeKey || (data?.category && data?.clue ? `${data.category}::${data.clue}` : null);
       if(questionKey && questionKey !== currentQuestionKey){
         currentQuestionKey = questionKey;
         remoteAnswerInput.value = "";
         answerPending = false;
+        try{const draft=JSON.parse(sessionStorage.getItem(`answer-draft-${roomCode}`)||"null");if(draft?.key===questionKey)remoteAnswerInput.value=draft.text||"";}catch(_){}
       }
       const wasAnswering = answerArea.style.display === "block";
 
       const controller = data?.controller || "";
       const phase = data?.phase || (data?.mode==="steal" ? "STEAL_OPEN" : "CONTROL_ANSWER");
       const iControl = !!playerName && sameName(controller,playerName);
-      const stealOpen = phase==="STEAL_OPEN";
+      const eligible=!(data.attempted||[]).some(n=>sameName(n,playerName));
+      const stealOpen = phase==="STEAL_OPEN" && eligible;
       const answeringSteal = phase==="ANSWERING" && sameName(data?.firstBuzzer,playerName);
       const questionActive = data?.active !== false && !!(data?.activeKey || data?.clue || data?.category);
       const directTurn = questionActive && phase==="CONTROL_ANSWER" && iControl && !data?.firstBuzzer;
 
       if(phonePhase) phonePhase.textContent=String(phase||"SYNC").replaceAll("_"," ");
+      const myTurn=directTurn||answeringSteal;
+      const ddTurn=!!data.dailyDouble?.waiting && iControl;
+      document.getElementById("dailyDoubleMobile").style.display=ddTurn?"block":"none";
+      if(ddTurn){document.getElementById("ddMobileWager").max=String(data.dailyDouble.max);document.getElementById("ddMobileSubmit").disabled=!!data.paused;document.getElementById("turnTitle").textContent="Daily Double — enter your wager";answerArea.style.display="none";buzzerBtn.disabled=true;document.getElementById("buzzControls").style.display="none";return;}
+
+      document.getElementById("turnTitle").textContent=data.paused?"Game paused":myTurn?"Your turn — type an answer":stealOpen?"Steal available — buzz now":data.firstBuzzer?`${data.firstBuzzer} is answering`:`Waiting for ${controller||"the next question"}`;
+      document.getElementById("buzzControls").style.display=stealOpen?"block":"none";
+      if(data.paused){answerArea.style.display=myTurn?"block":"none";submitAnswerBtn.disabled=passAnswerBtn.disabled=buzzerBtn.disabled=true;return;}
+
       if(controller) controlBanner.textContent=`In control: ${controller}`;
 
       if(directTurn){
         buzzerBtn.disabled=true;
         answerArea.style.display="block";
-        submitAnswerBtn.disabled=answerPending;
-        passAnswerBtn.disabled=answerPending;
+        submitAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
+        passAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
         statusMsg.textContent="🎯 You're in control — answer directly. No buzz needed.";
         statusMsg.className="ok";
         if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
@@ -416,8 +448,8 @@
       if(answeringSteal){
         buzzerBtn.disabled=true;
         answerArea.style.display="block";
-        submitAnswerBtn.disabled=answerPending;
-        passAnswerBtn.disabled=answerPending;
+        submitAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
+        passAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
         statusMsg.textContent="✅ You won the steal buzzer — answer now.";
         statusMsg.className="ok";
         if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
@@ -489,31 +521,72 @@
     function vibrateControlCountdown(seconds, controller, phase){
       const s=Number(seconds);
       const iControl=!!playerName && sameName(controller,playerName);
-      if(!iControl || phase!=="CONTROL_ANSWER" || !Number.isFinite(s) || s>10 || s<=0) {
+      if(!iControl || !["CONTROL_ANSWER","ANSWERING"].includes(phase) || !Number.isFinite(s) || s>10 || s<=0) {
         if(s>10 || s<=0) lastHapticSecond=null;
         return;
       }
       if(lastHapticSecond===s) return;
       lastHapticSecond=s;
-      if(!("vibrate" in navigator)) return;
+      if(!("vibrate" in navigator) || !document.getElementById("hapticsEnabled").checked) return;
       // Escalate gently from 10–6s, then become more urgent at 5–1s.
       const pattern = s<=3 ? [180,70,180] : s<=5 ? [140,60,140] : [90];
       try{ navigator.vibrate(pattern); }catch(_){}
     }
 
+    function renderFinalSnapshot(data){
+      if(data.gameId!==engineState.gameId)return;
+      const changed=finalStep!==data.step;finalStep=data.step;
+      if(data.step==="off"){finalMobile.style.display="none";return;}
+      updateClock(data);answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";buzzerBtn.disabled=true;document.getElementById("buzzControls").style.display="none";mobileBoard.style.display="none";finalMobile.style.display="block";
+      finalCategoryMobile.textContent=`Final Jeopardy: ${data.category}`;
+      const wagered=(data.wagered||[]).some(n=>sameName(n,playerName)),answered=(data.answered||[]).some(n=>sameName(n,playerName));
+      finalWagerInput.max=String(Math.max(0,(data.scores||{})[playerName]||0));
+      finalWagerInput.style.display=data.step==="wagers"&&!wagered?"block":"none";
+      finalWagerBtn.style.display=data.step==="wagers"&&!wagered?"inline-block":"none";finalWagerBtn.disabled=wagered||data.paused;
+      finalAnswerInput.style.display=data.step==="answers"&&!answered?"block":"none";
+      finalAnswerBtn.style.display=data.step==="answers"&&!answered?"inline-block":"none";finalAnswerBtn.disabled=answered||data.paused;
+      finalClueMobile.textContent=data.step==="wagers"?"Secret wager. Missing wagers default to $0 when the countdown ends.":data.clue||"";
+      const text=data.step==="wagers"?(wagered?"Wager locked privately":"Enter your secret wager"):data.step==="answers"?(answered?"Answer locked — automatic judging next":"Enter your Final answer"):data.step==="reveal"?"Answers locked — automatic results in a moment":"Game complete";
+      document.getElementById("turnTitle").textContent=data.paused?"Final paused":text;finalStatusMobile.textContent=text;
+      if(changed){finalAnswerInput.value="";try{const draft=JSON.parse(sessionStorage.getItem(`final-draft-${roomCode}`)||"null");if(draft?.gameId===data.gameId){finalWagerInput.value=draft.wager||"";finalAnswerInput.value=draft.answer||"";}}catch(_){}}
+    }
     // ---- Listen for messages from host ----
     function handleHostMessage(data) {
       if (!data || !data.type) return;
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
+      if(!["gameplay-sync","timer-tick","action-result","transport-ack","heartbeat-ack","board-state","ready-state","scoreboard-update","final-state","join-ack","buzz-ack","answer-correct","answer-wrong","decision-override","game-reset"].includes(data.type) && ["answer","buzz","pass","heartbeat","sync-request","join","select-clue","final-wager-submit","final-answer-submit"].includes(data.type))return;
+      lastHostAt=Date.now();
+      if(data.type==="action-result" && sameName(data.player,playerName)){
+        if(data.gameId!==engineState.gameId)return;
+        const action=criticalActions.get(data.mid);criticalActions.delete(data.mid);
+        const timer=pendingCritical.get(data.mid);if(timer)clearTimeout(timer);pendingCritical.delete(data.mid);
+        if(!data.accepted){answerPending=false;stage(data.reason||"Not accepted — syncing your turn");sendToHost({type:"sync-request",player:playerName});return;}
+        const labels={correct:"Correct — score updated automatically",incorrect:"Incorrect — judged automatically",passed:"Passed",'buzz-won':"Buzzer won — enter your answer",'wager-locked':"Wager locked privately",'final-answer-locked':"Final answer received and locked"};
+        stage(labels[data.result]||"Received by game engine");
+        if(data.result==="correct"||data.result==="incorrect")lastVerdictUntil=Date.now()+4000;
+        return;
+      }
+      if(data.type==="decision-override"){
+        if(sameName(data.player,playerName))stage(`Host correction: ${data.correct?"correct":"incorrect"} (${data.delta>=0?"+":""}$${data.delta}). ${data.reason}`);
+        return;
+      }
+      if(data.type==="game-reset"){
+        engineState={gameId:data.gameId,questionId:null,turnId:null};currentQuestionKey=null;answerPending=false;finalStep="off";
+        finalMobile.style.display="none";answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";remoteAnswerInput.value="";localDeadline=0;paintClock();
+        try{sessionStorage.removeItem(`answer-draft-${roomCode}`);}catch(_){}stage("New game — waiting for the board");return;
+      }
+      if(data.type==="final-state"){renderFinalSnapshot(data);return;}
+
 
       if(data.type==="transport-ack" && data.mid){
         const timer=pendingCritical.get(data.mid); if(timer) clearTimeout(timer);
         pendingCritical.delete(data.mid);
-        if(deliveryStatus) deliveryStatus.textContent="✓ Delivered";
+        if(deliveryStatus) deliveryStatus.textContent="✓ Delivered to game";
+        if(criticalActions.has(data.mid) && Date.now()>lastVerdictUntil)stage("Received by game engine — processing");
         return;
       }
       if(data.type==="heartbeat-ack" && sameName(data.player,playerName)){
-        const latency=Math.max(0,Date.now()-Number(data.clientSentAt||Date.now()));
+        const latency=Math.max(0,Date.now()-Number(data.clientSentAt||Date.now()));lastLatency=latency;
         if(deliveryStatus) deliveryStatus.textContent=`Connected • ${latency} ms`;
         return;
       }
@@ -528,6 +601,11 @@
       }
 
       if(data.type === "gameplay-sync"){
+        if(engineState.gameId && data.gameId!==engineState.gameId){currentQuestionKey=null;answerPending=false;}
+        engineState={gameId:data.gameId,questionId:data.questionId,turnId:data.turnId};lastSnapshot=data;
+        connectionBadge.textContent="● Connected · automatic referee";connectionBadge.style.color="var(--ok)";
+        if(finalStep==="off")updateClock(data);
+
         if(data.active){
           mobileBoard.style.display="none";
           questionInfo.textContent = data.category
@@ -536,7 +614,8 @@
           setPlayState(data);
         } else {
           buzzerBtn.disabled=true;
-          answerArea.style.display="none";
+          answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";
+          if(finalStep==="off"){document.getElementById("turnTitle").textContent="Choose a question / wait for your turn";document.getElementById("buzzControls").style.display="none";}
         }
       }
 
@@ -545,11 +624,13 @@
         if(iControl){
           statusMsg.textContent="💡 "+String(data.hint||"Hint available");
           statusMsg.className="ok";
-          try{if(navigator.vibrate)navigator.vibrate([55,45,55]);}catch(_){}
+          try{if(navigator.vibrate && document.getElementById("hapticsEnabled").checked)navigator.vibrate([55,45,55]);}catch(_){}
         }
       }
 
       if(data.type === "timer-tick"){
+        if(data.questionId!==engineState.questionId)return;
+        updateClock(data);
         vibrateControlCountdown(data.seconds,data.controller,data.phase);
         if(sameName(data.controller,playerName) && data.phase==="CONTROL_ANSWER" && Number(data.seconds)<=10 && Number(data.seconds)>0){
           statusMsg.textContent=`⏱ ${Number(data.seconds)}s left — answer now!`;
@@ -594,15 +675,16 @@
         statusMsg.textContent=`✅ Correct! ${data.delta>=0?"+":""}$${Math.abs(Number(data.delta)||0)}`; statusMsg.className="ok"; answerArea.style.display="none";
       }
       if(data.type === "answer-wrong" && sameName(data.player,playerName)){
-        statusMsg.textContent="❌ Wrong. Steal opens in 7 seconds…"; statusMsg.className="err"; answerArea.style.display="none";
+        statusMsg.textContent="❌ Incorrect. The next steal opens automatically…"; statusMsg.className="err"; answerArea.style.display="none";
       }
       if(data.type === "answer-pass" && sameName(data.player,playerName)){
-        statusMsg.textContent="↪️ Passed. Steal opens in 7 seconds…"; statusMsg.className=""; answerArea.style.display="none";
+        statusMsg.textContent="↪️ Passed. The next steal opens automatically…"; statusMsg.className=""; answerArea.style.display="none";
       }
       if(data.type === "buzz-lock"){ finishMobileRace(data.player); buzzerBtn.disabled=true; if(!sameName(data.player,playerName)){statusMsg.textContent=`⚡ ${data.player} buzzed first.`;statusMsg.className="err";} }
       if(data.type === "selection-denied" && sameName(data.player,playerName)){ statusMsg.textContent=data.reason||"Selection not allowed."; statusMsg.className="err"; }
 
       if(data.type === "final-wager"){
+        if(finalStep==="wagers" || finalStep==="complete")return;
         mobileBoard.style.display="none"; buzzerBtn.disabled=true; answerArea.style.display="none"; finalMobile.style.display="block";
         finalCategoryMobile.textContent=`Final Jeopardy Category: ${data.category}`; finalClueMobile.textContent="Submit your wager. The clue will appear after all wagers are locked.";
         const score=(data.scores||{})[playerName]; if(Number.isFinite(score)) finalWagerInput.max=String(Math.max(0,score));
@@ -611,12 +693,13 @@
       }
       if(data.type === "final-wager-ack" && sameName(data.player,playerName)){ finalWagerBtn.disabled=true; finalWagerInput.style.display="none"; finalStatusMobile.textContent="✅ Wager locked. Waiting for the other players…"; }
       if(data.type === "final-answer"){
+        if(finalStep==="answers" || finalStep==="reveal" || finalStep==="complete")return;
         finalMobile.style.display="block"; finalCategoryMobile.textContent=`Final Jeopardy Category: ${data.category}`; finalClueMobile.textContent=data.clue||"";
         finalWagerInput.style.display="none"; finalWagerBtn.style.display="none"; finalAnswerInput.style.display="block"; finalAnswerBtn.style.display="inline-block"; finalAnswerBtn.disabled=false; finalStatusMobile.textContent="Enter your Final Jeopardy answer.";
       }
       if(data.type === "final-answer-ack" && sameName(data.player,playerName)){ finalAnswerBtn.disabled=true; finalAnswerInput.style.display="none"; finalStatusMobile.textContent="✅ Final answer submitted. Waiting for reveal…"; }
       if(data.type === "final-error" && sameName(data.player,playerName)){ finalStatusMobile.textContent=data.message||"Please check your entry."; }
-      if(data.type === "final-wait-reveal"){ finalStatusMobile.textContent="All answers are in. Waiting for the host to reveal results…"; }
+      if(data.type === "final-wait-reveal"){ finalStatusMobile.textContent="All answers are in. Automatic results reveal shortly…"; }
       if(data.type === "final-results"){ finalStatusMobile.textContent=`Accepted answer: ${data.accepted || "—"}`; renderLiveScoreboard(data,true); }
 
       if (data.type === "question-start") {
@@ -627,7 +710,7 @@
         questionInfo.textContent = data.category
           ? `Category: ${data.category} | ${formatClueValue(data.value)} — ${data.clue || ""}`
           : (data.clue || "Question active!");
-        setPlayState({...data,active:true,phase:data.phase || (data.mode==="steal"?"STEAL_OPEN":"CONTROL_ANSWER")});
+        setPlayState({...lastSnapshot,...data,active:true,phase:data.phase || (data.mode==="steal"?"STEAL_OPEN":"CONTROL_ANSWER")});
       }
 
 
@@ -708,7 +791,7 @@
           if(!playerName) loginError.textContent = "";
           if(playerName) sendToHost({type:"join",player:playerName});
           sendToHost({type:"sync-request",player:playerName||""});
-        }
+        }else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)){realtimeReady=false;connectionLost();}
       });
     } else if (bc) {
       bc.addEventListener("message", (e) => handleHostMessage(e.data));
@@ -760,6 +843,8 @@
       sendToHost({ type: "leave", player: playerName });
       try{localStorage.removeItem(`jeopardy-player-${roomCode}`)}catch(_){}
       playerName = null;
+      for(const timer of pendingCritical.values())clearTimeout(timer);pendingCritical.clear();outboundQueue=[];
+      try{sessionStorage.removeItem(`answer-draft-${roomCode}`);sessionStorage.removeItem(`final-draft-${roomCode}`);}catch(_){}
       buzzerSection.style.display = "none";
       loginSection.style.display = "block";
       nameInput.value = "";
@@ -774,7 +859,7 @@
     buzzerBtn.addEventListener("click", () => {
       if (!playerName || buzzerBtn.disabled) return;
       playBuzzSound();
-      try{ if(navigator.vibrate) navigator.vibrate(35); }catch(_){}
+      try{ if(navigator.vibrate && document.getElementById("hapticsEnabled").checked) navigator.vibrate(35); }catch(_){}
       buzzerBtn.classList.add("pressed");
       setTimeout(() => buzzerBtn.classList.remove("pressed"), 200);
       criticalSend("buzz",{player:playerName,actionId:nextActionId("buzz")});
@@ -796,6 +881,7 @@
       passAnswerBtn.disabled=true;
       statusMsg.textContent="Sending answer…";
       statusMsg.className="";
+      saveDraft();
       criticalSend("answer",{player:playerName,answer,actionId:nextActionId("answer")});
       statusMsg.textContent="Sending answer to host…";
       statusMsg.className="";
@@ -839,18 +925,23 @@
 
     // Restore contestant identity after an accidental refresh/reconnect.
     try{const remembered=localStorage.getItem(`jeopardy-player-${roomCode}`);if(remembered){nameInput.value=remembered;setTimeout(join,120)}}catch(_){}
-    window.addEventListener("offline",()=>{connectionBadge.textContent="● Offline";connectionBadge.style.color="var(--danger)"});
+    window.addEventListener("offline",connectionLost);
     window.addEventListener("online",()=>{connectionBadge.textContent="● Reconnecting…";connectionBadge.style.color="var(--gold2)";if(playerName)sendToHost({type:"join",player:playerName})});
 
-    // Reliable recovery if a phone misses a realtime question/buzz event.
-    setInterval(()=>{
-      if(playerName && realtimeReady) sendToHost({type:"sync-request",player:playerName});
-    },1000);
+    setInterval(()=>{paintClock();if(playerName && lastHostAt && Date.now()-lastHostAt>8000)connectionLost();},250);
 
     setInterval(()=>{
-      if(playerName && realtimeReady) sendToHost({type:"heartbeat",player:playerName,clientSentAt:Date.now()});
+      if(playerName && realtimeReady) sendToHost({type:"heartbeat",player:playerName,clientSentAt:Date.now(),latency:lastLatency});
     },3000);
 
+    document.getElementById("ddMobileSubmit").onclick=()=>{
+      const input=document.getElementById("ddMobileWager"),value=input.value.trim();
+      if(!/^\d+$/.test(value)||Number(value)>Number(input.max)){stage("Enter a valid whole-dollar Daily Double wager");return;}
+      document.getElementById("ddMobileSubmit").disabled=true;criticalSend("dd-wager-submit",{player:playerName,wager:value});
+    };
+    remoteAnswerInput.addEventListener("input",saveDraft);
+    [finalWagerInput,finalAnswerInput].forEach(el=>el.addEventListener("input",()=>{try{sessionStorage.setItem(`final-draft-${roomCode}`,JSON.stringify({gameId:engineState.gameId,wager:finalWagerInput.value,answer:finalAnswerInput.value}));}catch(_){}}));
+    for(const [id,cls]of [["largeText","large-text"],["highContrast","high-contrast"]])document.getElementById(id).addEventListener("change",e=>document.body.classList.toggle(cls,e.target.checked));
     // Touch events for better mobile responsiveness
     buzzerBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();

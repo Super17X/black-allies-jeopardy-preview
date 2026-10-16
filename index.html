@@ -1741,8 +1741,6 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         const minLen=Math.min(gc.length,ac.length);
         if(minLen>=8 && editDistance(gc,ac)<=1) return true;
         if(minLen>=13 && editDistance(gc,ac)<=2) return true;
-        // Accept a full distinctive multi-word answer with an extra first/last name or article.
-        if(a.includes(" ") && minLen>=7 && ((" "+g+" ").includes(" "+a+" ") || (" "+a+" ").includes(" "+g+" "))) return true;
         return false;
       });
     }
@@ -2704,6 +2702,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       ddWagerRow.style.display="none";
       ddBadge.style.display="inline-block";
       answerInput.focus();
+      startTimer(Number(qSecondsInput.value||45),"main");
       startQuestionBeat();
     });
 
@@ -2744,7 +2743,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         // Phones decide locally whether they are the player in control before vibrating.
         if ((state.timer.mode === "main" || state.timer.mode === "steal") && typeof broadcastToBuzzers === "function") {
           broadcastToBuzzers({
-            type:"timer-tick",
+            type:"timer-tick",gameId:engineGameId,questionId:engineQuestionId(),turnId:engineTurn,serverTime:Date.now(),paused:state.timer.paused,
             seconds:state.timer.remaining,
             mode:state.timer.mode,
             controller:state.players[state.controlIdx]?.name || "—",
@@ -2813,6 +2812,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         ? `${state.timer.remaining}s (paused)`
         : `${state.timer.remaining}s`;
       updateQuestionPauseButton();
+      broadcastGameplaySync();
       if (state.timer.paused) answerInput.focus();
     }
 
@@ -2950,6 +2950,9 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
       const correct = isCorrectAnswer(answerInput.value, clue.answers);
+      const judgingPlayer=state.players[state.controlIdx].name;
+      recordDecision(judgingPlayer,answerInput.value,correct,value);
+      broadcastToBuzzers({type:correct?"answer-correct":"answer-wrong",player:judgingPlayer,delta:correct?value:0,automatic:true});
 
 
       if (correct){
@@ -2973,7 +2976,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         if (nextStreak === 3) setTimeout(playStreakSound, 500);
         markUsed();
         state.players[state.controlIdx].score += value;
-        if(firstBuzzer) broadcastToBuzzers({type:"answer-correct",player:firstBuzzer,delta:value});
+
         closeClue();
         return;
       }
@@ -2981,7 +2984,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
       sfxWrong();
       MascotV4B.react("wrong",800);
-      if(firstBuzzer) broadcastToBuzzers({type:"answer-wrong",player:firstBuzzer});
+
       statInc(premiereStats.wrong,state.players[state.controlIdx].name);
       correctStreaks.set(state.players[state.controlIdx].name, 0);
       const wrongCountThisClue = state.clueAttempts + 1;
@@ -3037,34 +3040,44 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     let championshipPaused=false;
     const championshipPauseBtn=$("finalPauseBtn");
     championshipPauseBtn.addEventListener("click",()=>{championshipPaused=!championshipPaused;championshipPauseBtn.textContent=championshipPaused?"Resume Countdown":"Pause Countdown";});
-    function startFinalTimer(){
-      stopFinalTimer();
-      championshipPaused=false;
-      startFinalBeat();
-      let remaining = 120;
-      state.final.timerRemaining = remaining;
-      finalTimerEl.textContent = `${remaining}s`;
-
-
-      state.final.timerId = setInterval(()=>{
-        if(championshipPaused)return;
-        remaining -= 1;
-        state.final.timerRemaining = remaining;
-        finalTimerEl.textContent = `${remaining}s`;
-        if (remaining===30)MascotV4B.react("alert",950,"Thirty seconds! Lock in your answers!");
-        if (remaining <= 0){
-          stopFinalTimer();
-          sfxTimesUp();
-          for(let i=0;i<state.players.length;i++){
-            if(!state.final.wagers.has(i)) state.final.wagers.set(i,0);
-            if(!state.final.answers.has(i)) state.final.answers.set(i,"");
-          }
-          state.final.step="reveal";state.final.idx=0;renderFinalUI();broadcastToBuzzers({type:"final-wait-reveal"});
-        }
-      }, 1000);
+    function broadcastFinalState(){
+      broadcastToBuzzers({type:"final-state",gameId:engineGameId,step:state.final.step,category:finalJeopardy.category,
+        clue:state.final.step==="wagers"||state.final.step==="off"?"":finalJeopardy.text,
+        remaining:state.final.step==="wagers"?state.final.wagerRemaining||0:state.final.timerRemaining||0,
+        paused:championshipPaused,wagered:[...state.final.wagers.keys()].map(i=>state.players[i]?.name),
+        answered:[...state.final.answers.keys()].map(i=>state.players[i]?.name),
+        scores:Object.fromEntries(state.players.map(p=>[p.name,p.score])),serverTime:Date.now()});
     }
-
-
+    function startFinalTimer(){
+      if(state.final.step!=="answers")return;
+      stopFinalTimer();championshipPaused=false;startFinalBeat();
+      state.final.timerRemaining=120;finalTimerEl.textContent="120s";
+      state.final.timerId=setInterval(()=>{
+        if(championshipPaused)return;
+        state.final.timerRemaining-=1;finalTimerEl.textContent=state.final.timerRemaining+"s";broadcastFinalState();
+        if(state.final.timerRemaining<=0){
+          for(let i=0;i<state.players.length;i++)if(!state.final.answers.has(i))state.final.answers.set(i,"");
+          beginAutomaticReveal();
+        }
+      },1000);broadcastFinalState();
+    }
+    function beginFinalAnswers(){
+      if(state.final.step!=="wagers")return;
+      clearInterval(finalWagerTimer);finalWagerTimer=null;
+      for(let i=0;i<state.players.length;i++)if(!state.final.wagers.has(i))state.final.wagers.set(i,0);
+      state.final.step="answers";state.final.idx=0;renderFinalUI();startFinalTimer();
+      broadcastToBuzzers({type:"final-answer",category:finalJeopardy.category,clue:finalJeopardy.text});broadcastFinalState();
+    }
+    function beginAutomaticReveal(){
+      if(state.final.step!=="answers")return;
+      stopFinalTimer();state.final.step="reveal";state.final.idx=0;renderFinalUI();
+      $("finalStatusPanel").textContent="Automatic judging complete — results reveal in 4 seconds. Pause to review.";
+      let remaining=4;championshipPaused=false;
+      clearInterval(autoRevealTimer);autoRevealTimer=setInterval(()=>{
+        if(championshipPaused)return;
+        if(--remaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(state.final.step==="reveal")revealFinalResults();}
+      },1000);broadcastFinalState();
+    }
     finalStartTimerBtn.addEventListener("click", startFinalTimer);
     finalStopTimerBtn.addEventListener("click", ()=>stopFinalTimer());
 
@@ -3072,7 +3085,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function startFinalJeopardy(){
       if(state.final.step!=="off") return;
       MascotV4B.react("final",1200);
-      finalResultsApplied=false;
+      finalResultsApplied=false;finalJudgments.clear();
       stopGameClock();
       stopTimer();
       stopFinalTimer();
@@ -3093,14 +3106,15 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
       finalCategoryEl.textContent = finalJeopardy.category;
-      finalClueTextEl.textContent = finalJeopardy.text;
+      finalClueTextEl.textContent = "Clue hidden while wagers are submitted.";
       finalRevealBtn.disabled = true;
 
 
       renderScoreboard();
       renderFinalUI();
       broadcastToBuzzers({type:"final-wager",category:finalJeopardy.category,scores:Object.fromEntries(state.players.map(p=>[p.name,p.score]))});
-      startFinalTimer();
+      championshipPaused=false;state.final.wagerRemaining=30;finalTimerEl.textContent="30s";
+      clearInterval(finalWagerTimer);finalWagerTimer=setInterval(()=>{if(championshipPaused)return;state.final.wagerRemaining-=1;finalTimerEl.textContent=state.final.wagerRemaining+"s";broadcastFinalState();if(state.final.wagerRemaining<=0)beginFinalAnswers();},1000);broadcastFinalState();
     }
 
 
@@ -3111,6 +3125,9 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     });
 
     function renderFinalUI(){
+      finalClueTextEl.textContent=state.final.step==="wagers"?"Clue hidden while wagers are submitted.":finalJeopardy.text;
+      const waiting=state.players.findIndex((p,i)=>!(state.final.step==="wagers"?state.final.wagers:state.final.answers).has(i));
+      if(waiting>=0)state.final.idx=waiting;
       finalStepEl.textContent = state.final.step;
       $("finalClueText").classList.toggle("final-concealed",state.final.step==="wagers");
       $("finalStatusPanel").textContent=state.final.step==="wagers"?`Secret wagers locked: ${state.final.wagers.size} of ${state.players.length}`:state.final.step==="answers"?`Private answers received: ${state.final.answers.size} of ${state.players.length}`:"Contestants are locked in. Host controls the reveal.";
@@ -3162,13 +3179,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         state.final.wagers.set(idx, wager);
 
 
-        state.final.idx += 1;
-        if (state.final.idx >= state.players.length){
-          state.final.step="answers";
-          state.final.idx=0;
-          // The answer phase begins once, after the final wager is accepted.
-          if(!state.final.timerId) startFinalTimer();
-        }
+        if(state.final.wagers.size>=state.players.length)beginFinalAnswers();
+        else broadcastFinalState();
         flash("rgba(247,201,72,0.15)", 160, 0.95);
         renderFinalUI();
         return;
@@ -3189,11 +3201,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         }
         clearFinalError();
         state.final.answers.set(idx, ans);
-        state.final.idx += 1;
-        if (state.final.idx >= state.players.length){
-          state.final.step="reveal";
-          state.final.idx=0;
-        }
+        if(state.final.answers.size>=state.players.length)beginAutomaticReveal();
+        else broadcastFinalState();
         flash("rgba(247,201,72,0.15)", 160, 0.95);
         renderFinalUI();
       }
@@ -3201,7 +3210,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
     function revealFinalResults(){
-      if(finalResultsApplied) return;
+      if(finalResultsApplied || state.final.step!=="reveal") return;
+      clearInterval(autoRevealTimer);autoRevealTimer=null;
       finalResultsApplied=true;
       stopFinalTimer();
       const lines = [];
@@ -3215,7 +3225,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         const p = state.players[i];
         const wager = state.final.wagers.get(i) ?? 0;
         const ans = state.final.answers.get(i) ?? "";
-        const correct = isCorrectAnswer(ans, finalJeopardy.answers);
+        const correct = finalJudgments.has(i)?finalJudgments.get(i):isCorrectAnswer(ans, finalJeopardy.answers);
+        recordDecision(p.name,ans,correct,wager,null,"final");
 
 
         if (correct){ p.score += wager; sfxCorrect(); playMoneySound(); MascotV4B.react("correct",900,`${p.name} nailed Final Jeopardy!`); }
@@ -3257,8 +3268,9 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       $("summaryText").innerHTML += `<div class="spacer"></div><h3 style="color:var(--gold2)">Game Awards</h3><div class="mono tiny">🔥 Hot Streak: ${awardTop(premiereStats.maxStreak)} &nbsp; • &nbsp; ⚡ Fastest Finger: ${awardTop(premiereStats.buzzes)} &nbsp; • &nbsp; 🏴‍☠️ Master Thief: ${awardTop(premiereStats.steals)} &nbsp; • &nbsp; 💰 Daily Double: ${awardTop(premiereStats.dailyDoubleWins)}</div>`;
       MascotV4B.react("winner",2000);
       showAchievement(winners.length>1?`🏆 CO-WINNERS<br>${winners.map(p=>escapeHtml(p.name)).join(" & ")}`:`🏆 ${escapeHtml(winners[0]?.name||"")} WINS!`,4500);
-      broadcastToBuzzers({type:"final-results",accepted:finalJeopardy.answers[0], ...scoreboardPayload(true)});
+      broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
       const competitionWinners=getRankedPlayers().filter(p=>p.rank===1); if(competitionWinners.length===1) advanceTournamentWinner(competitionWinners[0].name);
+      state.final.step="complete";broadcastFinalState();
       localStorage.removeItem("black-allies-jeopardy-premiere-state");
     }
 
@@ -3280,13 +3292,14 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     }
     $("finalNextRevealBtn").addEventListener("click",championshipRevealNext);
     function championshipBeginReveal(){
+      clearInterval(autoRevealTimer);autoRevealTimer=null;
       if(state.final.step!=="reveal")return;
       championshipRevealIndex=0;
       $("finalNextRevealBtn").textContent="Reveal Next Contestant";
       $("finalNextRevealBtn").style.display="inline-flex";
       finalRevealBtn.disabled=true;
       $("finalRevealStage").textContent="The answers are locked. Let the reveal begin.";
-      $("finalStatusPanel").textContent="Host-controlled championship reveal";
+      $("finalStatusPanel").textContent="Automatic reveal · host review available";
       stopFinalTimer();
     }
     // Host-only reveal: never expose the answer while contestants are wagering or answering.
@@ -3311,6 +3324,10 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     // Reset (functional, works from any pane)
     // -----------------------------
     function resetGame(){
+      clearInterval(finalWagerTimer);clearInterval(autoRevealTimer);finalWagerTimer=autoRevealTimer=null;
+      engineGameId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);engineTurn=0;
+      actionResults.clear();decisionHistory.length=0;finalJudgments.clear();renderOverrides();finalResultsApplied=false;
+      broadcastToBuzzers({type:"game-reset",gameId:engineGameId});
       // stop timers
       stopTimer();
       stopGameClock();
@@ -3424,6 +3441,47 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     let clueTransactionId = 0;
     let answerTransactionLocked = false;
     let finalResultsApplied = false;
+    let engineGameId = Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    let engineTurn = 0;
+    const actionResults = new Map();
+    const decisionHistory = [];
+    let finalWagerTimer=null, autoRevealTimer=null;
+    const finalJudgments = new Map();
+    function engineQuestionId(){return state.activeKey ? `${engineGameId}:${clueTransactionId}:${state.activeKey}` : null;}
+    function actionResult(data,accepted,detail={}){
+      const result={type:"action-result",mid:data._mid,action:data.type,player:data.player,accepted,gameId:engineGameId,questionId:engineQuestionId(),...detail};
+      if(data._mid){actionResults.set(data._mid,result);if(actionResults.size>500)actionResults.delete(actionResults.keys().next().value);}
+      broadcastToBuzzers(result);return result;
+    }
+    function recordDecision(player,answer,correct,value,key=state.activeKey,kind="clue"){
+      const item={id:`decision-${Date.now()}-${decisionHistory.length}`,player,answer,correct,value,key,kind,at:Date.now(),overridden:false};
+      decisionHistory.push(item);if(decisionHistory.length>100)decisionHistory.shift();renderOverrides();return item;
+    }
+    function renderOverrides(){
+      const list=$("overrideDecision");if(!list)return;
+      const chosen=list.value;list.innerHTML=decisionHistory.slice().reverse().map(d=>`<option value="${d.id}">${escapeHtml(d.player)} · ${d.kind} · ${escapeHtml(d.answer||"(blank)")} · ${d.correct?"Correct":"Incorrect"}${d.overridden?" · overridden":""}</option>`).join("");
+      if([...list.options].some(o=>o.value===chosen))list.value=chosen;
+    }
+    function overrideDecision(correct){
+      const d=decisionHistory.find(d=>d.id===$("overrideDecision").value);const reason=$("overrideReason").value.trim();
+      if(!d)return toast("Choose a decision to override");if(!reason)return toast("Enter a reason for the correction");
+      const idx=playerIndexByName(d.player);if(idx<0||d.correct===correct)return;
+      // Final judgments are ±wager; regular incorrect attempts have no score penalty.
+      const delta=d.kind==="final"?(correct?2:-2)*d.value:(correct?1:-1)*d.value;
+      state.players[idx].score+=delta;d.correct=correct;d.overridden=true;d.reason=reason;
+      if(d.kind==="clue" && correct && state.activeKey===d.key){state.controlIdx=idx;markUsed();closeClue();}
+      if(d.kind==="final")finalJudgments.set(idx,correct);
+      proLog(`OVERRIDE: ${d.player} → ${correct?"correct":"incorrect"}; ${reason}`);
+      $("overrideReason").value="";renderOverrides();renderScoreboard();broadcastScoreboard(state.final.step==="complete");
+      broadcastToBuzzers({type:"decision-override",player:d.player,correct,delta,reason});
+      if(state.final.step==="complete")renderCorrectedFinal();
+    }
+    function renderCorrectedFinal(){
+      const ranked=getRankedPlayers(),winners=ranked.filter(p=>p.rank===1);
+      $("summaryText").innerHTML=`<div class="finalWinnerBanner">${winners.length>1?"Co-Winners":"Winner"}: ${winners.map(p=>escapeHtml(p.name)).join(" & ")}</div><p>Results updated by host override.</p>`+ranked.map(p=>`<div class="scoreRow"><span>${p.rank}. ${escapeHtml(p.name)}</span><strong>$${p.score}</strong></div>`).join("");
+      broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
+    }
+
     let proLastEvent = "—";
 
     function actionKey(data){
@@ -3451,6 +3509,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
     function setGamePhase(phase){
       state.phase = phase;
+      engineTurn+=1;
       state.phaseChangedAt = Date.now();
       const el=$("proPhase"); if(el) el.textContent=phase;
       broadcastGameplaySync();
@@ -3557,9 +3616,13 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
     // ---------- authoritative gameplay sync for phones ----------
     function gameplaySyncPayload(){
-      const active = !!state.activeKey && (buzzerActive || state.timer.mode === "main" || state.timer.mode === "steal");
+      const active = !!state.activeKey && (buzzerActive || state.timer.mode === "main" || state.timer.mode === "steal" || state.timer.mode==="dd-wager");
       return {
         type:"gameplay-sync",
+        gameId:engineGameId,questionId:engineQuestionId(),turnId:engineTurn,
+        remaining:state.timer.id?state.timer.remaining:0,paused:state.timer.paused,
+        dailyDouble:{waiting:!!state.activeKey && state.timer.mode==="dd-wager" && state.ddLockedWager===null,max:Math.max(state.board?.valueForRow(state.board.rows[0])||0,state.players[state.controlIdx]?.score||0)},
+        attempted:[...attemptedPlayersThisClue].map(i=>state.players[i]?.name).filter(Boolean),
         active,
         activeKey:state.activeKey || null,
         mode:state.timer.mode || null,
@@ -3577,7 +3640,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         serverTime:Date.now()
       };
     }
-    function broadcastGameplaySync(){ broadcastToBuzzers(gameplaySyncPayload()); }
+    function broadcastGameplaySync(){ broadcastToBuzzers(gameplaySyncPayload()); broadcastFinalState(); }
 
     // Remove stale phone sessions and reopen a steal if its winner disconnects.
     setInterval(()=>{
@@ -3608,6 +3671,13 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function handleBuzzerMessage(data) {
       if (!data || !data.type) return;
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
+      const mutations=["answer","pass","buzz","select-clue","final-wager-submit","final-answer-submit","dd-wager-submit"];
+      if(data._mid && actionResults.has(data._mid)){broadcastToBuzzers(actionResults.get(data._mid));return;}
+      if(mutations.includes(data.type)){
+        if(data.gameId!==engineGameId || (Number(data.expiresAt)||0)<Date.now()) {actionResult(data,false,{reason:"This command expired. Your phone will resync."});return;}
+        if(["answer","pass","buzz","dd-wager-submit"].includes(data.type) && (data.questionId!==engineQuestionId() || data.turnId!==engineTurn)) {actionResult(data,false,{reason:"That answer turn has ended."});return;}
+        if(["answer","pass"].includes(data.type) && state.timer.paused){actionResult(data,false,{reason:"The game is paused."});return;}
+      }
 
       if(data.player){ markDevice(data.player); touchPlayer(data.player); }
       if(data._mid){
@@ -3622,6 +3692,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       proLog(`${data.player||"phone"} → ${data.type}`);
 
       if(data.type==="heartbeat"){
+        if(Number.isFinite(data.latency))markDevice(data.player,{latency:data.latency});
         broadcastToBuzzers({type:"heartbeat-ack",player:data.player,clientSentAt:data.clientSentAt,serverTime:Date.now()});
         return;
       }
@@ -3636,6 +3707,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         broadcastGameplaySync();
         broadcastScoreboard(false);
         broadcastReadyState();
+        broadcastBoardState();
         return;
       }
 
@@ -3699,8 +3771,10 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         const stealWinner = state.phase==="ANSWERING" && firstBuzzer && sameName(data.player,firstBuzzer);
         const questionIsActive = !!state.activeKey && (state.timer.mode === "main" || state.timer.mode === "steal");
         if(!questionIsActive || (!directControllerTurn && !stealWinner)){
+          actionResult(data,false,{reason:"It is not your answer turn."});
           broadcastToBuzzers({type:"answer-denied",player:data.player}); return;
         }
+        actionResult(data,true,{result:"passed"});
         broadcastToBuzzers({type:"answer-pass",player:data.player});
         handlePass();
         return;
@@ -3709,47 +3783,55 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       if (data.type === "select-clue") {
         const controller=state.players[state.controlIdx]?.name;
         if(!controller || !sameName(data.player,controller) || boardPane.style.display === "none" || state.activeKey){
+          actionResult(data,false,{reason:"Selection is unavailable."});
           broadcastToBuzzers({type:"selection-denied",player:data.player,reason:"It is not your turn to select."});
           return;
         }
         const cat=String(data.category||"");
         const row=Number(data.row);
         if(!state.board.categories.includes(cat) || !state.board.rows.includes(row) || state.used.has(state.board.keyFor(cat,row))){
+          actionResult(data,false,{reason:"Selection is unavailable."});
           broadcastToBuzzers({type:"selection-denied",player:data.player,reason:"That clue is no longer available."});
           broadcastBoardState();
           return;
         }
         addBuzzerLog(`${data.player} selected ${cat} for $${state.board.valueForRow(row)}`);
+        actionResult(data,true,{result:"selected"});
         openClue(cat,row);
         return;
       }
 
+      if(data.type==="dd-wager-submit"){
+        const wager=parseWholeNumber(data.wager),max=Math.max(state.board.valueForRow(state.board.rows[0]),state.players[state.controlIdx]?.score||0);
+        if(state.phase!=="DD_WAGER" || state.timer.paused || !sameName(data.player,state.players[state.controlIdx]?.name) || wager===null || wager<0 || wager>max){actionResult(data,false,{reason:"Wager must be a whole number within your Daily Double limit, on your turn."});return;}
+        ddWagerInput.value=String(wager);actionResult(data,true,{result:"wager-locked"});ddWagerSubmitBtn.click();return;
+      }
+
       if (data.type === "final-wager-submit") {
         const idx=state.players.findIndex(p=>sameName(p.name,data.player));
-        if(state.final.step!=="wagers" || idx<0) return;
+        if(state.final.step!=="wagers" || idx<0 || state.final.wagers.has(idx)){actionResult(data,false,{reason:"Wager is already locked or wagering has ended."});return;}
         const wager=parseWholeNumber(data.wager);
         const max=Math.max(0,state.players[idx].score);
         if(wager===null || wager<0 || wager>max){
+          actionResult(data,false,{reason:"Check your wager amount."});
           broadcastToBuzzers({type:"final-error",player:data.player,message:`Wager must be $0 to $${max}.`}); return;
         }
         state.final.wagers.set(idx,wager);
+        actionResult(data,true,{result:"wager-locked"});
         broadcastToBuzzers({type:"final-wager-ack",player:data.player});
-        if(state.final.wagers.size>=state.players.length){
-          state.final.step="answers"; state.final.idx=0; renderFinalUI();
-          broadcastToBuzzers({type:"final-answer",category:finalJeopardy.category,clue:finalJeopardy.text});
-        }
+        if(state.final.wagers.size>=state.players.length)beginFinalAnswers();
+        else {renderFinalUI();broadcastFinalState();}
         return;
       }
 
       if (data.type === "final-answer-submit") {
         const idx=state.players.findIndex(p=>sameName(p.name,data.player));
-        if(state.final.step!=="answers" || idx<0 || state.final.answers.has(idx)) return;
+        if(state.final.step!=="answers" || idx<0 || state.final.answers.has(idx)){actionResult(data,false,{reason:"Final answer is already locked or time has ended."});return;}
         state.final.answers.set(idx,String(data.answer||"").trim());
+        actionResult(data,true,{result:"final-answer-locked"});
         broadcastToBuzzers({type:"final-answer-ack",player:data.player});
-        if(state.final.answers.size>=state.players.length){
-          state.final.step="reveal"; state.final.idx=0; renderFinalUI();
-          broadcastToBuzzers({type:"final-wait-reveal"});
-        }
+        if(state.final.answers.size>=state.players.length)beginAutomaticReveal();
+        else {renderFinalUI();broadcastFinalState();}
         return;
       }
 
@@ -3761,9 +3843,14 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         const submitted = String(data.answer||"").trim();
         const questionIsActive = !!state.activeKey && (state.timer.mode === "main" || state.timer.mode === "steal");
         if (!questionIsActive || (!directControllerTurn && !stealWinner) || !submitted) {
+          actionResult(data,false,{reason:"Answer missing or this turn has ended."});
           broadcastToBuzzers({type:"answer-denied",player:data.player});
           return;
         }
+        const [judgeCat,judgeRow]=state.activeKey.split("::");
+        const judgeClue=state.board.clueFor(judgeCat,Number(judgeRow));
+        const correct=isCorrectAnswer(submitted,judgeClue.answers);
+        actionResult(data,true,{result:correct?"correct":"incorrect"});
         answerInput.value=submitted;
         addBuzzerLog(`${data.player} submitted an answer`);
         broadcastToBuzzers({type:"answer-received",player:data.player});
@@ -3779,6 +3866,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           const reason = state.phase==="CONTROL_ANSWER"
             ? "The player in control answers directly. Buzzing opens only for steals."
             : "No steal is open right now.";
+          actionResult(data,false,{reason});
           broadcastToBuzzers({type:"buzz-denied",player:data.player,reason});
           broadcastGameplaySync();
           return;
@@ -3790,6 +3878,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           return;
         }
         if (attemptedPlayersThisClue.has(registration.index)) {
+          actionResult(data,false,{reason:"You already attempted this question."});
           broadcastToBuzzers({type:"buzz-denied",player:data.player,reason:"You already attempted this question."});
           return;
         }
@@ -3799,12 +3888,13 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           addBuzzerLog(`${data.player} buzzed — DENIED (${firstBuzzer} already in)`);
           return;
         }
+        actionResult(data,true,{result:"buzz-won"});
         stopTimer();
         // The first eligible buzzer receives a fresh, independent answer clock.
         startTimer(Number(stealSecondsInput.value||10),"steal",()=>{
           sfxTimesUp();
           const key=state.activeKey;
-          if(!key || state.phase!=="ANSWERING")return;
+          if(!key)return;
           const [cat,row]=key.split("::");
           continueAfterMiss(state.board.clueFor(cat,Number(row)),"Steal answer time expired.");
         }, registration.player);
@@ -3931,6 +4021,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function startTimerWithBuzzer(seconds, mode, onExpire, answeringPlayer = null) {
       // Call original first (it calls stopTimer internally to clear any previous timer)
       origStartTimer(seconds, mode, onExpire);
+      updateQuestionPauseButton();
       // Then activate buzzer AFTER, so question-end from stopTimer doesn't override us
       if (mode === "main" || mode === "steal") {
         firstBuzzer = answeringPlayer;
@@ -3943,7 +4034,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         const val = clueValueEl.textContent || "";
         broadcastToBuzzers({ type: "question-start", activeKey:state.activeKey,phase:state.phase,firstBuzzer:firstBuzzer || null, category: cat, value: val, clue: questionText.textContent || "", controller: state.players[state.controlIdx]?.name || "—", mode, racers:state.players.map(p=>p.name), scoringMode:state.gameMode });
         broadcastGameplaySync();
-      }
+      } else if(mode==="dd-wager"){firstBuzzer=null;buzzerActive=false;setGamePhase("DD_WAGER");}
     }
 
 
@@ -3972,6 +4063,10 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       try { if (waitingCountdownId) clearInterval(waitingCountdownId); } catch(_) {}
     });
 
+    const overridePanel=document.createElement("section");overridePanel.id="engineOverrides";
+    overridePanel.innerHTML='<h3>Automatic referee · host overrides</h3><p class="tiny">Answers and scores are judged automatically. Corrections are optional and logged.</p><select id="overrideDecision" aria-label="Decision to override"></select><input id="overrideReason" placeholder="Reason for correction" aria-label="Override reason"/><button class="btn" id="overrideCorrect">Mark correct</button><button class="btn" id="overrideIncorrect">Mark incorrect</button>';
+    $("hostDrawer").appendChild(overridePanel);
+    $("overrideCorrect").onclick=()=>overrideDecision(true);$("overrideIncorrect").onclick=()=>overrideDecision(false);
     // ===== Competition Suite =====
     const teamNames=["Team Gold","Team Legacy","Team Unity","Team Victory"];
     function assignTeams(){
