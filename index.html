@@ -3086,7 +3086,8 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         remaining:state.final.step==="wagers"?state.final.wagerRemaining||0:state.final.timerRemaining||0,
         paused:championshipPaused,wagered:[...state.final.wagers.keys()].map(i=>state.players[i]?.name),
         answered:[...state.final.answers.keys()].map(i=>state.players[i]?.name),
-        scores:Object.fromEntries(state.players.map(p=>[p.name,p.score])),serverTime:Date.now()});
+        scores:Object.fromEntries(state.players.map(p=>[p.name,p.score])),answerRevealed:finalAnswerRevealed,acceptedAnswer:finalAnswerRevealed && ["reveal","complete"].includes(state.final.step)?finalJeopardy.answers[0]:null,serverTime:Date.now()});
+      updateFinalAnswerControls();
     }
     function startFinalTimer(){
       if(state.final.step!=="answers")return;
@@ -3125,7 +3126,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function startFinalJeopardy(){
       if(state.final.step!=="off") return;
       MascotV4B.react("final",1200);
-      finalResultsApplied=false;finalJudgments.clear();
+      finalResultsApplied=false;finalJudgments.clear();finalAnswerRevealed=false;renderFinalAnswerBanner();
       stopGameClock();
       stopTimer();
       stopFinalTimer();
@@ -3310,7 +3311,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       showAchievement(winners.length>1?`🏆 CO-WINNERS<br>${winners.map(p=>escapeHtml(p.name)).join(" & ")}`:`🏆 ${escapeHtml(winners[0]?.name||"")} WINS!`,4500);
       broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
       const competitionWinners=getRankedPlayers().filter(p=>p.rank===1); if(competitionWinners.length===1) advanceTournamentWinner(competitionWinners[0].name);
-      state.final.step="complete";broadcastFinalState();
+      state.final.step="complete";renderFinalAnswerBanner();broadcastFinalState();
       localStorage.removeItem("black-allies-jeopardy-premiere-state");
     }
 
@@ -3342,7 +3343,27 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       $("finalStatusPanel").textContent="Automatic reveal · host review available";
       stopFinalTimer();
     }
-    // Host-only reveal: never expose the answer while contestants are wagering or answering.
+    function updateFinalAnswerControls(){
+      const allowed=["reveal","complete"].includes(state.final.step);
+      for(const id of ["hostFinalAnswerRevealBtn","hostDrawerFinalAnswerBtn"]){const b=$(id);if(b){b.disabled=!allowed;b.title=allowed?"Show the accepted Final answer to everyone":"Available after Final answers are locked";}}
+      const b=$("hostFinalAnswerRevealBtn");if(b)b.style.display=state.final.step!=="off"?"inline-flex":"none";
+    }
+    function renderFinalAnswerBanner(){
+      let panel=$("finalAnswerRevealBanner");
+      if(!panel){panel=document.createElement("div");panel.id="finalAnswerRevealBanner";panel.setAttribute("role","status");panel.setAttribute("aria-live","polite");panel.style.cssText="padding:24px;margin:18px auto;border:2px solid #f7c948;border-radius:16px;background:#102448;color:#fff1b8;font-size:clamp(22px,3vw,40px);font-weight:800;text-align:center;max-width:1000px";}
+      const visible=finalAnswerRevealed && ["reveal","complete"].includes(state.final.step);
+      panel.style.display=visible?"block":"none";
+      panel.textContent=visible?"Final Jeopardy Answer: "+finalJeopardy.answers[0]:"";
+      if(state.final.step==="complete")$("summaryText").prepend(panel);else $("finalRevealStage").before(panel);
+    }
+    function revealCorrectFinalAnswer(){
+      if(!["reveal","complete"].includes(state.final.step))return;
+      finalAnswerRevealed=true;renderFinalAnswerBanner();
+      broadcastToBuzzers({type:"final-answer-revealed",answer:finalJeopardy.answers[0]});
+      broadcastFinalState();proLog("Host revealed the accepted Final Jeopardy answer");
+    }
+    // Reveal is available after all answers lock, including after automatic results.
+
     const hostFinalAnswerBtn=document.createElement("button");
     hostFinalAnswerBtn.id="hostFinalAnswerRevealBtn";
     hostFinalAnswerBtn.type="button";
@@ -3350,14 +3371,12 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     hostFinalAnswerBtn.textContent="Reveal Correct Final Answer";
     hostFinalAnswerBtn.style.display="none";
     finalRevealBtn.insertAdjacentElement("afterend",hostFinalAnswerBtn);
-    hostFinalAnswerBtn.addEventListener("click",()=>{
-      if(state.final.step!=="reveal" || !finalResultsApplied && !finalRevealBtn.disabled){
-        $("finalError").textContent="Finish collecting answers and begin the host reveal first.";
-        return;
-      }
-      $("finalRevealStage").textContent="Correct answer: "+finalJeopardy.answers[0];
-    });
-    finalRevealBtn.addEventListener("click",()=>{championshipBeginReveal();hostFinalAnswerBtn.style.display=state.final.step==="reveal"?"inline-flex":"none";});
+    hostFinalAnswerBtn.addEventListener("click",revealCorrectFinalAnswer);
+    const drawerFinalAnswerBtn=document.createElement("button");drawerFinalAnswerBtn.id="hostDrawerFinalAnswerBtn";drawerFinalAnswerBtn.type="button";drawerFinalAnswerBtn.className="btn";drawerFinalAnswerBtn.textContent="Reveal Final Jeopardy Answer";drawerFinalAnswerBtn.disabled=true;
+    drawerFinalAnswerBtn.addEventListener("click",revealCorrectFinalAnswer);$("hostDrawer").appendChild(drawerFinalAnswerBtn);
+    finalRevealBtn.addEventListener("click",championshipBeginReveal);
+    updateFinalAnswerControls();
+
 
 
     // -----------------------------
@@ -3366,7 +3385,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function resetGame(){
       clearInterval(finalWagerTimer);clearInterval(autoRevealTimer);finalWagerTimer=autoRevealTimer=null;
       engineGameId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);engineTurn=0;
-      actionResults.clear();decisionHistory.length=0;finalJudgments.clear();renderOverrides();finalResultsApplied=false;
+      actionResults.clear();decisionHistory.length=0;finalJudgments.clear();renderOverrides();finalResultsApplied=false;finalAnswerRevealed=false;renderFinalAnswerBanner();updateFinalAnswerControls();
       broadcastToBuzzers({type:"game-reset",gameId:engineGameId});
       // stop timers
       stopTimer();
@@ -3387,6 +3406,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
 
       state.final = { step:"off", idx:0, wagers:new Map(), answers:new Map(), timerId:null, timerRemaining:0 };
+      updateFinalAnswerControls();renderFinalAnswerBanner();
 
 
       // reset scores
@@ -3486,6 +3506,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     const actionResults = new Map();
     const decisionHistory = [];
     let finalWagerTimer=null, autoRevealTimer=null;
+    let finalAnswerRevealed=false;
     const finalJudgments = new Map();
     function engineQuestionId(){return state.activeKey ? `${engineGameId}:${clueTransactionId}:${state.activeKey}` : null;}
     function actionResult(data,accepted,detail={}){
@@ -3519,6 +3540,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function renderCorrectedFinal(){
       const ranked=getRankedPlayers(),winners=ranked.filter(p=>p.rank===1);
       $("summaryText").innerHTML=`<div class="finalWinnerBanner">${winners.length>1?"Co-Winners":"Winner"}: ${winners.map(p=>escapeHtml(p.name)).join(" & ")}</div><p>Results updated by host override.</p>`+ranked.map(p=>`<div class="scoreRow"><span>${p.rank}. ${escapeHtml(p.name)}</span><strong>$${p.score}</strong></div>`).join("");
+      renderFinalAnswerBanner();
       broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
     }
 

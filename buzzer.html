@@ -223,7 +223,7 @@
     </div>
     <div id="finalMobile">
       <div id="finalCategoryMobile" style="color:var(--gold2);font-weight:800"></div>
-      <div id="finalClueMobile"></div>
+      <div id="finalClueMobile"></div><div id="finalAnswerRevealed" role="status" aria-live="polite" style="display:none;border:1px solid var(--gold2);padding:16px;border-radius:12px;color:var(--gold2);font-size:1.2rem;font-weight:800"></div>
       <input id="finalWagerInput" type="number" min="0" step="1" placeholder="Final Jeopardy wager" />
       <button class="btn ok" id="finalWagerBtn">Submit Wager</button>
       <input id="finalAnswerInput" placeholder="Final Jeopardy answer" autocomplete="off" spellcheck="false" style="display:none" />
@@ -536,6 +536,9 @@
     function renderFinalSnapshot(data){
       if(data.gameId!==engineState.gameId)return;
       const changed=finalStep!==data.step;finalStep=data.step;
+      const answerBanner=document.getElementById("finalAnswerRevealed");
+      answerBanner.style.display=data.answerRevealed&&data.acceptedAnswer?"block":"none";
+      answerBanner.textContent=data.answerRevealed&&data.acceptedAnswer?"Final Jeopardy Answer: "+data.acceptedAnswer:"";
       if(data.step==="off"){finalMobile.style.display="none";return;}
       updateClock(data);answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";buzzerBtn.disabled=true;document.getElementById("buzzControls").style.display="none";mobileBoard.style.display="none";finalMobile.style.display="block";
       finalCategoryMobile.textContent=`Final Jeopardy: ${data.category}`;
@@ -571,9 +574,12 @@
         return;
       }
       if(data.type==="game-reset"){
-        engineState={gameId:data.gameId,questionId:null,turnId:null};currentQuestionKey=null;answerPending=false;finalStep="off";
+        engineState={gameId:data.gameId,questionId:null,turnId:null};currentQuestionKey=null;answerPending=false;finalStep="off";document.getElementById("finalAnswerRevealed").style.display="none";
         finalMobile.style.display="none";answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";remoteAnswerInput.value="";localDeadline=0;paintClock();
         try{sessionStorage.removeItem(`answer-draft-${roomCode}`);}catch(_){}stage("New game — waiting for the board");return;
+      }
+      if(data.type==="final-answer-revealed"){
+        const answer=document.getElementById("finalAnswerRevealed");answer.style.display="block";answer.textContent="Final Jeopardy Answer: "+String(data.answer||"");return;
       }
       if(data.type==="final-state"){renderFinalSnapshot(data);return;}
 
