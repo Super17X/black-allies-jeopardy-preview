@@ -867,10 +867,11 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 /* Keep every category and question inside one responsive game frame. */
 #boardPane{width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;max-height:none!important;margin:12px 0 100px!important;box-sizing:border-box!important;overflow:visible!important;padding:clamp(10px,1.1vw,20px)!important}
 #boardViewport{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;padding:3px;box-sizing:border-box;scrollbar-width:auto;scrollbar-color:#d6ad42 #071730;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
-#boardGrid{width:100%;min-width:calc(var(--board-columns,8)*120px + (var(--board-columns,8) - 1)*7px);gap:7px!important;box-sizing:border-box;overflow:visible!important;align-items:stretch}
+#boardGrid{width:100%;min-width:calc(var(--board-columns,8)*104px + (var(--board-columns,8) - 1)*7px);gap:7px!important;box-sizing:border-box;overflow:visible!important;align-items:stretch}
 #boardGrid>.cat,#boardGrid>.cell{min-width:0!important;width:100%;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;white-space:normal}
 #boardGrid>.cat{height:auto;min-height:76px;line-height:1.18;padding:10px 6px;font-size:clamp(.78rem,1.05vw,1.1rem)}
 #boardGrid>.cell{min-height:52px;padding:9px 5px}
+body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!important;right:auto!important;bottom:auto!important;float:right;clear:both;width:100px!important;height:170px!important;margin:0 16px 90px auto!important}
 #boardScrollHint{color:#e1c988;font-size:.85rem;margin:8px 3px 0;text-align:center}
 #boardViewport:focus-visible{outline:2px solid #ffe18a;outline-offset:2px}
 @media(min-width:1500px){#boardGrid>.cat{min-height:88px}}
