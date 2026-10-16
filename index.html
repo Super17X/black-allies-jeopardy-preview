@@ -953,6 +953,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     <div class="row">
       <label for="categoryCount" class="mono tiny">Categories:</label>
       <input id="categoryCount" type="number" min="3" max="10" value="8" style="width:80px" aria-label="Number of categories" />
+      <label class="mono tiny" for="includeUrbanSlang"><input id="includeUrbanSlang" type="checkbox" /> Add Urban Slang (optional extra category)</label>
       <label for="qPerCat" class="mono tiny">Questions / category:</label>
       <input id="qPerCat" type="number" min="5" max="12" value="10" style="width:90px" aria-label="Questions per category" />
       <label for="startValue" class="mono tiny">Start value:</label>
@@ -1420,6 +1421,34 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     });
 
 
+    const URBAN_SLANG_CATEGORY = "Urban Slang";
+    const urbanSlangBank = [
+      ["What slang phrase means 'no lie' or 'I am telling the truth'?", ["no cap", "nocap"]],
+      ["In the phrase 'that's cap,' what does 'cap' mean?", ["a lie", "lie", "lying", "false", "not true"]],
+      ["What one-word response can mean 'okay,' 'agreed,' or 'you can count on it'?", ["bet"]],
+      ["What three-letter slang word describes an exciting, high-energy party?", ["lit"]],
+      ["To show off your money, achievements, or possessions is to do what four-letter action?", ["flex", "a flex", "flexing"]],
+      ["What slang term means quietly, subtly, or without drawing much attention?", ["low key", "lowkey", "low-key"]],
+      ["The opposite of 'low-key,' what term means openly or very obviously?", ["high key", "highkey", "high-key"]],
+      ["What term describes suddenly stopping all communication with someone without explaining why?", ["ghosting", "ghost", "to ghost"]],
+      ["What phrase uses a hot drink to mean 'share the gossip or interesting details'?", ["spill the tea", "spill tea", "spilling the tea"]],
+      ["What does GOAT stand for when praising an outstanding athlete or performer?", ["greatest of all time", "the greatest of all time"]],
+      ["What five-letter slang word describes behavior that is overly dramatic or doing too much?", ["extra"]],
+      ["What four-letter word describes the mood, atmosphere, or energy of a person or place?", ["vibe", "vibes"]],
+      ["What four-letter verb can mean to perform exceptionally well or look amazing?", ["slay", "slaying"]],
+      ["What three-letter shortening of 'suspicious' describes something questionable?", ["sus"]],
+      ["What slang word associated with flames describes an excellent song, outfit, or performance?", ["fire", "straight fire"]],
+      ["What slang word compares stylish clothing and accessories to drops of liquid?", ["drip", "the drip"]],
+      ["What slang adjective, also a taste, describes someone who is bitter or annoyed?", ["salty"]],
+      ["What two-word phrase means to express a subtle insult or indirect criticism?", ["throw shade", "throwing shade"]],
+      ["What five-letter word means social influence or popularity, especially online?", ["clout"]],
+      ["What two-word phrase means exactly right, polished, or well executed?", ["on point", "on-point"]],
+      ["What three-letter shortening of 'family' is also used to address close friends?", ["fam"]],
+      ["What slang word for proof or evidence is also the name of documents you get after a purchase?", ["receipts", "receipt", "the receipts"]],
+      ["Complete the praise for someone who executed a task perfectly: 'They understood the ____.'", ["assignment", "the assignment"]],
+      ["What two-word phrase suggests taking a break from the internet and reconnecting with the outside world?", ["touch grass", "touching grass"]]
+    ];
+
     // Premium expansion bank: additional clues are merged into the featured categories.
     // Combined with persistent rotation below, these reduce repeats for returning players.
     const PREMIUM_BANK_EXPANSION = {
@@ -1563,6 +1592,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     const stealSecondsInput = $("stealSeconds");
     const finalSecondsInput = $("finalSeconds");
     const categoryCountInput = $("categoryCount");
+    $("includeUrbanSlang").addEventListener("change",renderLobbySettingsSummary);
     const qPerCatInput = $("qPerCat");
     const startValueInput = $("startValue");
     const valueStepInput = $("valueStep");
@@ -2114,7 +2144,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function premiumJoinUrl(){const url=new URL("buzzer.html",location.href);url.search="";url.hash="";url.searchParams.set("room",roomCode);return url;}
     function premiumRenderQr(){const target=$("premiumLobbyQr");if(!target)return;const url=premiumJoinUrl();$("premiumLobbyCode").textContent=roomCode;const link=$("premiumLobbyLink");link.href=url.href;link.textContent="Open Player Join Link";target.innerHTML="";try{if(typeof window.qrcode!=="function")throw Error("QR library unavailable");const qr=window.qrcode(0,"L");qr.addData(url.href,"Byte");qr.make();target.innerHTML=qr.createSvgTag(5,4);const svg=target.querySelector("svg");if(svg){svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("preserveAspectRatio","xMidYMid meet");svg.setAttribute("aria-hidden","true");}}catch(err){target.textContent="Use the join link below";console.warn("Lobby QR unavailable",err)}}
     $("premiumCopyJoin").addEventListener("click",async()=>{const url=premiumJoinUrl().href;try{await navigator.clipboard.writeText(url);$("premiumCopyJoin").textContent="✓ Link Copied";setTimeout(()=>$("premiumCopyJoin").textContent="Copy Join Link",1800)}catch(e){$("premiumLobbyLink").textContent=url;premiumActivity("Copy unavailable — use the player join link")}});
-    function renderLobbySettingsSummary(){const rows=[["Player-in-control answer time",controlAnswerSeconds()+"s (max 30)"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
+    function renderLobbySettingsSummary(){const rows=[["Urban Slang",$("includeUrbanSlang").checked?"On · extra category":"Off"],["Player-in-control answer time",controlAnswerSeconds()+"s (max 30)"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
     $("lobbyEditSettings").addEventListener("click",()=>backToLobby());
     function renderWaitingRoom(){
       renderLobbySettingsSummary();
@@ -2283,7 +2313,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       const startValue = clamp(Number(startValueInput.value || 200), 100, 5000);
       const step = clamp(Number(valueStepInput.value || 200), 50, 5000);
       const round = Number(roundSelect.value) === 2 ? 2 : 1;
-      return { categoryCount, qPerCat, startValue, step, round };
+      return { categoryCount, qPerCat, startValue, step, round, includeUrbanSlang:!!$("includeUrbanSlang").checked };
     }
 
 
@@ -2329,6 +2359,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         : { ...seededBankRound1 };
 
 
+      if(cfg.includeUrbanSlang)baseBank[URBAN_SLANG_CATEGORY]=urbanSlangBank;
       const eligible = baseCategories.filter(cat => Array.isArray(baseBank[cat]) && baseBank[cat].length >= cfg.qPerCat);
       if (!eligible.includes(mustIncludeBH)) {
         const available = Array.isArray(baseBank[mustIncludeBH]) ? baseBank[mustIncludeBH].length : 0;
@@ -2355,6 +2386,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
       }
 
 
+      if(cfg.includeUrbanSlang)cats.push(URBAN_SLANG_CATEGORY);
       const rows = Array.from({length: cfg.qPerCat}, (_,i)=>i+1);
       const clueMap = new Map();
 
