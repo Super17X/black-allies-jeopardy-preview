@@ -3551,7 +3551,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
     function broadcastActiveQuestion(){
       if(!state.activeKey || !buzzerActive) return;
-      broadcastToBuzzers({type:"question-start",category:clueCatEl.textContent||"",value:clueValueEl.textContent||"",clue:questionText.textContent||"",controller:state.players[state.controlIdx]?.name||"—",mode:state.timer.mode||"main",racers:state.players.map(p=>p.name),scoringMode:state.gameMode});
+      broadcastToBuzzers({type:"question-start",activeKey:state.activeKey,phase:state.phase,firstBuzzer:firstBuzzer || null,category:clueCatEl.textContent||"",value:clueValueEl.textContent||"",clue:questionText.textContent||"",controller:state.players[state.controlIdx]?.name||"—",mode:state.timer.mode||"main",racers:state.players.map(p=>p.name),scoringMode:state.gameMode});
       if(firstBuzzer) broadcastToBuzzers({type:"buzz-lock",player:firstBuzzer});
     }
 
@@ -3573,7 +3573,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         phase:state.phase,
         phaseChangedAt:state.phaseChangedAt,
         buzzAllowed:state.phase==="BUZZ_OPEN" || state.phase==="STEAL_OPEN",
-        answerAllowed:state.phase==="ANSWERING",
+        answerAllowed:state.phase==="CONTROL_ANSWER" || state.phase==="ANSWERING",
         serverTime:Date.now()
       };
     }
@@ -3799,9 +3799,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           addBuzzerLog(`${data.player} buzzed — DENIED (${firstBuzzer} already in)`);
           return;
         }
-        firstBuzzer = registration.player;
         stopTimer();
-        setGamePhase("ANSWERING");
         // The first eligible buzzer receives a fresh, independent answer clock.
         startTimer(Number(stealSecondsInput.value||10),"steal",()=>{
           sfxTimesUp();
@@ -3809,7 +3807,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
           if(!key || state.phase!=="ANSWERING")return;
           const [cat,row]=key.split("::");
           continueAfterMiss(state.board.clueFor(cat,Number(row)),"Steal answer time expired.");
-        });
+        }, registration.player);
         statInc(premiereStats.buzzes,registration.player);
         broadcastToBuzzers({type:"buzz-lock",player:registration.player,at:Date.now(),racers:state.players.map(p=>p.name)});
         showHostRaceWinner(registration.player);
@@ -3930,20 +3928,20 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     // ---------- hook into openClue / closeClue to activate/deactivate buzzer ----------
     // Wrap startTimer to detect question open and notify buzzer pages
     const origStartTimer = startTimer;
-    function startTimerWithBuzzer(seconds, mode, onExpire) {
+    function startTimerWithBuzzer(seconds, mode, onExpire, answeringPlayer = null) {
       // Call original first (it calls stopTimer internally to clear any previous timer)
       origStartTimer(seconds, mode, onExpire);
       // Then activate buzzer AFTER, so question-end from stopTimer doesn't override us
       if (mode === "main" || mode === "steal") {
-        firstBuzzer = null;
+        firstBuzzer = answeringPlayer;
         buzzerActive = true;
-        setGamePhase(mode==="steal" ? "STEAL_OPEN" : "CONTROL_ANSWER");
+        setGamePhase(answeringPlayer ? "ANSWERING" : mode==="steal" ? "STEAL_OPEN" : "CONTROL_ANSWER");
         buzzStatusEl.textContent = mode==="steal"
           ? "Steal open — waiting for buzz-in…"
           : `${state.players[state.controlIdx]?.name || "Player"} is in control — answer directly (no buzz required).`;
         const cat = clueCatEl.textContent || "";
         const val = clueValueEl.textContent || "";
-        broadcastToBuzzers({ type: "question-start", category: cat, value: val, clue: questionText.textContent || "", controller: state.players[state.controlIdx]?.name || "—", mode, racers:state.players.map(p=>p.name), scoringMode:state.gameMode });
+        broadcastToBuzzers({ type: "question-start", activeKey:state.activeKey,phase:state.phase,firstBuzzer:firstBuzzer || null, category: cat, value: val, clue: questionText.textContent || "", controller: state.players[state.controlIdx]?.name || "—", mode, racers:state.players.map(p=>p.name), scoringMode:state.gameMode });
         broadcastGameplaySync();
       }
     }
@@ -4011,7 +4009,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
     function showHostRaceWinner(name){document.querySelectorAll("#buzzerRaceHost .race-lane").forEach(l=>{const win=sameName(l.dataset.racer,name);const r=l.querySelector(".race-runner");r.style.width=win?"100%":"45%";r.classList.toggle("win",win)});setTimeout(()=>$("buzzerRaceHost")?.classList.remove("show"),2200)}
     $("gameMode").addEventListener("change",()=>{state.gameMode=$("gameMode").value;if(state.gameMode==="team")assignTeams();else{state.teams.clear();renderTeamPreview();renderScoreboard();broadcastScoreboard(false)}});
     $("teamCount").addEventListener("change",()=>{if($("gameMode").value==="team")assignTeams()}); $("assignTeamsBtn").onclick=assignTeams; $("createTournamentBtn").onclick=createTournament;
-    const competitionOrigStartTimer=startTimer; startTimer=function(seconds,mode,onExpire){if(mode==="main"||mode==="steal")showHostRaceStart(state.players.map(p=>p.name));return competitionOrigStartTimer(seconds,mode,onExpire)};
+    const competitionOrigStartTimer=startTimer; startTimer=function(seconds,mode,onExpire,answeringPlayer){if(mode==="main"||mode==="steal")showHostRaceStart(state.players.map(p=>p.name));return competitionOrigStartTimer(seconds,mode,onExpire,answeringPlayer)};
     const competitionOrigFinal=startFinalJeopardy; startFinalJeopardy=function(){state.gameMode=$("gameMode").value;if(state.gameMode==="team"&&!state.teams.size)assignTeams();return competitionOrigFinal.apply(this,arguments)};
     loadTournament();
 

@@ -178,7 +178,7 @@
 
 
   <h1>Black &amp; Allies Jeopardy</h1>
-  <p class="sub">Join the game and hit the buzzer to answer!</p>
+  <p class="sub">Join the game, type your answers, and buzz for steals!</p>
   <p id="roomLabel" class="sub" style="color:var(--gold2);margin-top:-8px">Room: —</p>
 
 
@@ -210,7 +210,8 @@
       <button id="buzzerBtn" disabled>BUZZ!</button>
       <div class="sub" style="margin:10px 0 0">In control? Answer directly. The buzzer activates for steals.</div>
     </div>
-    <div id="statusMsg"></div>
+    <div id="phonePhase" class="sub" aria-live="polite">Waiting for host</div>
+    <div id="statusMsg" role="status" aria-live="polite"></div>
     <div id="deliveryStatus" aria-live="polite"></div>
     <button class="btn" id="testBuzzerBtn" type="button">Test My Buzzer</button>
     <div id="answerArea">
@@ -264,6 +265,9 @@
     const playerLabel   = document.getElementById("playerLabel");
     const questionInfo  = document.getElementById("questionInfo");
     const statusMsg     = document.getElementById("statusMsg");
+    const phonePhase = document.getElementById("phonePhase");
+    let currentQuestionKey = null;
+    let answerPending = false;
     const answerArea    = document.getElementById("answerArea");
     const remoteAnswerInput = document.getElementById("remoteAnswerInput");
     const submitAnswerBtn = document.getElementById("submitAnswerBtn");
@@ -354,6 +358,7 @@
           const timer=setTimeout(()=>{
             if(pendingCritical.has(mid)){
               pendingCritical.delete(mid);
+              if(type==="answer" || type==="pass"){ answerPending=false; submitAnswerBtn.disabled=false; passAnswerBtn.disabled=false; }
               if(deliveryStatus) deliveryStatus.textContent=`⚠️ ${type} was not acknowledged. Tap again.`;
             }
           },900);
@@ -376,8 +381,17 @@
     }
 
 
+    function escapeHtml(value){ return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
     function sameName(a,b){ return String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase(); }
     function setPlayState(data){
+      const questionKey = data?.activeKey || (data?.category && data?.clue ? `${data.category}::${data.clue}` : null);
+      if(questionKey && questionKey !== currentQuestionKey){
+        currentQuestionKey = questionKey;
+        remoteAnswerInput.value = "";
+        answerPending = false;
+      }
+      const wasAnswering = answerArea.style.display === "block";
+
       const controller = data?.controller || "";
       const phase = data?.phase || (data?.mode==="steal" ? "STEAL_OPEN" : "CONTROL_ANSWER");
       const iControl = !!playerName && sameName(controller,playerName);
@@ -392,21 +406,21 @@
       if(directTurn){
         buzzerBtn.disabled=true;
         answerArea.style.display="block";
-        submitAnswerBtn.disabled=false;
-        passAnswerBtn.disabled=false;
+        submitAnswerBtn.disabled=answerPending;
+        passAnswerBtn.disabled=answerPending;
         statusMsg.textContent="🎯 You're in control — answer directly. No buzz needed.";
         statusMsg.className="ok";
-        setTimeout(()=>remoteAnswerInput.focus(),80);
+        if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
         return;
       }
       if(answeringSteal){
         buzzerBtn.disabled=true;
         answerArea.style.display="block";
-        submitAnswerBtn.disabled=false;
-        passAnswerBtn.disabled=false;
+        submitAnswerBtn.disabled=answerPending;
+        passAnswerBtn.disabled=answerPending;
         statusMsg.textContent="✅ You won the steal buzzer — answer now.";
         statusMsg.className="ok";
-        setTimeout(()=>remoteAnswerInput.focus(),80);
+        if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
         return;
       }
       answerArea.style.display="none";
@@ -613,15 +627,14 @@
         questionInfo.textContent = data.category
           ? `Category: ${data.category} | ${formatClueValue(data.value)} — ${data.clue || ""}`
           : (data.clue || "Question active!");
-        remoteAnswerInput.value = "";
-        submitAnswerBtn.disabled = false;
-        passAnswerBtn.disabled = false;
-        setPlayState({...data,active:true,activeKey:data.activeKey||"question",phase:data.mode==="steal"?"STEAL_OPEN":"CONTROL_ANSWER",firstBuzzer:null});
+        setPlayState({...data,active:true,phase:data.phase || (data.mode==="steal"?"STEAL_OPEN":"CONTROL_ANSWER")});
       }
 
 
       if (data.type === "question-end") {
         lastHapticSecond=null;
+        answerPending=false;
+        currentQuestionKey=null;
         try{ if("vibrate" in navigator) navigator.vibrate(0); }catch(_){}
         buzzerBtn.disabled = true;
         questionInfo.textContent = "Waiting for next question…";
@@ -634,8 +647,11 @@
         statusMsg.textContent = "✅ You buzzed in first! Answer now.";
         statusMsg.className = "ok";
         triggerBuzzerFlash();
+        answerPending=false;
+        submitAnswerBtn.disabled=false;
+        passAnswerBtn.disabled=false;
         answerArea.style.display = "block";
-        setTimeout(()=>remoteAnswerInput.focus(),100);
+        answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
       }
 
 
@@ -653,7 +669,9 @@
       }
 
       if (data.type === "answer-denied" && sameName(data.player,playerName)) {
-        statusMsg.textContent = "Answer was not accepted. Wait for your next chance to buzz.";
+        answerPending=false;
+        sendToHost({type:"sync-request",player:playerName});
+        statusMsg.textContent = "Answer was not accepted. Syncing your turn…";
         statusMsg.className = "err";
         answerArea.style.display = "none";
       }
@@ -773,7 +791,7 @@
         statusMsg.className="err";
         return;
       }
-      submitAnswerBtn.disabled=true;
+      answerPending=true;
       submitAnswerBtn.disabled=true;
       passAnswerBtn.disabled=true;
       statusMsg.textContent="Sending answer…";
@@ -785,7 +803,9 @@
     }
     submitAnswerBtn.addEventListener("click",submitRemoteAnswer);
     passAnswerBtn.addEventListener("click",()=>{
-      if(!playerName) return;
+      if(!playerName || passAnswerBtn.disabled) return;
+      answerPending=true;
+      submitAnswerBtn.disabled=true;
       passAnswerBtn.disabled=true;
       criticalSend("pass",{player:playerName,actionId:nextActionId("pass")});
       statusMsg.textContent="Passing…"; statusMsg.className="";
