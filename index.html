@@ -863,7 +863,20 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 #summaryPane.championship-summary .finalWinnerBanner{animation:championshipGlow 1.6s ease-in-out infinite alternate!important}
 @keyframes championshipGlow{from{filter:drop-shadow(0 0 4px #f3c66a)}to{filter:drop-shadow(0 0 24px #ffd66e)}}
 @media(prefers-reduced-motion:reduce){#summaryPane.championship-summary .finalWinnerBanner{animation:none!important}}
-</style><style id="lobby-error-steal-fix">#waitingError:not(:empty){display:block!important;background:rgba(89,16,30,.82);border:1px solid #ff8a8a;border-radius:10px;padding:10px 12px;margin-top:10px;color:#ffd5d5!important;line-height:1.45}#premiumLobbyCountdown:not(.show){display:none!important}</style></head>
+</style><style id="lobby-error-steal-fix">#waitingError:not(:empty){display:block!important;background:rgba(89,16,30,.82);border:1px solid #ff8a8a;border-radius:10px;padding:10px 12px;margin-top:10px;color:#ffd5d5!important;line-height:1.45}#premiumLobbyCountdown:not(.show){display:none!important}</style><style id="expanding-board-layout">
+/* Keep every category and question inside one responsive game frame. */
+#boardPane{width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;max-height:none!important;margin:12px 0 100px!important;box-sizing:border-box!important;overflow:visible!important;padding:clamp(10px,1.1vw,20px)!important}
+#boardViewport{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;padding:3px;box-sizing:border-box;scrollbar-width:auto;scrollbar-color:#d6ad42 #071730;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+#boardGrid{width:100%;min-width:calc(var(--board-columns,8)*120px + (var(--board-columns,8) - 1)*7px);gap:7px!important;box-sizing:border-box;overflow:visible!important;align-items:stretch}
+#boardGrid>.cat,#boardGrid>.cell{min-width:0!important;width:100%;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;white-space:normal}
+#boardGrid>.cat{height:auto;min-height:76px;line-height:1.18;padding:10px 6px;font-size:clamp(.78rem,1.05vw,1.1rem)}
+#boardGrid>.cell{min-height:52px;padding:9px 5px}
+#boardScrollHint{color:#e1c988;font-size:.85rem;margin:8px 3px 0;text-align:center}
+#boardViewport:focus-visible{outline:2px solid #ffe18a;outline-offset:2px}
+@media(min-width:1500px){#boardGrid>.cat{min-height:88px}}
+@media(max-width:700px){#boardGrid{min-width:calc(var(--board-columns,8)*112px + (var(--board-columns,8) - 1)*7px)}#boardGrid>.cat{font-size:.8rem}#boardGrid>.cell{font-size:1.1rem;min-height:48px}}
+</style>
+</head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
   <div id="gameCountdown"></div>
@@ -1089,7 +1102,7 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
         <button id="resetBtnTop" class="btn warn">Reset Game</button>
       </div>
     </div>
-    <div id="boardGrid"></div>
+    <div id="boardViewport" tabindex="0" role="region" aria-label="Question board. Scroll horizontally to see more categories."><div id="boardGrid"></div></div><p id="boardScrollHint">All categories stay inside this frame. On smaller screens, swipe or scroll sideways for more categories.</p>
   </div>
 
 
@@ -2428,7 +2441,9 @@ body:has(#boardPane[style*="display: block"]) #boardPane{
 
     function renderBoard(){
       boardGrid.innerHTML="";
-      boardGrid.style.gridTemplateColumns = `repeat(${state.board.categories.length}, minmax(150px, 1fr))`;
+      boardGrid.style.setProperty("--board-columns",String(state.board.categories.length));
+      boardGrid.style.gridTemplateColumns = `repeat(${state.board.categories.length}, minmax(0, 1fr))`;
+      $("boardViewport").scrollLeft=0;
 
 
       state.board.categories.forEach(cat=>{

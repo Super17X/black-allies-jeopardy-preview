@@ -39,7 +39,7 @@ function send(w,type,extra={}){const state=last('gameplay-sync');const channel=c
 const st=host.__engineTest.state;
 click(host,'enterPremiereBtn');for(const [w,n]of [[a,'Alpha'],[b,'Beta']]){fill(w,'nameInput',n);click(w,'joinBtn')}
 el(host,'dailyDoubles').value='off';el(host,'includeUrbanSlang').checked=true;click(host,'enterWaitingRoomBtn');click(a,'readyBtn');click(b,'readyBtn');advance(14000);
-assert(st.board.categories.includes('Urban Slang'));assert(last('board-state').categories.includes('Urban Slang'));
+assert(st.board.categories.includes('Urban Slang'));assert.equal(el(host,'boardGrid').parentElement.id,'boardViewport');assert.equal(el(host,'boardGrid').style.getPropertyValue('--board-columns'),String(st.board.categories.length));assert.match(el(host,'boardGrid').style.gridTemplateColumns,/minmax\(0, 1fr\)/);assert(last('board-state').categories.includes('Urban Slang'));
 function open(){host.document.querySelector('#boardGrid button:not(:disabled)').click();advance(1);assert.equal(st.phase,'CONTROL_ANSWER')}
 fill(host,'qSeconds','99');open();assert.equal(st.timer.remaining,30);assert.equal(el(host,'qSeconds').value,'30');assert.match(el(a,'turnTitle').textContent,/Your turn/);assert.match(el(a,'remoteClock').textContent,/s/);
 fill(a,'remoteAnswerInput','saved draft');el(a,'remoteAnswerInput').dispatchEvent(new a.Event('input'));advance(1600);assert.equal(el(a,'remoteAnswerInput').value,'saved draft');
