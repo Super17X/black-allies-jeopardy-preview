@@ -12,9 +12,11 @@ const fs=require('fs'),assert=require('node:assert/strict');
  const tick=()=>new Promise(r=>w.setTimeout(r,15));
  assert(ticker.hidden,'Hidden on initial lobby');
  board.style.display='block';await tick();assert(!ticker.hidden);assert.equal(mascot.parentElement.id,'boardMascotRail');assert(!board.contains(mascot));assert.equal(ticker.previousElementSibling.id,'boardStage');assert.equal(w.getComputedStyle(ticker).position,'relative');
+ assert.equal(d.querySelectorAll('.tickerGroup').length,1,'No cloned player lists');
  latest.currentTime=1234;d.querySelector('.tickerTrack').innerHTML='<span class="tickerPlayer">Chris <strong>$400</strong></span>';await tick();assert.equal(latest.currentTime,1234,'Score update preserves travel');
  d.querySelector('.tickerPause').click();assert(latest.paused);
  for(const page of ['question','Final Jeopardy','results','lobby']){board.style.display='none';await tick();assert(ticker.hidden,'Hidden on '+page);assert.equal(mascot.parentElement,d.body);board.style.display='block';await tick();assert(!ticker.hidden);}
  assert(!d.querySelector('[data-reaction]'),'No Wrong or Steal buttons');
+ d.querySelector('.tickerTrack').innerHTML='<span class="tickerPlayer">Player A $0</span><span class="tickerPlayer">Player B $0</span>';await tick();assert.equal(d.querySelectorAll('.tickerPlayer').length,2,'Two players appear exactly twice total, one entry each');
  console.log('PASS board-only visibility, mascot outside frame, normal-flow ticker, score travel, pause and page transitions');dom.window.close();
 })().catch(e=>{console.error(e);process.exitCode=1});

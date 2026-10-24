@@ -33,15 +33,13 @@
     else{
       summary.textContent=group.textContent;button.hidden=reduced.matches;
       if(!reduced.matches&&typeof track.animate==='function'){
-        // Fill one complete cycle even with a single player or an ultrawide display.
-        const unit=group.getBoundingClientRect().width;
-        if(unit>0){
-          const repeats=Math.max(1,Math.ceil(viewport.clientWidth/unit));
-          for(let i=1;i<repeats;i++){const copy=document.createElement('span');copy.className='tickerGroup';copy.setAttribute('aria-hidden','true');copy.innerHTML=source;group.append(copy);}
-          const width=group.getBoundingClientRect().width;
-          const clone=group.cloneNode(true);clone.setAttribute('aria-hidden','true');track.append(clone);
-          animation=track.animate([{transform:'translateX(0)'},{transform:`translateX(-${width}px)`}],{duration:width/55*1000,iterations:Infinity,easing:'linear'});
-          animation.currentTime=(offset%width)/55*1000;syncPause();
+        // One real entry per player. The whole list exits before starting its next pass.
+        const width=group.getBoundingClientRect().width;
+        const start=viewport.clientWidth;
+        const distance=start+width;
+        if(width>0&&distance>0){
+          animation=track.animate([{transform:`translateX(${start}px)`},{transform:`translateX(-${width}px)`}],{duration:distance/55*1000,iterations:Infinity,easing:'linear'});
+          animation.currentTime=(offset%distance)/55*1000;syncPause();
         }
       }
     }
