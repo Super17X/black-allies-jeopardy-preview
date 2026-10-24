@@ -31,7 +31,7 @@ function setup(file){
 }
 
 
-const host=setup('index.html');advance(1);const api=host.__engineTest;const checkbox=host.document.getElementById('includeUrbanSlang');assert.equal(checkbox.checked,false);host.document.getElementById('dailyDoubles').value='off';
+const host=setup('index.html');host.document.getElementById('competitionRules').value='controller';host.document.getElementById('finalWagerPolicy').value='full';advance(1);const api=host.__engineTest;const checkbox=host.document.getElementById('includeUrbanSlang');assert.equal(checkbox.checked,false);host.document.getElementById('dailyDoubles').value='off';
 for(const round of [1,2])for(const randomized of ['off','on'])for(const count of [5,10]){
  host.document.getElementById('randomizeBoard').value=randomized;
  const cfg={categoryCount:8,qPerCat:count,startValue:200,step:200,round};

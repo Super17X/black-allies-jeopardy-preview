@@ -285,7 +285,7 @@ window.gameCaption=message=>{
     let answerPending = false;
     let engineState={gameId:null,questionId:null,turnId:null}, lastSnapshot=null, lastHostAt=0, lastLatency=0;
     let localDeadline=0,clockPaused=false,clockRemaining=0,finalStep="off";
-    let lastVerdictUntil=0;
+    let lastVerdictUntil=0,lastTiebreakRound=0;
     const criticalActions=new Map();
     function envelope(type,payload){return {type,...payload,gameId:engineState.gameId,questionId:engineState.questionId,turnId:engineState.turnId,expiresAt:Date.now()+10000};}
     function saveDraft(){if(currentQuestionKey)try{sessionStorage.setItem(`answer-draft-${roomCode}`,JSON.stringify({key:currentQuestionKey,text:remoteAnswerInput.value}));}catch(_){}}
@@ -433,7 +433,7 @@ window.gameCaption=message=>{
       const phase = data?.phase || (data?.mode==="steal" ? "STEAL_OPEN" : "CONTROL_ANSWER");
       const iControl = !!playerName && sameName(controller,playerName);
       const eligible=!(data.attempted||[]).some(n=>sameName(n,playerName));
-      const stealOpen = phase==="STEAL_OPEN" && eligible;
+      const stealOpen = ["BUZZ_OPEN","STEAL_OPEN"].includes(phase) && eligible;
       const answeringSteal = phase==="ANSWERING" && sameName(data?.firstBuzzer,playerName);
       const questionActive = data?.active !== false && !!(data?.activeKey || data?.clue || data?.category);
       const directTurn = questionActive && phase==="CONTROL_ANSWER" && iControl && !data?.firstBuzzer;
@@ -457,7 +457,7 @@ window.gameCaption=message=>{
         passAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
         statusMsg.textContent="🎯 You're in control — answer directly. No buzz needed.";
         statusMsg.className="ok";
-        if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
+        if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:window.reducedMotion()?"instant":"smooth"});
         return;
       }
       if(answeringSteal){
@@ -467,13 +467,13 @@ window.gameCaption=message=>{
         passAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
         statusMsg.textContent="✅ You won the steal buzzer — answer now.";
         statusMsg.className="ok";
-        if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
+        if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:window.reducedMotion()?"instant":"smooth"});
         return;
       }
       answerArea.style.display="none";
       if(stealOpen && !data?.firstBuzzer){
         buzzerBtn.disabled=false;
-        statusMsg.textContent="⚡ STEAL OPEN — tap BUZZ!";
+        statusMsg.textContent=data.phase==="BUZZ_OPEN"?"⚑ BUZZ OPEN — everyone may answer!":"⚡ STEAL OPEN — tap BUZZ!";
         statusMsg.className="ok";
       }else{
         buzzerBtn.disabled=true;
@@ -550,23 +550,24 @@ window.gameCaption=message=>{
 
     function renderFinalSnapshot(data){
       if(data.gameId!==engineState.gameId)return;
-      const changed=finalStep!==data.step;finalStep=data.step;
+      const changed=finalStep!==data.step||lastTiebreakRound!==(data.tiebreakRound||0);finalStep=data.step;lastTiebreakRound=data.tiebreakRound||0;
+      if(data.tiebreak && data.step!=="complete" && !(data.eligible||[]).some(n=>sameName(n,playerName))){finalMobile.style.display="block";answerArea.style.display="none";finalWagerBtn.style.display=finalWagerInput.style.display=finalAnswerInput.style.display=finalAnswerBtn.style.display="none";finalStatusMobile.textContent="Knowledge tiebreak — tied leaders are answering.";return;}
       const answerBanner=document.getElementById("finalAnswerRevealed");
       answerBanner.style.display=data.answerRevealed&&data.acceptedAnswer?"block":"none";
       answerBanner.textContent=data.answerRevealed&&data.acceptedAnswer?"Final Jeopardy Answer: "+data.acceptedAnswer:"";
       if(data.step==="off"){finalMobile.style.display="none";return;}
       updateClock(data);answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";buzzerBtn.disabled=true;document.getElementById("buzzControls").style.display="none";mobileBoard.style.display="none";finalMobile.style.display="block";
-      finalCategoryMobile.textContent=`Final Jeopardy: ${data.category}`;
+      finalCategoryMobile.textContent=`${data.tiebreak?"Knowledge tiebreak":"Final Jeopardy"}: ${data.category}`;
       const wagered=(data.wagered||[]).some(n=>sameName(n,playerName)),answered=(data.answered||[]).some(n=>sameName(n,playerName));
-      finalWagerInput.max=String(Math.max(0,(data.scores||{})[playerName]||0));
+      finalWagerInput.max=String(data.wagerCaps?.[playerName]??Math.max(0,(data.scores||{})[playerName]||0));
       finalWagerInput.style.display=data.step==="wagers"&&!wagered?"block":"none";
-      finalWagerBtn.style.display=data.step==="wagers"&&!wagered?"inline-block":"none";finalWagerBtn.disabled=wagered||data.paused;
+      finalWagerBtn.style.display=data.step==="wagers"&&!wagered?"inline-block":"none";finalWagerBtn.disabled=wagered||data.paused;showWagerPreview();wagerPreview.style.display=data.step==="wagers"?"block":"none";
       finalAnswerInput.style.display=data.step==="answers"&&!answered?"block":"none";
       finalAnswerBtn.style.display=data.step==="answers"&&!answered?"inline-block":"none";finalAnswerBtn.disabled=answered||data.paused;
       finalClueMobile.textContent=data.step==="wagers"?"Secret wager. Missing wagers default to $0 when the countdown ends.":data.clue||"";
       const text=data.step==="wagers"?(wagered?"Wager locked privately":"Enter your secret wager"):data.step==="answers"?(answered?"Answer locked — automatic judging next":"Enter your Final answer"):data.step==="reveal"?"Answers locked — automatic results in a moment":"Game complete";
-      document.getElementById("turnTitle").textContent=data.paused?"Final paused":text;finalStatusMobile.textContent=text;
-      if(changed){finalAnswerInput.value="";try{const draft=JSON.parse(sessionStorage.getItem(`final-draft-${roomCode}`)||"null");if(draft?.gameId===data.gameId){finalWagerInput.value=draft.wager||"";finalAnswerInput.value=draft.answer||"";}}catch(_){}}
+      document.getElementById("turnTitle").textContent=data.paused?"Final paused":text;finalStatusMobile.textContent=data.tiebreak?text+" · Correct +1; incorrect 0. Tied leaders only.":text;
+      if(changed){finalAnswerInput.value="";try{const draft=JSON.parse(sessionStorage.getItem(`final-draft-${roomCode}`)||"null");if(draft?.gameId===data.gameId && (draft.round||0)===(data.tiebreakRound||0)){finalWagerInput.value=draft.wager||"";finalAnswerInput.value=draft.answer||"";}}catch(_){}}
     }
     // ---- Listen for messages from host ----
     function handleHostMessage(data) {
@@ -598,6 +599,7 @@ window.gameCaption=message=>{
       if(data.type==="final-answer-revealed"){
         const answer=document.getElementById("finalAnswerRevealed");answer.style.display="block";answer.textContent="Final Jeopardy Answer: "+String(data.answer||"");return;
       }
+      if(data.rulesText){let rules=document.getElementById("playerRules");if(!rules){rules=document.createElement("details");rules.id="playerRules";const title=document.createElement("summary");title.textContent="Game rules & scoring";rules.appendChild(title);rules.appendChild(document.createElement("p"));controlBanner.after(rules);}rules.querySelector("p").textContent=data.rulesText;}
       if(data.type==="audio-caption"){window.gameCaption(String(data.message||""));return;}
       if(data.type==="final-state"){renderFinalSnapshot(data);return;}
 
@@ -690,7 +692,7 @@ window.gameCaption=message=>{
         answerArea.style.display="none";
         remoteAnswerInput.value="";
         buzzerBtn.disabled=false;
-        statusMsg.textContent="⚡ STEAL OPEN — tap BUZZ!";
+        statusMsg.textContent=data.phase==="BUZZ_OPEN"?"⚑ BUZZ OPEN — everyone may answer!":"⚡ STEAL OPEN — tap BUZZ!";
         statusMsg.className="ok";
         if(phonePhase) phonePhase.textContent="STEAL OPEN";
       }
@@ -758,7 +760,7 @@ window.gameCaption=message=>{
         submitAnswerBtn.disabled=false;
         passAnswerBtn.disabled=false;
         answerArea.style.display = "block";
-        answerArea.scrollIntoView({block:"nearest",behavior:"smooth"});
+        answerArea.scrollIntoView({block:"nearest",behavior:window.reducedMotion()?"instant":"smooth"});
       }
 
 
@@ -938,9 +940,13 @@ window.gameCaption=message=>{
     remoteAnswerInput.addEventListener("keydown",e=>{if(e.key==="Enter") submitRemoteAnswer();});
 
 
+    const wagerPreview=document.createElement("p");wagerPreview.id="wagerPreview";finalWagerInput.after(wagerPreview);
+    function showWagerPreview(){const amount=Number(finalWagerInput.value||0);wagerPreview.textContent=`Limit: $${finalWagerInput.max}. Correct: +$${amount}; incorrect: −$${amount}. A $0 wager never changes your score.`;}
+    finalWagerInput.addEventListener("input",showWagerPreview);
     finalWagerBtn.addEventListener("click",()=>{
       const wager=String(finalWagerInput.value||"").trim();
       if(!/^\d+$/.test(wager)){ finalStatusMobile.textContent="Enter a whole-dollar wager."; return; }
+      if(Number(wager)>Number(finalWagerInput.max)){finalStatusMobile.textContent="Wager exceeds your displayed limit.";return;}
       criticalSend("final-wager-submit",{player:playerName,wager}); finalWagerBtn.disabled=true; finalStatusMobile.textContent="Sending wager…";
     });
     finalAnswerBtn.addEventListener("click",()=>{
@@ -965,7 +971,7 @@ window.gameCaption=message=>{
       document.getElementById("ddMobileSubmit").disabled=true;criticalSend("dd-wager-submit",{player:playerName,wager:value});
     };
     remoteAnswerInput.addEventListener("input",saveDraft);
-    [finalWagerInput,finalAnswerInput].forEach(el=>el.addEventListener("input",()=>{try{sessionStorage.setItem(`final-draft-${roomCode}`,JSON.stringify({gameId:engineState.gameId,wager:finalWagerInput.value,answer:finalAnswerInput.value}));}catch(_){}}));
+    [finalWagerInput,finalAnswerInput].forEach(el=>el.addEventListener("input",()=>{try{sessionStorage.setItem(`final-draft-${roomCode}`,JSON.stringify({gameId:engineState.gameId,round:lastTiebreakRound,wager:finalWagerInput.value,answer:finalAnswerInput.value}));}catch(_){}}));
     for(const [id,cls]of [["largeText","large-text"],["highContrast","high-contrast"]])document.getElementById(id).addEventListener("change",e=>document.body.classList.toggle(cls,e.target.checked));
     // Touch events for better mobile responsiveness
     buzzerBtn.addEventListener("touchstart", (e) => {

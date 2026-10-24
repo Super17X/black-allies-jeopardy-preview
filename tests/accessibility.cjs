@@ -31,7 +31,7 @@ function setup(file){
 }
 
 
-const host=setup('index.html');advance(1);const a=setup('buzzer.html'),b=setup('buzzer.html');advance(1);
+const host=setup('index.html');host.document.getElementById('competitionRules').value='controller';host.document.getElementById('finalWagerPolicy').value='full';advance(1);const a=setup('buzzer.html'),b=setup('buzzer.html');advance(1);
 const el=(w,id)=>w.document.getElementById(id),last=type=>messages.filter(m=>m.type===type).at(-1);
 function click(w,id){assert(el(w,id),'Missing '+id);assert(!el(w,id).disabled,'Disabled '+id);el(w,id).click();advance(1);assert.deepEqual(errors,[])}
 function fill(w,id,v){el(w,id).value=v}

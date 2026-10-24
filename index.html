@@ -1025,7 +1025,7 @@ window.gameCaption=message=>{
     <div class="competition-panel" id="competitionSetup">
       <h3>🏆 Competition Suite</h3>
       <div class="row">
-        <label for="gameMode" class="mono tiny">Scoring mode:</label>
+        <fieldset><legend>Competition rules</legend><label for="competitionRules">Play preset</label><select id="competitionRules"><option value="competitive" selected>Competitive · everyone can buzz</option><option value="controller">Controller-first · original play</option></select><label for="missScoring">Regular missed answers</label><select id="missScoring"><option value="friendly">No deduction</option><option value="traditional">Traditional · deduct clue value</option></select><label for="finalWagerPolicy">Final wagers</label><select id="finalWagerPolicy"><option value="balanced">Balanced · up to 50% of positive score</option><option value="full">Traditional · up to full positive score</option></select><p id="competitionRulesText">Competitive: 5 seconds to read, then everyone may buzz. Correct answers choose next. One attempt per player. Steals get a fresh answer timer. Shared wins for ties; tournaments wait for a host-resolved tie. Scores of $0 or below may answer Final with a $0 wager. Daily Doubles remain exclusive to the chooser; correct adds the wager and incorrect subtracts it.</p></fieldset><label for="gameMode" class="mono tiny">Scoring mode:</label>
         <select id="gameMode"><option value="individual" selected>Individual</option><option value="team">Team Mode</option></select>
         <label for="teamCount" class="mono tiny">Teams:</label>
         <select id="teamCount"><option value="2" selected>2 Teams</option><option value="3">3 Teams</option><option value="4">4 Teams</option></select>
@@ -1529,14 +1529,14 @@ window.gameCaption=message=>{
         ["This jurist became the first Black woman confirmed to the U.S. Supreme Court in 2022.",["ketanji brown jackson","justice jackson","jackson"]],
         ["This West Point graduate became the first Black chairman of the Joint Chiefs of Staff.",["colin powell","powell"]],
         ["This educator and presidential adviser founded a school that became Bethune-Cookman University.",["mary mcleod bethune","bethune"]],
-        ["This journalist became the first Black woman to anchor a weekday network evening newscast when she co-anchored ABC World News Tonight.",["max robinson","robinson"]],
+        ["This journalist co-anchored ABC World News Tonight beginning in 1978.",["max robinson","robinson"]],
         ["This astronaut became the first African American to command a Space Shuttle mission.",["frederick gregory","fred gregory","gregory"]],
-        ["This lawyer became the first Black U.S. Attorney General in 2015.",["loretta lynch","lynch"]]
+        ["This lawyer became the first Black woman to serve as U.S. Attorney General in 2015.",["loretta lynch","lynch"]]
       ],
       "90s Hip-Hop": [
         ["This Brooklyn rapper released Ready to Die in 1994.",["the notorious big","notorious big","biggie","biggie smalls","christopher wallace"]],
         ["This duo released the 1992 album Mecca and the Soul Brother.",["pete rock and cl smooth","pete rock & cl smooth","pete rock cl smooth"]],
-        ["This group released the 1992 album The Chronic—trick question: it was actually this solo producer and rapper.",["dr dre","dr. dre","dre"]],
+        ["This producer and rapper released the 1992 solo album The Chronic.",["dr dre","dr. dre","dre"]],
         ["This Queens group released The Low End Theory in 1991.",["a tribe called quest","tribe called quest","atcq"]],
         ["This duo of Method Man and Redman collaborated frequently after rising to fame in the 1990s; Method Man belonged to this Staten Island group.",["wu tang clan","wu-tang clan","wu tang"]],
         ["This rapper released Hard Core in 1996.",["lil kim","lil' kim","kimberly jones"]],
@@ -1577,7 +1577,7 @@ window.gameCaption=message=>{
         ["Viola Davis stars as Annalise Keating in this legal thriller series.", ["how to get away with murder"]],
         ["He won Best Actor for portraying Ray Charles in Ray.", ["jamie foxx","foxx"]],
         ["This 2013 film directed by Steve McQueen depicts Solomon Northup’s kidnapping.", ["12 years a slave","twelve years a slave"]],
-        ["This FX miniseries dramatizes the wrongful conviction of five teenagers in the Central Park jogger case.", ["when they see us"]],
+        ["This miniseries dramatizes the wrongful conviction of five teenagers in the Central Park jogger case.", ["when they see us"]],
         ["This 1992 Spike Lee biopic explores the life of the civil rights leader Malcolm X.", ["malcolm x"]],
         ["This 2016 film tells the story of three Black women mathematicians at NASA.", ["hidden figures"]],
         ["This 2014 film chronicling Dr. King’s campaign for voting rights is titled after an Alabama city.", ["selma"]],
@@ -2341,6 +2341,31 @@ window.gameCaption=message=>{
     // -----------------------------
     // Board
     // -----------------------------
+
+    // Editorial estimates. Confirm using the observed correct rates in the fairness report.
+    const editorialDifficulty={"Black History & Notable Events": [1, 1, 1, 2, 2, 3, 3, 3, 4, 4], "World Geography": [2, 3, 1, 1, 2, 1, 5, 3, 2, 4], "Science & Nature": [1, 1, 2, 2, 2, 4, 3, 3, 2, 2], "Movies, TV & Books": [1, 2, 1, 2, 1, 4, 2, 2, 2, 3], "Everyday Tech & Internet": [2, 3, 3, 2, 4, 5, 4, 4, 2, 1], "Black Celebrity & Cultural Events": [3, 4, 2, 4, 1, 4, 1, 1, 3, 4, 1, 2, 2, 3, 3, 2, 3, 4], "Employment & Civil Rights": [2, 2, 5, 4, 4, 5, 5, 3, 4, 5, 2, 1, 2, 2, 1, 4, 4, 3], "Black Inventors & Innovation": [2, 3, 4, 4, 2, 4, 5, 3, 1, 5, 2, 4, 5, 4, 5, 3, 2, 4], "Black Entrepreneurs & Business": [1, 3, 1, 2, 4, 5, 4, 2, 4, 5, 5, 4, 2, 5, 3, 2, 4, 3], "Black Workforce Milestones": [3, 5, 4, 4, 3, 4, 3, 5, 1, 5, 4, 2, 2, 2, 3, 4, 5, 3], "90s Hip-Hop": [2, 2, 2, 2, 2, 1, 2, 2, 4, 3, 2, 5, 2, 3, 2, 4, 3, 4], "Black TV Shows": [1, 2, 1, 4, 2, 1, 2, 3, 3, 3, 1, 2, 3, 3, 2, 1, 3, 4], "Famous Black Sayings & Slang": [2, 2, 1, 3, 3, 2, 2, 3, 2, 2, 1, 1, 1, 3, 2, 3, 3, 3], "Movies & TV \u2014 Black History": [1, 3, 3, 2, 4, 4, 2, 2, 3, 2], "Urban Slang": [1, 1, 1, 1, 2, 2, 3, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 3, 3, 2, 2, 3, 3, 3]};
+    function rulesDescription(){return `${competitive()?"Competitive: read together for 5 seconds; everyone may buzz. The correct player chooses next. Daily Doubles stay exclusive: correct adds the wager; incorrect subtracts it.":"Controller-first: chooser answers first, then others may steal."} One attempt per player per clue. ${$("missScoring").value==="traditional"?"Incorrect answers deduct clue value; negative scores stay on the board.":"Regular misses cost no points."} Final wager limit: ${$("finalWagerPolicy").value==="balanced"?"50%":"100%"} of positive score. Correct adds the wager; incorrect subtracts it. Scores at or below $0 allow a $0 wager. Tied ranks share their place; tied winners may share the win or play a private-answer knowledge tiebreak. For team tiebreaks, one representative per tied team answers.`;}
+    function competitive(){return $("competitionRules").value==="competitive";}
+    function finalWagerMax(score){return Math.floor(Math.max(0,score)*($("finalWagerPolicy").value==="balanced"?.5:1));}
+    function missPenalty(value){return $("missScoring").value==="traditional"?value:0;}
+    const fairness={clues:[],opportunities:{},leadChanges:0,lastLeaders:"",preFinalLeaders:[]};
+    function fairnessReport(){
+      let history=[];try{history=JSON.parse(localStorage.getItem("jeopardy-difficulty-results-v1")||"[]");if(!Array.isArray(history))history=[];}catch(_){}
+      history=history.filter(x=>x.id!==engineGameId);history.push({id:engineGameId,clues:fairness.clues.map(({value,difficulty,correct})=>({value,difficulty,correct}))});history=history.slice(-20);
+      try{localStorage.setItem("jeopardy-difficulty-results-v1",JSON.stringify(history));}catch(_){}
+      const groups=new Map();for(const q of history.flatMap(x=>x.clues)){const k=q.value;const r=groups.get(k)||{shown:0,correct:0};r.shown++;r.correct+=q.correct?1:0;groups.set(k,r);}
+      const rows=[...groups].sort((a,b)=>a[0]-b[0]).map(([v,r])=>`<tr><td>$${v}</td><td>${r.shown}</td><td>${Math.round(100*r.correct/r.shown)}%</td></tr>`).join("");
+      const winners=fairness.afterFinalLeaders||getRankedPlayers().filter(p=>p.rank===1).map(p=>p.name).sort();
+      return `<h3>Competition & difficulty report</h3><p>Difficulty tiers are editorial estimates, not calibrated ratings. Correct rates below combine up to 20 completed sessions saved in this browser; a higher-value clue should generally have a lower correct rate.</p><table><tr><th>Value</th><th>Clues shown</th><th>Solved</th></tr>${rows}</table><p>Lead changes: ${fairness.leadChanges}. Final changed the leader group: ${JSON.stringify(winners)!==JSON.stringify(fairness.preFinalLeaders)?"Yes":"No"}.</p><p>Eligible clue opportunities: ${Object.entries(fairness.opportunities).map(([n,c])=>escapeHtml(n)+": "+c).join(" · ")}</p><p>Successful steals: ${[...premiereStats.steals].map(([n,c])=>escapeHtml(n)+": "+c).join(" · ")||"None"}. Tied ranks share the same place; tied winners share the win. Negative scores remain visible; a score of $0 or below allows a $0 Final wager.</p><p>Player feedback: Did you feel you had a fair chance to compete?</p>`;
+    }
+    function trackLeader(){const leaders=getRankedPlayers().filter(p=>p.rank===1).map(p=>p.name).sort().join("|");if(fairness.lastLeaders && leaders!==fairness.lastLeaders)fairness.leadChanges++;fairness.lastLeaders=leaders;}
+    function openCompetitiveBuzz(clue){
+      stopTimer();firstBuzzer=null;answerInput.disabled=submitBtn.disabled=passBtn.disabled=true;
+      startTimer(Number(stealSecondsInput.value||10),"steal",()=>revealAnswerAndClose(clue));
+      setGamePhase("BUZZ_OPEN");qaHeader.textContent="Everyone may buzz — one attempt per player";
+      window.gameCaption("⚑ Buzzers open to everyone");broadcastGameplaySync();
+    }
+
     function getConfig(){
       const categoryCount = clamp(Number(categoryCountInput.value || 9), 3, 10);
       const qPerCat = clamp(Number(qPerCatInput.value || 10), 5, 12);
@@ -2427,11 +2452,12 @@ window.gameCaption=message=>{
 
       for (const cat of cats){
         const pool = baseBank[cat];
-        const picks = randomizeBoardSel.value === "on" ? rotatingPicks(cat,pool,cfg.qPerCat) : pool.slice(0, cfg.qPerCat);
+        let picks = randomizeBoardSel.value === "on" ? rotatingPicks(cat,pool,cfg.qPerCat) : pool.slice(0, cfg.qPerCat);
+        picks=picks.slice().sort((a,b)=>(editorialDifficulty[cat]?.[pool.indexOf(a)]||3)-(editorialDifficulty[cat]?.[pool.indexOf(b)]||3));
         for (let i=0;i<cfg.qPerCat;i++){
           const row = rows[i];
           const [text, answers] = picks[i];
-          clueMap.set(keyFor(cat,row,cfg.round), {cat,row,text,answers});
+          clueMap.set(keyFor(cat,row,cfg.round), {cat,row,text,answers,difficulty:editorialDifficulty[cat]?.[pool.indexOf(picks[i])]||3});
         }
       }
 
@@ -2560,7 +2586,7 @@ window.gameCaption=message=>{
     // Game start
     // -----------------------------
     function beginGameNow(){
-      $("educationalMode").disabled=true;
+      $("educationalMode").disabled=true;["competitionRules","missScoring","finalWagerPolicy"].forEach(id=>$(id).disabled=true);
       setTimeout(()=>MascotV4B.react("greet",1200),200);
       $("premiumLobbyCountdown").classList.remove("show");
       if (waitingCountdownId) clearInterval(waitingCountdownId);
@@ -2673,6 +2699,8 @@ window.gameCaption=message=>{
 
 
       state.activeKey = key;
+      fairness.clues.push({key,value:state.board.valueForRow(row),difficulty:clue.difficulty,correct:false});
+      state.players.forEach(p=>{if(!removedPlayers.has(p.name))fairness.opportunities[p.name]=(fairness.opportunities[p.name]||0)+(competitive()?1:p===state.players[state.controlIdx]?1:0);});
       clearHostHints();
       MascotV4B.react("hint",950);
       clueTransactionId += 1;
@@ -2723,7 +2751,15 @@ window.gameCaption=message=>{
         submitBtn.disabled = false;
         passBtn.disabled = false;
         answerInput.focus();
-        startTimer(controlAnswerSeconds(), "main");
+        if(competitive()){
+          answerInput.disabled=submitBtn.disabled=passBtn.disabled=true;
+          startTimer(5,"reading",()=>openCompetitiveBuzz(clue));setGamePhase("READING");
+          qaHeader.textContent="Read the clue — buzzers open in 5 seconds";broadcastGameplaySync();
+          if(window.educationalMode()){
+            feedback.textContent="Untimed reading: host opens buzzers when everyone is ready.";
+            $("openCompetitiveBuzz").hidden=false;
+          }
+        }else startTimer(controlAnswerSeconds(), "main");
         startQuestionBeat();
       }
     }
@@ -2808,7 +2844,7 @@ window.gameCaption=message=>{
         timerEl.textContent = `${state.timer.remaining}s`;
         timerEl.classList.toggle("timer-danger", state.timer.remaining <= 5);
 
-        if(state.timer.mode==="main" && state.timer.remaining===15 && state.activeKey){
+        if(state.timer.mode==="main" && state.timer.remaining===15 && state.activeKey && !competitive()){
           const [hintCat,hintRowStr]=state.activeKey.split("::");
           const hintClue=state.board.clueFor(hintCat,Number(hintRowStr));
           const primary=answerCore(hintClue?.answers?.[0]||"");
@@ -2934,15 +2970,20 @@ window.gameCaption=message=>{
       },10000);
     }
 
-    const multiStealAttemptLimit=5;
-    const multiStealBuzzSeconds=5;
+    // Every eligible player may attempt once; no fixed player-count cap.
     let attemptedPlayersThisClue=new Set();
     function continueAfterMiss(clue,message){
+      if(/expired/i.test(message) && (state.phase==="ANSWERING"||state.board.isDailyDouble(state.activeKey))){
+        const isDD=state.board.isDailyDouble(state.activeKey),value=isDD?(state.ddLockedWager||0):state.board.valueForRow(Number(state.activeKey.split("::")[1])),penalty=isDD?value:missPenalty(value),player=state.players[state.controlIdx];
+        recordDecision(player.name,"",false,value);decisionHistory.at(-1).penalty=penalty;player.score-=penalty;trackLeader();broadcastScoreboard(false);
+        window.gameCaption(`⏱ ${player.name}: ${penalty?"−$"+penalty:"no points deducted"}`);
+      }
       stopTimer();
       attemptedPlayersThisClue.add(state.controlIdx);
+      if(state.board.isDailyDouble(state.activeKey)){revealAnswerAndClose(clue);return;}
       firstBuzzer=null;
       state.clueAttempts+=1;
-      if(state.clueAttempts>=Math.min(multiStealAttemptLimit,state.players.length)){
+      if(state.clueAttempts>=state.players.length){
         revealAnswerAndClose(clue);
         return;
       }
@@ -2991,8 +3032,8 @@ window.gameCaption=message=>{
         // Do nothing if the host left/closed this clue during the delay.
         if(!state.activeKey || state.activeKey!==activeKeyAtDelayStart || state.final.step!=="off") return;
 
-        qaHeader.textContent=`Steal ${state.clueAttempts+1}/${Math.min(multiStealAttemptLimit,state.players.length)} — buzz now`;
-        feedback.textContent=`STEAL OPEN — ${multiStealBuzzSeconds} seconds to buzz!`;
+        qaHeader.textContent=`Steal ${state.clueAttempts+1}/${state.players.length} — buzz now`;
+        feedback.textContent=`STEAL OPEN — ${Number(stealSecondsInput.value||10)} seconds to buzz!`;
         answerInput.disabled=true;
         submitBtn.disabled=true;
         passBtn.disabled=true;
@@ -3001,7 +3042,7 @@ window.gameCaption=message=>{
         setGamePhase("STEAL_OPEN");
         broadcastToBuzzers({type:"steal-open",controller:stealPlayer});
         playBruhSound();
-        startTimer(multiStealBuzzSeconds,"steal",()=>{
+        startTimer(competitive()?controlAnswerSeconds():Number(stealSecondsInput.value||10),"steal",()=>{
           sfxTimesUp();
           revealAnswerAndClose(clue);
         });
@@ -3016,7 +3057,7 @@ window.gameCaption=message=>{
     }
     function statInc(map,name,n=1){map.set(name,(map.get(name)||0)+n)}
     function handleSubmit(){
-      if (!state.activeKey || answerTransactionLocked) return;
+      if (!state.activeKey || answerTransactionLocked || (competitive() && !state.board.isDailyDouble(state.activeKey) && state.phase!=="ANSWERING")) return;
       answerTransactionLocked=true;
       pushUndo("Answer result");
       stopQuestionBeat();
@@ -3035,9 +3076,10 @@ window.gameCaption=message=>{
 
 
       const correct = isCorrectAnswer(answerInput.value, clue.answers);
+      const penalty=isDD?value:missPenalty(value);
       const judgingPlayer=state.players[state.controlIdx].name;
-      recordDecision(judgingPlayer,answerInput.value,correct,value);
-      broadcastToBuzzers({type:correct?"answer-correct":"answer-wrong",player:judgingPlayer,delta:correct?value:0,automatic:true});
+      recordDecision(judgingPlayer,answerInput.value,correct,value);decisionHistory.at(-1).penalty=penalty;
+      broadcastToBuzzers({type:correct?"answer-correct":"answer-wrong",player:judgingPlayer,delta:correct?value:-penalty,automatic:true});
 
 
       if (correct){
@@ -3061,12 +3103,16 @@ window.gameCaption=message=>{
         if (nextStreak === 3) setTimeout(playStreakSound, 500);
         markUsed();
         state.players[state.controlIdx].score += value;
+        const observed=fairness.clues.findLast(q=>q.key===state.activeKey);if(observed)observed.correct=true;
+        trackLeader();window.gameCaption(`✓ ${judgingPlayer}: +$${value}`);
 
         closeClue();
         return;
       }
 
 
+      state.players[state.controlIdx].score-=penalty;trackLeader();renderScoreboard();broadcastScoreboard(false);
+      window.gameCaption(`✗ ${judgingPlayer}: ${penalty?"−$"+penalty:"no points deducted"}`);
       sfxWrong();
       MascotV4B.react("wrong",800);
 
@@ -3090,7 +3136,7 @@ window.gameCaption=message=>{
 
 
     function handlePass(){
-      if (!state.activeKey || answerTransactionLocked) return;
+      if (!state.activeKey || answerTransactionLocked || (competitive() && !state.board.isDailyDouble(state.activeKey) && state.phase!=="ANSWERING")) return;
       answerTransactionLocked=true;
       stopQuestionBeat();
       const [cat,rowStr] = state.activeKey.split("::");
@@ -3126,12 +3172,12 @@ window.gameCaption=message=>{
     const championshipPauseBtn=$("finalPauseBtn");
     championshipPauseBtn.addEventListener("click",()=>{championshipPaused=!championshipPaused;championshipPauseBtn.textContent=championshipPaused?"Resume Countdown":"Pause Countdown";});
     function broadcastFinalState(){
-      broadcastToBuzzers({type:"final-state",gameId:engineGameId,step:state.final.step,category:finalJeopardy.category,
+      broadcastToBuzzers({type:"final-state",gameId:engineGameId,step:state.final.step,tiebreak:!!tiebreakPlayers,tiebreakRound:tiebreakNumber,eligible:finalEligible().map(i=>state.players[i].name),category:finalJeopardy.category,
         clue:state.final.step==="wagers"||state.final.step==="off"?"":finalJeopardy.text,
         remaining:state.final.step==="wagers"?state.final.wagerRemaining||0:state.final.timerRemaining||0,
         paused:championshipPaused,wagered:[...state.final.wagers.keys()].map(i=>state.players[i]?.name),
         answered:[...state.final.answers.keys()].map(i=>state.players[i]?.name),
-        scores:Object.fromEntries(state.players.map(p=>[p.name,p.score])),answerRevealed:finalAnswerRevealed,acceptedAnswer:finalAnswerRevealed && ["reveal","complete"].includes(state.final.step)?finalJeopardy.answers[0]:null,serverTime:Date.now()});
+        wagerCaps:Object.fromEntries(state.players.map(p=>[p.name,finalWagerMax(p.score)])),scores:Object.fromEntries(state.players.map(p=>[p.name,p.score])),answerRevealed:finalAnswerRevealed,acceptedAnswer:finalAnswerRevealed && ["reveal","complete"].includes(state.final.step)?finalJeopardy.answers[0]:null,serverTime:Date.now()});
       updateFinalAnswerControls();
     }
     function startFinalTimer(){
@@ -3143,7 +3189,7 @@ window.gameCaption=message=>{
         if(championshipPaused || window.educationalMode())return;
         state.final.timerRemaining-=1;finalTimerEl.textContent=state.final.timerRemaining+"s";broadcastFinalState();
         if(state.final.timerRemaining<=0){
-          for(let i=0;i<state.players.length;i++)if(!state.final.answers.has(i))state.final.answers.set(i,"");
+          for(const i of finalEligible())if(!state.final.answers.has(i))state.final.answers.set(i,"");
           beginAutomaticReveal();
         }
       },1000);broadcastFinalState();
@@ -3171,6 +3217,7 @@ window.gameCaption=message=>{
 
     function startFinalJeopardy(){
       if(state.final.step!=="off") return;
+      tiebreakPlayers=null;tiebreakNumber=0;tiebreakUsed=[];fairness.preFinalLeaders=getRankedPlayers().filter(p=>p.rank===1).map(p=>p.name).sort();
       MascotV4B.react("final",1200);
       finalResultsApplied=false;finalJudgments.clear();finalAnswerRevealed=false;renderFinalAnswerBanner();
       stopGameClock();
@@ -3213,7 +3260,7 @@ window.gameCaption=message=>{
 
     function renderFinalUI(){
       finalClueTextEl.textContent=state.final.step==="wagers"?"Clue hidden while wagers are submitted.":finalJeopardy.text;
-      const waiting=state.players.findIndex((p,i)=>!(state.final.step==="wagers"?state.final.wagers:state.final.answers).has(i));
+      const waiting=state.players.findIndex((p,i)=>finalEligible().includes(i) && !(state.final.step==="wagers"?state.final.wagers:state.final.answers).has(i));
       if(waiting>=0)state.final.idx=waiting;
       finalStepEl.textContent = state.final.step;
       $("finalClueText").classList.toggle("final-concealed",state.final.step==="wagers");
@@ -3224,8 +3271,8 @@ window.gameCaption=message=>{
 
       if (state.final.step === "wagers"){
         const minFloor = (state.board?state.board.valueForRow(state.board.rows[0]):200);
-        const max = Math.max(0, player.score);
-        finalPromptEl.textContent = `Enter wager for ${player.name}. Max: $${max} (min $0).`;
+        const max = finalWagerMax(player.score);
+        finalPromptEl.textContent = `Enter wager for ${player.name}. Limit: $0–$${max}. Correct adds your wager; incorrect subtracts it. $0 never changes your score.`;
         finalInput.type="password";
         finalInput.value="";
         finalInput.placeholder="Secret wager (whole number)";
@@ -3260,7 +3307,7 @@ window.gameCaption=message=>{
         if (wager === null) { showFinalError("Wager must be a whole number."); return; }
         if (wager < 0) { showFinalError("Wager cannot be negative."); return; }
         const minFloor = (state.board?state.board.valueForRow(state.board.rows[0]):200);
-        const max = Math.max(minFloor, player.score);
+        const max = finalWagerMax(player.score);
         if (wager > max) { showFinalError(`Wager cannot exceed $${max}.`); return; }
         clearFinalError();
         state.final.wagers.set(idx, wager);
@@ -3288,7 +3335,7 @@ window.gameCaption=message=>{
         }
         clearFinalError();
         state.final.answers.set(idx, ans);
-        if(state.final.answers.size>=state.players.length)beginAutomaticReveal();
+        if(state.final.answers.size>=finalEligible().length)beginAutomaticReveal();
         else broadcastFinalState();
         flash("rgba(247,201,72,0.15)", 160, 0.95);
         renderFinalUI();
@@ -3308,20 +3355,20 @@ window.gameCaption=message=>{
       lines.push(`<strong>Accepted answer example:</strong> ${escapeHtml(finalJeopardy.answers[0])}`);
 
 
-      for (let i=0;i<state.players.length;i++){
+      for (const i of finalEligible()){
         const p = state.players[i];
         const wager = state.final.wagers.get(i) ?? 0;
         const ans = state.final.answers.get(i) ?? "";
         const correct = finalJudgments.has(i)?finalJudgments.get(i):isCorrectAnswer(ans, finalJeopardy.answers);
-        recordDecision(p.name,ans,correct,wager,null,"final");
+        recordDecision(p.name,ans,correct,tiebreakPlayers?1:wager,null,tiebreakPlayers?"tiebreak":"final");
 
 
-        if (correct){ p.score += wager; sfxCorrect(); playMoneySound(); MascotV4B.react("correct",900,`${p.name} nailed Final Jeopardy!`); }
+        if (correct){ p.score += tiebreakPlayers?1:wager; sfxCorrect(); playMoneySound(); MascotV4B.react("correct",900,`${p.name} nailed Final Jeopardy!`); }
         else { p.score -= wager; sfxWrong(); playRizzSound(); MascotV4B.react("wrong",800,`${p.name} missed this one.`); }
 
 
         lines.push(
-          `${escapeHtml(p.name)} wagered <strong>$${wager}</strong> and answered ` +
+          `${escapeHtml(p.name)} ${tiebreakPlayers?"played the knowledge tiebreak (+1 correct / 0 incorrect) and answered":"wagered <strong>$"+wager+"</strong> and answered"} ` +
           `<strong>${escapeHtml(ans || "(blank)")}</strong> — ` +
           `${correct ? "<strong>✓ Correct</strong>" : "<strong>✗ Incorrect</strong>"}`
         );
@@ -3337,7 +3384,7 @@ window.gameCaption=message=>{
 
 
       const ranked = getRankedPlayers();
-      const winners = ranked.filter(p=>p.rank===1);
+      const winners = ranked.filter(p=>p.rank===1);if(!tiebreakPlayers)fairness.afterFinalLeaders=winners.map(p=>p.name).sort();
       const winnerLabel = winners.length===1
         ? `🏆 Winner: ${escapeHtml(winners[0].name)} — $${winners[0].score}`
         : `🏆 Co-Winners: ${winners.map(p=>escapeHtml(p.name)).join(" & ")} — $${winners[0]?.score ?? 0}`;
@@ -3357,7 +3404,8 @@ window.gameCaption=message=>{
       showAchievement(winners.length>1?`🏆 CO-WINNERS<br>${winners.map(p=>escapeHtml(p.name)).join(" & ")}`:`🏆 ${escapeHtml(winners[0]?.name||"")} WINS!`,4500);
       broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
       const competitionWinners=getRankedPlayers().filter(p=>p.rank===1); if(competitionWinners.length===1) advanceTournamentWinner(competitionWinners[0].name);
-      state.final.step="complete";renderFinalAnswerBanner();broadcastFinalState();
+      $("summaryText").innerHTML+=fairnessReport();
+      if(winners.length>1){const tieBtn=document.createElement("button");tieBtn.className="btn";tieBtn.id="knowledgeTiebreak";tieBtn.textContent="Play knowledge tiebreak";tieBtn.onclick=startKnowledgeTiebreak;$("summaryText").appendChild(tieBtn);const note=document.createElement("p");note.textContent="Tiebreak: tied leaders answer privately at the same time. Correct answers earn 1 point; misses cost 0. If still tied, play another clue. Tournament advancement waits for a single winner.";$("summaryText").appendChild(note);}state.final.step="complete";renderFinalAnswerBanner();broadcastFinalState();
       localStorage.removeItem("black-allies-jeopardy-premiere-state");
     }
 
@@ -3429,6 +3477,8 @@ window.gameCaption=message=>{
     // Reset (functional, works from any pane)
     // -----------------------------
     function resetGame(){
+      fairness.clues=[];fairness.opportunities={};fairness.leadChanges=0;fairness.lastLeaders="";fairness.preFinalLeaders=[];delete fairness.afterFinalLeaders;tiebreakPlayers=null;tiebreakNumber=0;tiebreakUsed=[];
+      ["competitionRules","missScoring","finalWagerPolicy","educationalMode"].forEach(id=>$(id).disabled=false);
       clearInterval(finalWagerTimer);clearInterval(autoRevealTimer);finalWagerTimer=autoRevealTimer=null;
       engineGameId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);engineTurn=0;
       actionResults.clear();decisionHistory.length=0;finalJudgments.clear();renderOverrides();finalResultsApplied=false;finalAnswerRevealed=false;renderFinalAnswerBanner();updateFinalAnswerControls();
@@ -3562,6 +3612,22 @@ window.gameCaption=message=>{
     const decisionHistory = [];
     let finalWagerTimer=null, autoRevealTimer=null;
     let finalAnswerRevealed=false;
+    let tiebreakPlayers=null,tiebreakNumber=0,tiebreakUsed=[];
+    function finalEligible(){return state.players.map((p,i)=>i).filter(i=>!tiebreakPlayers||tiebreakPlayers.includes(state.players[i].name));}
+    function startKnowledgeTiebreak(){
+      const leaders=getRankedPlayers().filter(p=>p.rank===1);if(leaders.length<2)return;
+      tiebreakPlayers=leaders.map(p=>p.entityType==="team"?p.members.find(n=>!removedPlayers.has(n)):p.name).filter(Boolean);tiebreakNumber++;
+      const shown=new Set([finalJeopardy.text,...tiebreakUsed,...fairness.clues.map(q=>{const [c,r]=q.key.split("::");return state.board?.clueFor(c,Number(r))?.text;})]);
+      const pool=Object.entries({...seededBankRound1,...seededBankRound2}).flatMap(([category,qs])=>qs.map(([text,answers])=>({category,text,answers}))).filter(q=>!shown.has(q.text));
+      if(!pool.length){toast("No unused tiebreak clues remain. Shared winners stand.");tiebreakPlayers=null;return;}
+      finalJeopardy=pool[Math.floor(Math.random()*pool.length)];tiebreakUsed.push(finalJeopardy.text);
+      state.final.step="answers";state.final.idx=finalEligible()[0];state.final.answers=new Map();state.final.wagers=new Map(finalEligible().map(i=>[i,0]));
+      finalResultsApplied=false;finalJudgments.clear();finalAnswerRevealed=false;
+      summaryPane.style.display="none";finalPane.style.display="block";
+      finalCategoryEl.textContent="Knowledge tiebreak · "+finalJeopardy.category;
+      renderFinalUI();startFinalTimer();broadcastFinalState();
+    }
+
     const finalJudgments = new Map();
     function engineQuestionId(){return state.activeKey ? `${engineGameId}:${clueTransactionId}:${state.activeKey}` : null;}
     function actionResult(data,accepted,detail={}){
@@ -3583,8 +3649,8 @@ window.gameCaption=message=>{
       if(!d)return toast("Choose a decision to override");if(!reason)return toast("Enter a reason for the correction");
       const idx=playerIndexByName(d.player);if(idx<0||d.correct===correct)return;
       // Final judgments are ±wager; regular incorrect attempts have no score penalty.
-      const delta=d.kind==="final"?(correct?2:-2)*d.value:(correct?1:-1)*d.value;
-      state.players[idx].score+=delta;d.correct=correct;d.overridden=true;d.reason=reason;
+      const delta=d.kind==="tiebreak"?(correct?1:-1):d.kind==="final"?(correct?2:-2)*d.value:(correct?1:-1)*(d.value+(d.penalty||0));
+      state.players[idx].score+=delta;d.correct=correct;d.overridden=true;d.reason=reason;const observed=fairness.clues.findLast(q=>q.key===d.key);if(observed)observed.correct=decisionHistory.some(x=>x.key===d.key&&x.correct);trackLeader();
       if(d.kind==="clue" && correct && state.activeKey===d.key){state.controlIdx=idx;markUsed();closeClue();}
       if(d.kind==="final")finalJudgments.set(idx,correct);
       proLog(`OVERRIDE: ${d.player} → ${correct?"correct":"incorrect"}; ${reason}`);
@@ -3683,7 +3749,7 @@ window.gameCaption=message=>{
 
     // ---------- send to buzzer pages ----------
     function broadcastToBuzzers(msg) {
-      msg={...msg,untimed:window.educationalMode()};
+      msg={...msg,untimed:window.educationalMode()};if(["ready-state","gameplay-sync","board-state","final-state","join-ack"].includes(msg.type))msg.rulesText=rulesDescription();
       msg = {...msg, room: roomCode};
       if (sendRealtime(msg)) return;
       if (bc) bc.postMessage(msg);
@@ -3735,7 +3801,7 @@ window.gameCaption=message=>{
 
     // ---------- authoritative gameplay sync for phones ----------
     function gameplaySyncPayload(){
-      const active = !!state.activeKey && (buzzerActive || state.timer.mode === "main" || state.timer.mode === "steal" || state.timer.mode==="dd-wager");
+      const active = !!state.activeKey && (buzzerActive || state.timer.mode === "main" || state.timer.mode === "steal" || state.timer.mode === "reading" || state.timer.mode==="dd-wager");
       return {
         type:"gameplay-sync",
         gameId:engineGameId,questionId:engineQuestionId(),turnId:engineTurn,
@@ -3751,7 +3817,7 @@ window.gameCaption=message=>{
         clue:questionText.textContent || "",
         controller:state.players[state.controlIdx]?.name || "—",
         racers:state.players.map(p=>p.name),
-        scoringMode:state.gameMode,
+        scoringMode:state.gameMode,competitive:competitive(),
         phase:state.phase,
         phaseChangedAt:state.phaseChangedAt,
         buzzAllowed:state.phase==="BUZZ_OPEN" || state.phase==="STEAL_OPEN",
@@ -3955,7 +4021,7 @@ window.gameCaption=message=>{
         const idx=state.players.findIndex(p=>sameName(p.name,data.player));
         if(state.final.step!=="wagers" || idx<0 || state.final.wagers.has(idx)){actionResult(data,false,{reason:"Wager is already locked or wagering has ended."});return;}
         const wager=parseWholeNumber(data.wager);
-        const max=Math.max(0,state.players[idx].score);
+        const max=finalWagerMax(state.players[idx].score);
         if(wager===null || wager<0 || wager>max){
           actionResult(data,false,{reason:"Check your wager amount."});
           broadcastToBuzzers({type:"final-error",player:data.player,message:`Wager must be $0 to $${max}.`}); return;
@@ -3970,11 +4036,11 @@ window.gameCaption=message=>{
 
       if (data.type === "final-answer-submit") {
         const idx=state.players.findIndex(p=>sameName(p.name,data.player));
-        if(state.final.step!=="answers" || idx<0 || state.final.answers.has(idx)){actionResult(data,false,{reason:"Final answer is already locked or time has ended."});return;}
+        if(state.final.step!=="answers" || idx<0 || !finalEligible().includes(idx) || state.final.answers.has(idx)){actionResult(data,false,{reason:"Final answer is already locked or time has ended."});return;}
         state.final.answers.set(idx,String(data.answer||"").trim());
         actionResult(data,true,{result:"final-answer-locked"});
         broadcastToBuzzers({type:"final-answer-ack",player:data.player});
-        if(state.final.answers.size>=state.players.length)beginAutomaticReveal();
+        if(state.final.answers.size>=finalEligible().length)beginAutomaticReveal();
         else {renderFinalUI();broadcastFinalState();}
         return;
       }
@@ -4005,7 +4071,7 @@ window.gameCaption=message=>{
 
       if (data.type === "buzz") {
         if(!claimAction(data)){ broadcastToBuzzers({type:"buzz-denied",player:data.player,reason:"Duplicate buzz ignored."}); return; }
-        const questionIsActive = !!state.activeKey && state.phase==="STEAL_OPEN";
+        const questionIsActive = !!state.activeKey && ["BUZZ_OPEN","STEAL_OPEN"].includes(state.phase) && !state.timer.paused;
         if (!questionIsActive) {
           const reason = state.phase==="CONTROL_ANSWER"
             ? "The player in control answers directly. Buzzing opens only for steals."
@@ -4035,7 +4101,7 @@ window.gameCaption=message=>{
         actionResult(data,true,{result:"buzz-won"});
         stopTimer();
         // The first eligible buzzer receives a fresh, independent answer clock.
-        startTimer(Number(stealSecondsInput.value||10),"steal",()=>{
+        startTimer(competitive()?controlAnswerSeconds():Number(stealSecondsInput.value||10),"steal",()=>{
           sfxTimesUp();
           const key=state.activeKey;
           if(!key)return;
@@ -4272,7 +4338,7 @@ window.gameCaption=message=>{
       if(!recoveryReady)return;
       try{
         const board=state.board;
-        const d={version:3,room:roomCode,ts:Date.now(),players:state.players,ready:[...state.ready],round:state.round,controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,
+        const d={fairness,tiebreakPlayers,tiebreakNumber,tiebreakUsed,version:3,room:roomCode,ts:Date.now(),players:state.players,ready:[...state.ready],round:state.round,controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,
           board:board?{cfg:board.cfg,categories:board.categories,rows:board.rows,clues:board.categories.flatMap(c=>board.rows.map(r=>[board.keyFor(c,r),board.clueFor(c,r)])),dailyDoubles:[...board.dailyDoubles]}:null,
           timer:{remaining:state.timer.remaining,mode:state.timer.mode,paused:state.timer.paused,running:!!state.timer.id || (window.educationalMode() && !!state.activeKey)},gameClock:{remaining:state.gameClock.remaining,running:!!state.gameClock.id},
           final:{...state.final,timerId:null,wagers:[...state.final.wagers],answers:[...state.final.answers]},finalJeopardy,championshipPaused,finalTimerRunning:!!state.final.timerId,finalResultsApplied,finalAnswerRevealed,finalJudgments:[...finalJudgments],finalHTML:$("summaryText").innerHTML,stats:Object.fromEntries(Object.entries(premiereStats).map(([k,v])=>[k,[...v]])),
@@ -4286,9 +4352,11 @@ window.gameCaption=message=>{
     function restoreSession(d){
       if(d.version!==3||d.room!==roomCode||!Array.isArray(d.players))throw Error("Invalid recovery file for this room");
       if(!Array.isArray(d.final?.wagers)||!Array.isArray(d.final?.answers)||!d.timer||!d.gameClock||!Array.isArray(d.sessions)||!Array.isArray(d.used)||(d.board&&(!Array.isArray(d.board.clues)||!Array.isArray(d.board.categories))))throw Error("Incomplete recovery data");
+      if(d.fairness)Object.assign(fairness,d.fairness);tiebreakPlayers=d.tiebreakPlayers||null;tiebreakNumber=d.tiebreakNumber||0;tiebreakUsed=d.tiebreakUsed||[];
       recoveryReady=false;clearTimeout(transitionTimeout);clearInterval(transitionInterval);
       stopTimer();stopGameClock();clearInterval(finalWagerTimer);clearInterval(autoRevealTimer);stopFinalTimer();
       for(const [id,value,checked] of d.inputs||[]){const e=$(id);if(e){e.value=value;e.checked=checked;}}
+      window.untimedSession=!!$("educationalMode").checked;["competitionRules","missScoring","finalWagerPolicy","educationalMode"].forEach(id=>$(id).disabled=!!d.board);
       Object.assign(state,{players:d.players,ready:new Map(d.ready),round:d.round,controlIdx:d.controlIdx,used:new Set(d.used),activeKey:d.activeKey,phase:d.phase,clueAttempts:d.clueAttempts,clueStartIdx:d.clueStartIdx,ddLockedWager:d.ddLockedWager,gameMode:d.gameMode,teams:new Map(d.teams),tournament:d.tournament,previousRanks:new Map(d.previousRanks||[]),privacyOn:d.privacyOn,phaseChangedAt:d.phaseChangedAt});
       for(const [k,v] of Object.entries(d.stats||{}))if(premiereStats[k]){premiereStats[k].clear();for(const [a,b] of v)premiereStats[k].set(a,b);}
       if(d.board){const b=d.board,m=new Map(b.clues),dd=new Set(b.dailyDoubles);state.board={...b,dailyDoubles:dd,keyFor:(c,r)=>keyFor(c,r,b.cfg.round),clueFor:(c,r)=>m.get(keyFor(c,r,b.cfg.round)),valueForRow:r=>valueForRow(r,b.cfg),isDailyDouble:k=>dd.has(k)};}
@@ -4299,9 +4367,9 @@ window.gameCaption=message=>{
       finalResultsApplied=d.finalResultsApplied;finalAnswerRevealed=d.finalAnswerRevealed;championshipPaused=d.championshipPaused;recoveryTransition=d.transition;
       $("premiereIntro").classList.add("hidden");lobbyPane.style.display=d.board?"none":"block";boardPane.style.display=d.board&&!d.activeKey&&d.final.step==="off"?"block":"none";qaPane.style.display=d.activeKey?"block":"none";finalPane.style.display=d.final.step!=="off"&&d.final.step!=="complete"?"block":"none";summaryPane.style.display=d.final.step==="complete"?"block":"none";
       renderLobbyList();renderScoreboard();if(state.board)renderBoard();renderOverrides();renderRoomControls();
-      if(d.activeKey){const [c,r]=d.activeKey.split("::"),clue=state.board.clueFor(c,Number(r));questionText.textContent=clue.text;clueCatEl.textContent=c;clueValueEl.textContent="$"+state.board.valueForRow(Number(r));qaHeader.textContent=state.players[state.controlIdx].name+"'s Question";ddBadge.style.display=state.board.isDailyDouble(d.activeKey)?"inline-block":"none";ddWagerRow.style.display=d.timer.mode==="dd-wager"?"block":"none";answerInput.value=d.answerDraft||"";answerInput.disabled=submitBtn.disabled=passBtn.disabled=d.timer.mode==="dd-wager"||d.phase==="STEAL_OPEN";
-        if(d.timer.running){startTimer(d.timer.remaining,d.timer.mode,d.timer.mode==="steal"?()=>revealAnswerAndClose(clue):undefined,d.firstBuzzer);state.timer.remaining=d.timer.remaining;state.timer.paused=d.timer.paused;engineTurn=d.engineTurn;state.phase=d.phase;firstBuzzer=d.firstBuzzer;timerEl.textContent=window.educationalMode()?"∞ Untimed":d.timer.remaining+"s";updateQuestionPauseButton();}
-        if(d.transition){const remaining=Math.max(0,d.transition.deadline-d.ts);recoveryTransition={...d.transition,deadline:Date.now()+remaining};if(d.transition.kind==="reveal"){ $("correctAnswerText").textContent=clue.answers[0];$("correctAnswerOverlay").classList.add("show");transitionTimeout=setTimeout(()=>{$("correctAnswerOverlay").classList.remove("show");closeClue();},remaining);}else transitionTimeout=setTimeout(()=>{recoveryTransition=null;setGamePhase("STEAL_OPEN");startTimer(5,"steal",()=>revealAnswerAndClose(clue));},remaining);}
+      if(d.activeKey){const [c,r]=d.activeKey.split("::"),clue=state.board.clueFor(c,Number(r));questionText.textContent=clue.text;clueCatEl.textContent=c;clueValueEl.textContent="$"+state.board.valueForRow(Number(r));qaHeader.textContent=state.players[state.controlIdx].name+"'s Question";ddBadge.style.display=state.board.isDailyDouble(d.activeKey)?"inline-block":"none";ddWagerRow.style.display=d.timer.mode==="dd-wager"?"block":"none";answerInput.value=d.answerDraft||"";answerInput.disabled=submitBtn.disabled=passBtn.disabled=d.timer.mode==="dd-wager"||["STEAL_OPEN","BUZZ_OPEN","READING"].includes(d.phase);if(d.phase==="READING"&&window.educationalMode())$("openCompetitiveBuzz").hidden=false;
+        if(d.timer.running){startTimer(d.timer.remaining,d.timer.mode,d.timer.mode==="reading"?()=>openCompetitiveBuzz(clue):d.timer.mode==="steal"?()=>d.phase==="ANSWERING"?continueAfterMiss(clue,"Answer time expired."):revealAnswerAndClose(clue):undefined,d.firstBuzzer);state.timer.remaining=d.timer.remaining;state.timer.paused=d.timer.paused;engineTurn=d.engineTurn;state.phase=d.phase;firstBuzzer=d.firstBuzzer;timerEl.textContent=window.educationalMode()?"∞ Untimed":d.timer.remaining+"s";updateQuestionPauseButton();}
+        if(d.transition){const remaining=Math.max(0,d.transition.deadline-d.ts);recoveryTransition={...d.transition,deadline:Date.now()+remaining};if(d.transition.kind==="reveal"){ $("correctAnswerText").textContent=clue.answers[0];$("correctAnswerOverlay").classList.add("show");transitionTimeout=setTimeout(()=>{$("correctAnswerOverlay").classList.remove("show");closeClue();},remaining);}else transitionTimeout=setTimeout(()=>{recoveryTransition=null;setGamePhase("STEAL_OPEN");startTimer(Number(stealSecondsInput.value||10),"steal",()=>revealAnswerAndClose(clue));},remaining);}
       }
       if(d.gameClock.running){startGameClock();state.gameClock.remaining=d.gameClock.remaining;gameClockEl.textContent=formatClock(d.gameClock.remaining);}
       if(d.final.step!=="off"){
@@ -4348,7 +4416,7 @@ window.gameCaption=message=>{
     $("removeRoomPlayer").onclick=()=>{const name=$("removePlayerChoice").value,k=name.toLocaleLowerCase(),token=playerSessions.get(k);if(token)removedDevices.add(token);playerSessions.delete(k);removedPlayers.add(name);connectedBuzzers.delete(name);if(state.players[state.controlIdx]?.name===name&&state.activeKey)handlePass();else if(state.players[state.controlIdx]?.name===name)state.controlIdx=nextAvailablePlayer(state.controlIdx);broadcastScoreboard(false);broadcastBoardState();broadcastToBuzzers({type:"player-removed",player:name,deviceToken:token});premiereSave();toast(name+" removed. Score retained.");};
     $("importRecovery").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());restoreSession(d);}catch(err){toast("Recovery import failed: "+err.message);}};
     $("exportRecovery").onclick=()=>{premiereSave();const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([localStorage.getItem(recoveryKey)],{type:"application/json"}));a.download="jeopardy-"+roomCode+"-recovery.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
-    $("tutorialBtn").onclick=()=>{const d=document.createElement("dialog");d.innerHTML='<h2>Play in four steps</h2><ol><li>Host: choose categories and answer time, then show the room QR code.</li><li>Players: join on your phone with a unique name, test your buzzer and tap Ready.</li><li>The player in control picks a clue and answers. After a miss, eligible players can buzz for a steal. Answers and scoring run automatically.</li><li>Final: submit a secret wager, then a secret answer. Request a review if needed; play continues. The host can override a recorded decision.</li></ol><p>Board refresh restores this browser’s saved room. Keep an exported recovery file before your event.</p><button class="btn">Got it</button>';document.body.appendChild(d);d.querySelector("button").onclick=()=>d.remove();d.showModal();};
+    $("tutorialBtn").onclick=()=>{const d=document.createElement("dialog");d.innerHTML='<h2>Play in four steps</h2><ol><li>Host: choose categories and answer time, then show the room QR code.</li><li>Players: join on your phone with a unique name, test your buzzer and tap Ready.</li><li>Competitive: the chooser picks a clue; everyone reads for five seconds, then everyone may buzz. One attempt each. Correct answers choose next. Controller-first play remains optional.</li><li>Final: submit a secret wager, then a secret answer. Request a review if needed; play continues. The host can override a recorded decision.</li></ol><p>Board refresh restores this browser’s saved room. Keep an exported recovery file before your event.</p><button class="btn">Got it</button>';document.body.appendChild(d);d.querySelector("button").onclick=()=>d.remove();d.showModal();};
     $("verifiedMediaOnly").onchange=()=>{const on=$("verifiedMediaOnly").checked;document.documentElement.classList.toggle("verified-media",on);if(on){soundModeSel.value="off";soundModeSel.dispatchEvent(new Event("change"));document.querySelectorAll("audio,video").forEach(e=>e.pause());}premiereSave();};
     const rightsStyle=document.createElement("style");rightsStyle.textContent='.verified-media *,.verified-media *:before,.verified-media *:after{background-image:none!important}.verified-media [id*=mascot],.verified-media [id*=Mascot]{visibility:hidden!important}.verified-media img,.verified-media #mascotStage,.verified-media #bobbleheadWidget{visibility:hidden!important}.verified-media body,.verified-media .hero,.verified-media .app{background-image:none!important}';document.head.appendChild(rightsStyle);
     const originalMediaPlay=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if($("verifiedMediaOnly")?.checked)return Promise.resolve();return originalMediaPlay.apply(this,arguments);};
@@ -4358,6 +4426,8 @@ window.gameCaption=message=>{
     const educationalControls=document.createElement("div");educationalControls.innerHTML='<p>Educational mode: advance Final manually after players finish.</p><button class="btn" id="educationNext">Continue Final</button>';
     finalPane.appendChild(educationalControls);$("educationNext").onclick=()=>{if(!window.educationalMode())return;if(state.final.step==="wagers")beginFinalAnswers();else if(state.final.step==="answers")beginAutomaticReveal();else if(state.final.step==="reveal")revealFinalResults();};
     window.captionBroadcast=message=>broadcastToBuzzers({type:"audio-caption",message});
+    const buzzOpenBtn=document.createElement("button");buzzOpenBtn.id="openCompetitiveBuzz";buzzOpenBtn.className="btn";buzzOpenBtn.textContent="Open buzzers for everyone";buzzOpenBtn.hidden=true;qaPane.appendChild(buzzOpenBtn);buzzOpenBtn.onclick=()=>{if(state.phase!=="READING"||!state.activeKey)return;const [c,r]=state.activeKey.split("::");openCompetitiveBuzz(state.board.clueFor(c,Number(r)));buzzOpenBtn.hidden=true;};
+    $("competitionRules").onchange=()=>{$("competitionRulesText").textContent=competitive()?"5-second shared reading period; everyone may buzz. Correct answer chooses next. One attempt each; fresh answer timer. Ties share the win. $0/negative scores may wager $0. Daily Doubles stay exclusive: correct adds the wager; incorrect subtracts it.":"Chooser answers first. Other players buzz after a miss or pass. One attempt each. Ties share the win. $0/negative scores may wager $0.";};
     renderRoomControls();offerRecovery();setInterval(premiereSave,250);
 
   })();
