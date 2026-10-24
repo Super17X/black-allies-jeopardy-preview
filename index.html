@@ -1228,7 +1228,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
   <div id="flashOverlay"></div>
 
 
-  <div id="ticker"><div class="ticker-content"></div></div>
+  <div id="ticker" aria-label="Host hints" hidden><div class="ticker-content" role="status" aria-live="polite" aria-atomic="true"></div></div>
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1239,19 +1239,21 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     // -----------------------------
     // Ticker
     // -----------------------------
-    const historicWinners = [
-      { year: 1978, winner: "Walter Bruss", winnings: "$34,000" },
-      { year: 1995, winner: "Quincy Jones", winnings: "$60,000" },
-      { year: 2001, winner: "Ken Jennings", winnings: "$2,520,700" },
-      { year: 2020, winner: "Hannah Wilson", winnings: "$45,200" }
-    ];
     const tickerContent = document.querySelector("#ticker .ticker-content");
+    const currentHostHints=[];
     function initTicker(){
-      tickerContent.textContent = historicWinners
-        .map(g => `${g.year}: ${g.winner} — ${g.winnings}`)
-        .join("   |   ");
+      tickerContent.textContent="";
+      document.getElementById("ticker").hidden=true;
     }
-    window.addEventListener("load", initTicker);
+    function showHostHint(message){
+      const hint=String(message||"").trim();if(!hint)return;
+      if(!currentHostHints.includes(hint))currentHostHints.push(hint);
+      tickerContent.textContent=currentHostHints.map((text,i)=>`Hint ${i+1}: ${text.replace(/^Hint:\s*/i,"")}`).join("   •   ");
+      document.getElementById("ticker").hidden=false;
+    }
+    function clearHostHints(){currentHostHints.length=0;initTicker();}
+    initTicker();
+    window.JeopardyHostHints={show:showHostHint,clear:clearHostHints};
 
 
     // -----------------------------
@@ -2652,6 +2654,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
       state.activeKey = key;
+      clearHostHints();
       MascotV4B.react("hint",950);
       clueTransactionId += 1;
       answerTransactionLocked = false;
@@ -4346,11 +4349,11 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         alert:["Time is running out!","Eyes on the clock!","Heads up, players!"],
         hint:["Think about the era and the category.","Read every word — details matter.","Connect the clue to the category.","Think of a person, place, or milestone."]
       };
-      function say(message,duration=2600){if(!message)return;clearTimeout(speechTimer);bubble.textContent=String(message);bubble.classList.add("show");speechTimer=setTimeout(()=>bubble.classList.remove("show"),duration);}
+      function say(message,duration=2600){if(!message)return;if(/^Hint:/i.test(String(message)))window.JeopardyHostHints?.show(message);clearTimeout(speechTimer);bubble.textContent=String(message);bubble.classList.add("show");speechTimer=setTimeout(()=>bubble.classList.remove("show"),duration);}
       function react(name,duration=900,message=""){
         const el=document.getElementById("hostMascotV4B");
         clearTimeout(timer);if(el){el.classList.remove(...classes);void el.offsetWidth;const cls="react-"+name;if(name==="wrong" && classes.includes(cls))el.classList.add(cls);timer=setTimeout(()=>el.classList.remove(...classes),duration);}
-        const options=lines[name]||[];say(message||options[sequence++%Math.max(options.length,1)]||"",Math.max(duration+1000,2500));
+        const options=lines[name]||[];const line=message||options[sequence++%Math.max(options.length,1)]||"";if(name==="hint")window.JeopardyHostHints?.show(line);say(line,Math.max(duration+1000,2500));
       }
       return {react,say};
     })();

@@ -1,0 +1,6 @@
+const fs=require('fs'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
+const html=fs.readFileSync('index.html','utf8');const d=new JSDOM('<div id="ticker"><div class="ticker-content"></div></div>',{runScripts:'outside-only'});const w=d.window;
+const a=html.indexOf('    const tickerContent ='),b=html.indexOf('    initTicker();',a)+'    initTicker();'.length;
+w.eval(html.slice(a,b)+';window.hints={showHostHint,clearHostHints};');
+const ticker=w.document.getElementById('ticker'),text=ticker.firstChild;
+assert(ticker.hidden);w.hints.showHostHint('Read every word — details matter.');w.hints.showHostHint('Hint: 3 words; starts with “M”.');assert(text.textContent.includes('Hint 1: Read'));assert(text.textContent.includes('Hint 2: 3 words'));assert(!ticker.hidden);w.hints.showHostHint('Hint: 3 words; starts with “M”.');assert.equal((text.textContent.match(/Hint 2:/g)||[]).length,1);w.hints.clearHostHints();assert(ticker.hidden);assert.equal(text.textContent,'');assert(!html.includes('Walter Bruss'));assert(html.includes('if(name==="hint")window.JeopardyHostHints?.show(line)'));console.log('PASS current-question host hints, appended hints, duplicate suppression, reset and removal of historical winners');d.window.close();

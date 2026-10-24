@@ -21,3 +21,8 @@
 #leaderboardTicker.tickerReduced .tickerViewport{overflow-x:auto}
 #leaderboardTicker.tickerReduced .tickerTrack{transform:none!important;will-change:auto}
 @media(max-width:700px){#boardStage.boardStageActive{grid-template-columns:minmax(0,1fr) 76px;gap:8px}#boardMascotRail{padding:30px 0 6px}#boardStage #boardMascotRail #hostMascotV4B{width:72px!important;height:123px!important}#leaderboardTicker{height:60px;gap:4px}#leaderboardTicker .tickerLabel{flex-basis:58px;font-size:10px;padding:0 4px;letter-spacing:0}#leaderboardTicker .tickerPlayer{padding:12px 16px;font-size:.9rem}#leaderboardTicker .tickerPause{min-height:44px;padding:7px;margin-right:4px}}
+
+/* Replace historical winners with the host's hints for the current question. */
+#ticker{display:none;white-space:normal;color:var(--gold2);line-height:1.5;background:rgba(3,8,18,.97);padding:10px 18px;box-sizing:border-box;max-height:100px;overflow-y:auto}
+body:has(#qaPane[style*="block"]) #ticker:not([hidden]){display:block}
+#ticker .ticker-content{display:block;padding-left:0;animation:none;white-space:normal;overflow-wrap:anywhere}
