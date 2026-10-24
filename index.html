@@ -1157,7 +1157,6 @@ window.gameCaption=message=>{
       <input id="answerInput" placeholder="Type answer…" style="flex:1" aria-label="Your answer" />
       <button id="submitBtn" class="btn ok">Submit</button>
       <button id="passBtn" class="btn">Pass</button>
-      <button id="buzzerBtn" class="btn alt">Play Buzzer Sound</button>
       <button id="showBuzzerPanelBtn" class="btn alt">📱 Virtual Buzzer</button>
     </div>
     <div class="mono tiny" style="text-align:center;margin-top:7px">Answers are not case-sensitive—capitalization and accent marks do not matter.</div>
@@ -1644,7 +1643,6 @@ window.gameCaption=message=>{
     const backToLobbyBtn = $("backToLobbyBtn");
     const submitBtn = $("submitBtn");
     const passBtn = $("passBtn");
-    const buzzerBtn = $("buzzerBtn");
     const pauseQuestionTimerBtn = $("pauseQuestionTimerBtn");
 
 
@@ -2084,7 +2082,6 @@ window.gameCaption=message=>{
     $("musicToggleTopBtn").addEventListener("click",toggleGameMusic);
     volumeInput.addEventListener("change", ()=>{ syncLandingMusicVolume(); syncQuestionBeatVolume(); if(waitingRoomMusic&&!waitingRoomMusic.paused) waitingRoomMusic.volume=clamp(Number(volumeInput.value||0.25)*0.72,0,0.55); });
     soundModeSel.addEventListener("change", ()=>{ if(soundModeSel.value === "off") stopLandingMusic(); else startLandingMusic(); });
-    buzzerBtn.addEventListener("click", sfxPriceIsRightBuzzer);
 
 
     // -----------------------------
