@@ -25,4 +25,4 @@
 /* Replace historical winners with the host's hints for the current question. */
 #ticker{display:none;white-space:normal;color:var(--gold2);line-height:1.5;background:rgba(3,8,18,.97);padding:10px 18px;box-sizing:border-box;max-height:100px;overflow-y:auto}
 body:has(#qaPane[style*="block"]) #ticker:not([hidden]){display:block}
-#ticker .ticker-content{display:block;padding-left:0;animation:none;white-space:normal;overflow-wrap:anywhere}
+#ticker .ticker-content{display:block;padding-left:0;animation:none;white-space:normal;overflow-wrap:anywhere;text-align:center}
