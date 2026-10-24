@@ -298,6 +298,7 @@ window.gameCaption=message=>{
     function connectionLost(){
       connectionBadge.textContent="● Reconnecting — progress preserved";connectionBadge.style.color="var(--danger)";
       [submitAnswerBtn,passAnswerBtn,buzzerBtn,finalWagerBtn,finalAnswerBtn].forEach(b=>b.disabled=true);
+      document.getElementById("playerNowGuide").textContent="Connection lost. Keep this page open; your answer is saved. Tap Refresh connection to sync before retrying.";
       document.getElementById("turnTitle").textContent="Reconnecting…";saveDraft();
     }
 
@@ -424,7 +425,23 @@ window.gameCaption=message=>{
 
     function escapeHtml(value){ return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
     function sameName(a,b){ return String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase(); }
+
+    function explainNow(data){
+      let message=isReady?"You are ready. Wait for the host to start; keep this page open.":"Tap Ready. The host will start once the group is set.";
+      const controller=data.controller||"the chooser",mine=sameName(controller,playerName),attempted=(data.attempted||[]).some(n=>sameName(n,playerName));
+      if(data.type==="final-state"&&data.step!=="off"){
+        const locked=(data.step==="wagers"?(data.wagered||[]):(data.answered||[])).some(n=>sameName(n,playerName));
+        message=data.tiebreak&&data.step!=="complete"&&!(data.eligible||[]).some(n=>sameName(n,playerName))?"Watch the knowledge tiebreak. Only tied leaders answer this clue.":data.step==="complete"?"Game complete. Review your final score.":data.step==="wagers"?(locked?"Your wager is locked. Wait for the Final clue.":"Enter a private wager from $0 to $"+(data.wagerCaps?.[playerName]??0)+", then tap Lock Wager."):data.step==="answers"?(locked?"Your Final answer is locked. Wait for the results.":"Type your private Final answer, then tap Submit."):"Answers are locked. Watch the results.";
+      }else if(answerPending&&["CONTROL_ANSWER","ANSWERING","ALL_ANSWER"].includes(data.phase))message="Sending your answer. Wait for host confirmation; your answer stays saved.";
+      else if(data.paused)message="The game is paused. Keep this page open; your typed answer is saved.";
+      else if(data.boardVisible||(!data.activeKey&&data.phase==="BOARD"))message=mine?"Choose an unused clue below.":"Wait while "+controller+" chooses the next clue.";
+      else if(data.phase){message=({READING:data.everyoneAnswers?"Read the clue. Private answering opens when reading ends.":"Read the clue. Wait for BUZZ to become available.",CONTROL_ANSWER:mine?"Type your answer, then Submit — or tap Pass. No buzz is needed.":"Wait while "+controller+" answers or passes.",BUZZ_OPEN:attempted?"You already attempted this clue. Watch the result.":"Tap BUZZ. If you win, type your answer or Pass.",STEAL_OPEN:attempted?"You already attempted this clue. Wait for the next clue.":"Tap BUZZ to try the steal. Then answer or Pass.",STEAL_DELAY:attempted?"You already attempted this clue. Watch the steal.":"Get ready: BUZZ will unlock when the steal opens.",ANSWERING:sameName(data.firstBuzzer,playerName)?"You won the buzzer. Type an answer and Submit, or Pass.":"Wait while "+(data.firstBuzzer||controller)+" answers.",DD_WAGER:mine?"Enter your Daily Double wager, then lock it.":"Wait while "+controller+" plays the Daily Double.",ALL_ANSWER:(data.allSubmitted||[]).some(n=>sameName(n,playerName))?"Your answer is locked privately. Wait for the group.":"Type your private answer and Submit, or Pass. No buzz is needed.",ALL_REVEAL:"Read the explanation and discuss. The host continues when the group is ready."})[data.phase]||(isReady?"You are ready. Wait for the host to start.":"Tap Ready, then wait for the host to start.");}
+      const el=document.getElementById("playerNowGuide");if(el)el.textContent=message;
+    }
+    const nowGuide=document.createElement("section");nowGuide.id="playerNowGuide";nowGuide.setAttribute("role","status");nowGuide.setAttribute("aria-live","polite");nowGuide.textContent="Join with your name, then tap Ready.";document.getElementById("controlBanner").before(nowGuide);
+
     function setPlayState(data){
+      explainNow(data);
       const questionKey = data?.questionId || data?.activeKey || (data?.category && data?.clue ? `${data.category}::${data.clue}` : null);
       if(questionKey && questionKey !== currentQuestionKey){
         currentQuestionKey = questionKey;showLearningMessage("");
@@ -494,7 +511,7 @@ window.gameCaption=message=>{
     }
     let isReady = false;
     function setReadyUI(ready){
-      isReady=!!ready;
+      isReady=!!ready;const guide=document.getElementById("playerNowGuide");if(guide&&!lastSnapshot?.activeKey)guide.textContent=isReady?"You are ready. Wait for the host to start.":"Tap Ready when you are set to play.";
       readyBtn.style.display="block";
       readyBtn.textContent=isReady?"✓ Ready — tap to change":"Set Ready";
       readyBtn.className=isReady?"btn ok":"btn";
@@ -504,6 +521,7 @@ window.gameCaption=message=>{
       return raw.startsWith("$")?raw:`$${raw}`;
     }
     function renderMobileBoard(data){
+      if(data.boardVisible)explainNow(data);
       if(!data || !Array.isArray(data.categories) || !Array.isArray(data.rows)) return;
       controlBanner.textContent=`In control: ${data.controller || "—"}`;
       mobileBoard.style.display=data.boardVisible?"block":"none";
@@ -558,6 +576,7 @@ window.gameCaption=message=>{
     }
 
     function renderFinalSnapshot(data){
+      if(data.step!=="off")explainNow(data);
       if(data.gameId!==engineState.gameId)return;
       const changed=finalStep!==data.step||lastTiebreakRound!==(data.tiebreakRound||0);finalStep=data.step;lastTiebreakRound=data.tiebreakRound||0;
       if(data.tiebreak && data.step!=="complete" && !(data.eligible||[]).some(n=>sameName(n,playerName))){finalMobile.style.display="block";answerArea.style.display="none";finalWagerBtn.style.display=finalWagerInput.style.display=finalAnswerInput.style.display=finalAnswerBtn.style.display="none";finalStatusMobile.textContent="Knowledge tiebreak — tied leaders are answering.";return;}
@@ -580,6 +599,7 @@ window.gameCaption=message=>{
     }
     // ---- Listen for messages from host ----
     function handleHostMessage(data) {
+      if(data?.type==="host-secure")return;
       if(data.type==="player-removed" && data.deviceToken===clientSessionId){playerName="";localStorage.removeItem(`jeopardy-player-${roomCode}`);statusMsg.textContent="The host removed this device from the room.";loginSection.style.display="block";buzzerSection.style.display="none";loginError.textContent=statusMsg.textContent;return;}
 
       if (!data || !data.type) return;
@@ -920,6 +940,7 @@ window.gameCaption=message=>{
       answerPending=true;
       submitAnswerBtn.disabled=true;
       passAnswerBtn.disabled=true;
+      document.getElementById("playerNowGuide").textContent="Sending your answer. Wait for confirmation; your answer stays saved.";
       statusMsg.textContent="Sending answer…";
       statusMsg.className="";
       saveDraft();

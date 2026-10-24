@@ -42,7 +42,7 @@ const phones=[a,b,...Array.from({length:4},()=>setup('buzzer.html'))];advance(1)
 phones.forEach((w,i)=>{fill(w,'nameInput','Player'+i);click(w,'joinBtn')});
 el(host,'dailyDoubles').value='off';click(host,'enterWaitingRoomBtn');phones.forEach(w=>click(w,'readyBtn'));advance(14000);
 for(const c of st.board.categories){const tiers=st.board.rows.map(r=>st.board.clueFor(c,r).difficulty);assert.equal(JSON.stringify([...tiers].sort((a,b)=>a-b)),JSON.stringify(tiers));}
-function open(){host.document.querySelector('#boardGrid button:not(:disabled)').click();advance(1);assert.equal(st.phase,'READING');assert(phones.every(w=>el(w,'buzzerBtn').disabled));advance(5000);assert.equal(st.phase,'BUZZ_OPEN');assert(phones.every(w=>!el(w,'buzzerBtn').disabled));}
+function open(){host.document.querySelector('#boardGrid button:not(:disabled)').click();advance(1);assert.equal(st.phase,'READING');assert.match(el(a,'playerNowGuide').textContent,/Read the clue/);assert(phones.every(w=>el(w,'buzzerBtn').disabled));advance(5000);assert.equal(st.phase,'BUZZ_OPEN');assert.match(el(a,'playerNowGuide').textContent,/Tap BUZZ/);assert(phones.every(w=>!el(w,'buzzerBtn').disabled));}
 open();click(b,'buzzerBtn');assert.equal(st.phase,'ANSWERING');assert.equal(st.controlIdx,1);assert.equal(st.timer.remaining,30);
 fill(b,'remoteAnswerInput','not an answer');click(b,'submitAnswerBtn');assert.equal(st.players[1].score,0);advance(3001);assert.equal(st.phase,'STEAL_OPEN');assert(el(b,'buzzerBtn').disabled);
 click(a,'buzzerBtn');fill(a,'remoteAnswerInput',host.__engineTest.answers()[0]);click(a,'submitAnswerBtn');assert.equal(st.activeKey,null);assert(st.players[0].score>0);

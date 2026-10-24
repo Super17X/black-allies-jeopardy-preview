@@ -1134,6 +1134,8 @@ window.gameCaption=message=>{
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/qrcode.js?v=20261007-qrfix2"></script>
   <script src="config.js"></script>
+  <script src="host-wire.js"></script>
+  <script src="host-bridge.js"></script>
   <script>
   (() => {
     // -----------------------------
@@ -2675,7 +2677,7 @@ window.gameCaption=message=>{
       state.activeKey = key;
       fairness.clues.push({key,value:state.board.valueForRow(row),difficulty:clue.difficulty,correct:false});
       state.players.forEach(p=>{if(!removedPlayers.has(p.name))fairness.opportunities[p.name]=(fairness.opportunities[p.name]||0)+((competitive()||everyoneAnswers())?1:p===state.players[state.controlIdx]?1:0);});
-      $("learningPanel").hidden=true;$("continueEveryone").hidden=true;$("openCompetitiveBuzz").textContent=everyoneAnswers()?"Open answering for everyone":"Open buzzers for everyone";
+      $("learningPanel").hidden=true;$("continueEveryone").hidden=true;$("closeEveryoneWindow").hidden=!everyoneAnswers();$("openCompetitiveBuzz").textContent=everyoneAnswers()?"Open answering for everyone":"Open buzzers for everyone";
       clearHostHints();
       MascotV4B.react("hint",950);
       clueTransactionId += 1;
@@ -3154,6 +3156,7 @@ window.gameCaption=message=>{
     const championshipPauseBtn=$("finalPauseBtn");
     championshipPauseBtn.addEventListener("click",()=>{championshipPaused=!championshipPaused;championshipPauseBtn.textContent=championshipPaused?"Resume Countdown":"Pause Countdown";});
     function broadcastFinalState(){
+      if(document.getElementById("nowBoardGuide"))updateBoardNow();
       broadcastToBuzzers({type:"final-state",gameId:engineGameId,step:state.final.step,tiebreak:!!tiebreakPlayers,tiebreakRound:tiebreakNumber,eligible:finalEligible().map(i=>state.players[i].name),category:finalJeopardy.category,
         clue:state.final.step==="wagers"||state.final.step==="off"?"":finalJeopardy.text,
         remaining:state.final.step==="wagers"?state.final.wagerRemaining||0:state.final.timerRemaining||0,
@@ -3787,7 +3790,7 @@ window.gameCaption=message=>{
     function gameplaySyncPayload(){
       const active = !!state.activeKey && (buzzerActive || state.timer.mode === "main" || state.timer.mode === "steal" || state.timer.mode === "all" || state.timer.mode === "reading" || state.timer.mode==="dd-wager");
       return {
-        type:"gameplay-sync",
+        type:"gameplay-sync",boardVisible:!!state.board&&!state.activeKey&&state.final.step==="off"&&boardPane.style.display!=="none",
         gameId:engineGameId,questionId:engineQuestionId(),turnId:engineTurn,
         remaining:state.timer.id?state.timer.remaining:0,paused:state.timer.paused,
         dailyDouble:{waiting:!!state.activeKey && state.timer.mode==="dd-wager" && state.ddLockedWager===null,max:Math.max(state.board?.valueForRow(state.board.rows[0])||0,state.players[state.controlIdx]?.score||0)},
@@ -3810,6 +3813,7 @@ window.gameCaption=message=>{
       };
     }
     function broadcastGameplaySync(){
+      updateBoardNow();
       for(const p of state.players){const d=decisionHistory.slice().reverse().find(d=>d.player===p.name);if(d)broadcastToBuzzers({type:"answer-decision",player:p.name,id:d.id});} broadcastToBuzzers(gameplaySyncPayload()); broadcastFinalState(); }
 
     // Remove stale phone sessions and reopen a steal if its winner disconnects.
@@ -3842,6 +3846,7 @@ window.gameCaption=message=>{
     function handleBuzzerMessage(data) { try { return processBuzzerMessage(data); } finally { premiereSave(); } }
     function processBuzzerMessage(data) {
       if (!data || !data.type) return;
+      if(data.type==="host-secure"){mobileHostBridge?.handle(data).catch(()=>{});return;}
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
       if(data.player && data.type!=="join"){
         const owner=playerSessions.get(String(data.player).trim().toLocaleLowerCase());
@@ -4422,7 +4427,7 @@ window.gameCaption=message=>{
     const lesson=document.createElement("section");lesson.id="learningPanel";lesson.setAttribute("role","status");lesson.hidden=true;qaPane.appendChild(lesson);
     const explainHint=document.createElement("button");explainHint.className="btn";explainHint.id="reasoningHint";explainHint.textContent="Show reasoning hint (everyone)";explainHint.onclick=()=>{if(!state.activeKey)return;const [c,r]=state.activeKey.split("::");const hint=learningFor(state.board.clueFor(c,Number(r))).hint;window.gameCaption("💡 "+hint);broadcastToBuzzers({type:"shared-hint",hint});};qaPane.appendChild(explainHint);
     const nextAll=document.createElement("button");nextAll.id="continueEveryone";nextAll.className="btn";nextAll.textContent="Continue after discussion";nextAll.hidden=true;nextAll.onclick=()=>{if(state.phase!=="ALL_REVEAL")return;state.controlIdx=nextAvailablePlayer(state.clueStartIdx);closeClue();};qaPane.appendChild(nextAll);
-    const endAll=document.createElement("button");endAll.className="btn";endAll.textContent="Close everyone-answer window";endAll.onclick=finishEveryoneRound;qaPane.appendChild(endAll);
+    const endAll=document.createElement("button");endAll.id="closeEveryoneWindow";endAll.hidden=true;endAll.className="btn";endAll.textContent="Close everyone-answer window";endAll.onclick=finishEveryoneRound;qaPane.appendChild(endAll);
     $("conversationMode").onchange=()=>{document.body.classList.toggle("conversation-mode",$("conversationMode").checked);if($("conversationMode").checked){stopLandingMusic();stopMusic();pauseQuestionBeat();stopFinalBeat();stopWaitingRoomMusic(0);resultSounds.forEach(a=>a.pause());Object.values(cueAudio).forEach(a=>a.pause());}document.querySelectorAll("#featuredMusicDock iframe").forEach(f=>{if($("conversationMode").checked){f.dataset.quietSrc=f.src;f.src="about:blank";}else if(f.dataset.quietSrc){f.src=f.dataset.quietSrc;delete f.dataset.quietSrc;}});broadcastGameplaySync();};
     renderRoomControls();offerRecovery();setInterval(premiereSave,250);
     function refreshSetupSummary(){
@@ -4437,6 +4442,27 @@ window.gameCaption=message=>{
     $('lobbyPane').addEventListener('click',()=>queueMicrotask(refreshSetupSummary));
     new MutationObserver(refreshSetupSummary).observe($('lobbyList'),{childList:true,subtree:true});
     refreshSetupSummary();
+
+    let mobileHostBridge=null;
+    const nowBoard=document.createElement("section");nowBoard.id="nowBoardGuide";nowBoard.setAttribute("role","status");document.querySelector("header.hero").after(nowBoard);
+    function updateBoardNow(){
+      const target=document.getElementById("nowBoardGuide");if(!target)return;
+      let message="Join on your phone, then tap Ready. The host starts the game.";
+      if(state.final.step!=="off")message=state.final.step==="wagers"?"Final: enter a private wager on your phone. Review the displayed gain and loss before locking it.":state.final.step==="answers"?"Final: type and submit your private answer on your phone.":state.final.step==="complete"?"Game complete: review the scores and how they changed.":"Answers are locked. Watch the results reveal.";
+      else if(state.timer.paused)message="The game is paused. Keep your phone open; your typed answer stays saved.";
+      else if(state.activeKey){const p=state.players[state.controlIdx]?.name||"The player";message=({READING:everyoneAnswers()?"Read the clue. Private answering opens after the reading period.":"Read the clue. Buzzers are closed until the reading period ends.",BUZZ_OPEN:"Buzzers are open: tap BUZZ on your phone. The first eligible player gets an answer turn.",STEAL_OPEN:"Steal is open: players who have not attempted may tap BUZZ.",STEAL_DELAY:"Get ready for the steal. Players who already attempted sit out this clue.",CONTROL_ANSWER:p+": type an answer or tap Pass on your phone. No buzz is needed.",ANSWERING:p+" is answering. Everyone else: wait for the result.",ALL_ANSWER:"Everyone: submit a private answer or Pass on your phone. All results appear together.",ALL_REVEAL:"Read the explanation and discuss. The host continues when the group is ready.",DD_WAGER:p+": lock your Daily Double wager on your phone."})[state.phase]||"Watch the clue result. The next action will appear here.";}
+      else if(state.board&&state.final.step==="off")message=(state.players[state.controlIdx]?.name||"The chooser")+": choose an unused clue on the board or your phone. Everyone else: wait for the clue.";
+      target.textContent="What can I do now? "+message;
+    }
+    if(window.JeopardyRemoteHost)mobileHostBridge=window.JeopardyRemoteHost.init({room:roomCode,context:()=>engineGameId+":"+engineTurn+":"+state.activeKey+":"+state.final.step,phase:()=>state.final.step!=="off"?"Final · "+state.final.step:!state.board?"Set up players and start the waiting room":!state.activeKey?"Choose a clue":({READING:"Read the clue",BUZZ_OPEN:"Buzzers open",STEAL_OPEN:"Steal open",STEAL_DELAY:"Steal opens shortly",ANSWERING:"Player answering",CONTROL_ANSWER:"Chooser answering",ALL_ANSWER:"Collecting private answers",ALL_REVEAL:"Discuss results, then continue",DD_WAGER:"Daily Double wager"})[state.phase]||"Review clue result",
+      canUse:el=>{const a=el.dataset.hostAction;if(["correct","wrong","pass"].includes(a))return !!state.activeKey&&["CONTROL_ANSWER","ANSWERING"].includes(state.phase)&&!state.timer.paused;if(a==="pause")return !!state.timer.id;if(a==="reveal")return !!state.activeKey&&state.phase!=="ALL_REVEAL";if(a==="board")return !!state.activeKey;if(el.id==="hostSkipFinalBtn")return !state.activeKey&&state.final.step==="off"&&!!state.board;if(el.id==="undoBtn")return undoStack.length>0;return true;},
+      send:packet=>{if(sendRealtime(packet))return;if(bc)bc.postMessage(packet);try{localStorage.setItem(BUZZER_KEY_OUT,JSON.stringify({...packet,_ts:Date.now()}));}catch(_){}},
+      exportRecovery:()=>{premiereSave();return localStorage.getItem(recoveryKey);},importRecovery:restoreSession,
+      monitor:id=>{if(id==="diagnosticsBtn")runDiagnostics();else renderDeviceHealth();},
+      next:()=>state.final.step!=="off"?state.final.step==="wagers"?"Monitor wagers; pause the countdown if the group needs time.":state.final.step==="answers"?"Monitor private submissions; pause if needed.":state.final.step==="reveal"?"Reveal the Final answer or results when ready.":"Review final scores, play a tiebreak if tied, or reset for another game.":waitingRoomPane.style.display!=="none"?"Check the ready list, then start the game.":!state.board?"Set up players and options, then enter the waiting room.":state.phase==="ALL_REVEAL"?"Read the learning explanation, then tap Continue after discussion.":state.phase==="READING"&&window.educationalMode()?"Tap Open buzzers / answering when everyone has finished reading.":state.timer.paused?"Resume the timer when the group is ready.":!state.activeKey?"Let the chooser select a clue, or choose it below.":"Monitor the current turn. Pause, reveal, or correct a decision only when needed.",
+      current:()=>state.activeKey?clueCatEl.textContent+" · "+clueValueEl.textContent+" · "+timerEl.textContent+"\n"+questionText.textContent:state.final.step!=="off"?$("finalClueText").textContent:"No active clue. Waiting for the next selection.",
+      notes:()=>["Room "+roomCode,"Phase "+state.phase,"Clue: "+(state.activeKey?questionText.textContent:"No active clue"),"Timer: "+timerEl.textContent,"Final: "+$("finalClueText").textContent,"In control: "+(state.players[state.controlIdx]?.name||"—"),"Scores: "+state.players.map(p=>p.name+" $"+p.score).join(" · "),$("diagnosticRows").textContent,$("proDeviceGrid").textContent,$("recoveryHealth").textContent,$("finalStatusPanel").textContent].join("\n")});
+    updateBoardNow();
 
 
   })();

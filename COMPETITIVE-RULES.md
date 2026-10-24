@@ -33,3 +33,15 @@ Question rotation prefers unseen material in fixed and randomized layouts. Finit
 Clue-level observations are stored per play mode in this browser. A rating remains editorial until at least 20 nonblank answer submissions across five sessions are available for that clue. Then an audience-dependent estimate uses observed accuracy. Passes, missing answers, and Daily Doubles are excluded. These minimums are safeguards, not a statistical guarantee that higher dollar values are consistently harder. The results report displays the evidence and identifies insufficient data explicitly.
 
 `npm run test:casual` verifies private collection, simultaneous scoring, partial-round recovery, discussion pacing, rotating control, pass/timeout, normalized formatting, numeric protection, quiet media, content rotation, and the evidence threshold.
+
+## Clear next actions and private mobile host controls
+
+Both the board and player phone display the next action in plain language: join/Ready, choose a clue, read, buzz, answer/pass, wait, lock a Final wager, submit a Final answer, or discuss results. The guidance distinguishes the chooser, buzzer winner, players who already attempted, private submissions, paused play, and a lost connection.
+
+On the board, open **Host Controls → Host-only QR / mobile controls**. Scan that private QR with the host phone. Keep it off the shared projector and never send it to players. The dedicated `host.html` interface mirrors currently available host controls, organized into collapsible groups, and shows the current clue, room state, scores, diagnostics, and recovery tools. The board tab must remain open and connected. Full screen requires a direct click on the board device.
+
+The private link contains a random 256-bit capability in its fragment. Phone and board authenticate and encrypt host messages with AES-GCM; player room codes and player QR codes contain no host capability. Host commands are limited to known current controls, checked against the current turn and availability, expire promptly, and use deduplication receipts that survive a board refresh within the same tab session. The URL fragment is removed from the host phone address bar after pairing; the capability stays in session storage. Recovery exports never include it. This is capability-link access, not account login: anyone possessing the private link has host authority.
+
+**Revoke mobile host access** immediately stops accepting the old capability. Generate a new private QR to reconnect. **Disconnect this phone** removes its stored capability without revoking other paired host phones. HTTPS and Web Crypto are required. No database schema or Supabase configuration changes are needed.
+
+`npm run test:host` checks encrypted pairing, the actual mobile control UI, private fragment handling, replay/stale/disabled/unknown/read-only command rejection, encrypted recovery, and revocation. Real-device camera scanning and mobile-browser behavior still need an event-device check.
