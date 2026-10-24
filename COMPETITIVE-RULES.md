@@ -17,3 +17,19 @@ Competitive is the default for new games. Controller-first remains available bef
 `npm run test:remote` retains regression coverage for controller-first play, Daily Doubles, original full-score Final rules, normalized answers, reconnects, and recovery.
 
 Visual and network-latency fairness still need testing on event devices; first accepted buzz is determined by arrival at the host.
+
+## Casual groups and learning
+
+Choose **Casual · everyone answers privately** to give every registered player a response on every regular clue. Answers lock once per player, are judged together, and award identical points for correct responses without a speed bonus or deductions. Daily Doubles are disabled in this mode. The chooser rotates; the host continues after a results-and-discussion screen. There is no casual session deadline. Configured answer timers still apply unless educational mode is untimed. Competitive and controller-first presets remain available.
+
+Conversation mode stops internal sounds/music, disables decorative motion, and resets the embedded music player. Visible game messages remain. Player phones inherit the setting and include a manual connection sync control, retry/status feedback, saved answer drafts, and recent score receipts.
+
+Answer matching ignores compact spacing, case, accents, and punctuation before conservative typo tolerance. Different numeric content is not accepted as a typo. Meaningful alternative answers can still require the existing host review/override flow.
+
+Hints now offer reasoning strategies rather than revealing initials. Post-answer explanations connect the answer to the clue, provide additional distinctions for selected common answers, and include discussion prompts. This is not a claim that every clue has a fully authored lesson.
+
+Question rotation prefers unseen material in fixed and randomized layouts. Finite banks eventually repeat; the host is told when reused clues are necessary.
+
+Clue-level observations are stored per play mode in this browser. A rating remains editorial until at least 20 nonblank answer submissions across five sessions are available for that clue. Then an audience-dependent estimate uses observed accuracy. Passes, missing answers, and Daily Doubles are excluded. These minimums are safeguards, not a statistical guarantee that higher dollar values are consistently harder. The results report displays the evidence and identifies insufficient data explicitly.
+
+`npm run test:casual` verifies private collection, simultaneous scoring, partial-round recovery, discussion pacing, rotating control, pass/timeout, normalized formatting, numeric protection, quiet media, content rotation, and the evidence threshold.

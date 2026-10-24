@@ -19,3 +19,7 @@ button,.btn{white-space:normal;overflow-wrap:anywhere}
 body,#waitingRoomPane,#hostDrawer{padding-bottom:20dvh!important}
 @media(max-width:800px){#boardPane>.row:first-child{position:relative!important;inset:auto!important;transform:none!important;border-radius:12px!important;flex-wrap:wrap!important}#featuredMusicDock{position:relative!important;inset:auto!important;margin:1rem auto}#hostFab{bottom:20dvh!important}}
 @media(prefers-reduced-motion:reduce){#flashOverlay,#buzzFlashOverlay,#buzzFlashLabel{display:none!important}}
+
+body.conversation-mode *,body.conversation-mode *::before,body.conversation-mode *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+body.conversation-mode #achievementOverlay,body.conversation-mode .champ-confetti,body.conversation-mode #gameCountdown,body.conversation-mode #flashOverlay,body.conversation-mode #buzzFlashOverlay,body.conversation-mode #hostMascotV4B{display:none!important}
+#learningPanel,#phoneLearning{padding:1rem;margin:1rem 0;border:1px solid #b7c9e9;border-radius:.5rem;line-height:1.6;overflow-wrap:anywhere}

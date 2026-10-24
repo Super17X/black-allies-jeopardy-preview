@@ -336,6 +336,7 @@ window.gameCaption=message=>{
     let playerName = null;
     let audioCtx = null;
     function playBuzzSound() {
+      if(document.body.classList.contains("conversation-mode"))return;
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
       audioCtx = audioCtx || new Ctx();
@@ -395,13 +396,17 @@ window.gameCaption=message=>{
             if(pendingCritical.has(mid)){
               pendingCritical.delete(mid);
               if(type==="answer" || type==="pass"){ answerPending=false; submitAnswerBtn.disabled=false; passAnswerBtn.disabled=false; }
-              if(deliveryStatus) deliveryStatus.textContent=`⚠️ ${type} was not acknowledged. Tap again.`;
+              if(deliveryStatus) deliveryStatus.textContent=`⚠️ ${type} has no host confirmation yet. Use Refresh connection; your answer is saved. Repeating a received submission will not score twice.`;stage("Not confirmed. Keep this page open and refresh the connection before retrying.");sendToHost({type:"sync-request",player:playerName});
             }
           },900);
           pendingCritical.set(mid,timer);
         }
       };
       attempt();
+      // A transport acknowledgement is not the same as a processed action.
+      // Retry the same id so the host can return its cached result without rescoring.
+      [2200,5200].forEach(ms=>setTimeout(()=>{if(criticalActions.has(mid)){stage("Still awaiting host confirmation — retrying safely; your answer is saved.");sendToHost(msg);sendToHost({type:"sync-request",player:playerName});}},ms));
+      setTimeout(()=>{if(criticalActions.has(mid)){stage("Not confirmed yet. Use Refresh connection; keep your saved answer on this page.");sendToHost({type:"sync-request",player:playerName});}},8200);
       return mid;
     }
 
@@ -422,11 +427,14 @@ window.gameCaption=message=>{
     function setPlayState(data){
       const questionKey = data?.questionId || data?.activeKey || (data?.category && data?.clue ? `${data.category}::${data.clue}` : null);
       if(questionKey && questionKey !== currentQuestionKey){
-        currentQuestionKey = questionKey;
+        currentQuestionKey = questionKey;showLearningMessage("");
         remoteAnswerInput.value = "";
         answerPending = false;
         try{const draft=JSON.parse(sessionStorage.getItem(`answer-draft-${roomCode}`)||"null");if(draft?.key===questionKey)remoteAnswerInput.value=draft.text||"";}catch(_){}
       }
+      if(data.allResults){const mine=data.allResults.find(x=>sameName(x.name,playerName));if(mine){stage(`${mine.correct?"✓ Correct":"✗ No points"} · +$${mine.delta}. ${mine.reason}.`);statusMsg.textContent="Results revealed — discuss the explanation while the host prepares the next clue.";}showLearningMessage(data.learning||"");}
+      if(data.everyoneAnswers && data.phase==="ALL_ANSWER" && (data.allSubmitted||[]).some(n=>sameName(n,playerName))){answerPending=false;answerArea.style.display="none";buzzerBtn.disabled=true;document.getElementById("buzzControls").style.display="none";document.getElementById("turnTitle").textContent="Answer locked privately";stage(`✓ Locked · ${(data.allSubmitted||[]).length} of ${(data.allEligible||[]).length} answers received. Results appear together.`);return;}
+      if(data.scoreLedger){let ledger=document.getElementById("myScoreReceipts");if(!ledger){ledger=document.createElement("details");ledger.id="myScoreReceipts";ledger.innerHTML='<summary>Why did my score change?</summary><div></div>';controlBanner.after(ledger);}ledger.querySelector("div").textContent=data.scoreLedger.filter(d=>sameName(d.player,playerName)).slice(-10).map(d=>`${d.kind}: ${d.correct?"correct":"incorrect / no answer"} · ${d.delta>=0?"+":""}$${d.delta}${d.overridden?" (host correction)":""}`).join(" | ")||"No scored answers yet.";}
       const wasAnswering = answerArea.style.display === "block";
 
       const controller = data?.controller || "";
@@ -436,7 +444,8 @@ window.gameCaption=message=>{
       const stealOpen = ["BUZZ_OPEN","STEAL_OPEN"].includes(phase) && eligible;
       const answeringSteal = phase==="ANSWERING" && sameName(data?.firstBuzzer,playerName);
       const questionActive = data?.active !== false && !!(data?.activeKey || data?.clue || data?.category);
-      const directTurn = questionActive && phase==="CONTROL_ANSWER" && iControl && !data?.firstBuzzer;
+      const allTurn=data.everyoneAnswers && phase==="ALL_ANSWER" && (data.allEligible||[]).some(n=>sameName(n,playerName)) && !(data.allSubmitted||[]).some(n=>sameName(n,playerName));
+      const directTurn = allTurn || questionActive && phase==="CONTROL_ANSWER" && iControl && !data?.firstBuzzer;
 
       if(phonePhase) phonePhase.textContent=String(phase||"SYNC").replaceAll("_"," ");
       const myTurn=directTurn||answeringSteal;
@@ -455,7 +464,7 @@ window.gameCaption=message=>{
         answerArea.style.display="block";
         submitAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
         passAnswerBtn.disabled=answerPending || Date.now()-lastHostAt>8000;
-        statusMsg.textContent="🎯 You're in control — answer directly. No buzz needed.";
+        statusMsg.textContent=allTurn?"Everyone answers: type privately. Same points for every correct answer; no speed bonus.":"🎯 You're in control — answer directly. No buzz needed.";
         statusMsg.className="ok";
         if(!wasAnswering && !answerPending) answerArea.scrollIntoView({block:"nearest",behavior:window.reducedMotion()?"instant":"smooth"});
         return;
@@ -576,14 +585,15 @@ window.gameCaption=message=>{
       if (!data || !data.type) return;
       if (data.room && String(data.room).toUpperCase() !== roomCode) return;
       if(!["gameplay-sync","timer-tick","action-result","transport-ack","heartbeat-ack","board-state","ready-state","scoreboard-update","final-state","join-ack","buzz-ack","answer-correct","answer-wrong","decision-override","game-reset"].includes(data.type) && ["answer","buzz","pass","heartbeat","sync-request","join","select-clue","final-wager-submit","final-answer-submit"].includes(data.type))return;
-      lastHostAt=Date.now();
+      lastHostAt=Date.now();if(typeof data.conversationMode==="boolean")document.body.classList.toggle("conversation-mode",data.conversationMode);
       if(data.type==="action-result" && sameName(data.player,playerName)){
         if(data.gameId!==engineState.gameId)return;
         const action=criticalActions.get(data.mid);criticalActions.delete(data.mid);
         const timer=pendingCritical.get(data.mid);if(timer)clearTimeout(timer);pendingCritical.delete(data.mid);
         if(!data.accepted){answerPending=false;stage(data.reason||"Not accepted — syncing your turn");sendToHost({type:"sync-request",player:playerName});return;}
-        const labels={correct:"✓ Correct — score updated automatically",incorrect:"✗ Incorrect — judged automatically",passed:"Passed",'buzz-won':"Buzzer won — enter your answer",'wager-locked':"Wager locked privately",'final-answer-locked':"Final answer received and locked"};
-        stage(labels[data.result]||"Received by game engine");
+        const labels={"private-answer-locked":"✓ Answer locked privately — waiting for the group",correct:"✓ Correct — score updated automatically",incorrect:"✗ Incorrect — judged automatically",passed:"Passed",'buzz-won':"Buzzer won — enter your answer",'wager-locked':"Wager locked privately",'final-answer-locked':"Final answer received and locked"};
+        stage(data.reasonText||labels[data.result]||"Received by game engine");
+        if(data.result==="private-answer-locked")answerPending=false;
         if(data.result==="correct"||data.result==="incorrect")lastVerdictUntil=Date.now()+4000;
         return;
       }
@@ -592,13 +602,15 @@ window.gameCaption=message=>{
         return;
       }
       if(data.type==="game-reset"){
-        engineState={gameId:data.gameId,questionId:null,turnId:null};currentQuestionKey=null;answerPending=false;finalStep="off";document.getElementById("finalAnswerRevealed").style.display="none";
+        criticalActions.clear();engineState={gameId:data.gameId,questionId:null,turnId:null};currentQuestionKey=null;answerPending=false;finalStep="off";document.getElementById("finalAnswerRevealed").style.display="none";
         finalMobile.style.display="none";answerArea.style.display="none";document.getElementById("dailyDoubleMobile").style.display="none";remoteAnswerInput.value="";localDeadline=0;paintClock();
         try{sessionStorage.removeItem(`answer-draft-${roomCode}`);}catch(_){}stage("New game — waiting for the board");return;
       }
       if(data.type==="final-answer-revealed"){
         const answer=document.getElementById("finalAnswerRevealed");answer.style.display="block";answer.textContent="Final Jeopardy Answer: "+String(data.answer||"");return;
       }
+      if(data.type==="learning-reveal"){showLearningMessage(data.explanation);return;}
+      if(data.type==="shared-hint"){stage("💡 "+data.hint);return;}
       if(data.rulesText){let rules=document.getElementById("playerRules");if(!rules){rules=document.createElement("details");rules.id="playerRules";const title=document.createElement("summary");title.textContent="Game rules & scoring";rules.appendChild(title);rules.appendChild(document.createElement("p"));controlBanner.after(rules);}rules.querySelector("p").textContent=data.rulesText;}
       if(data.type==="audio-caption"){window.gameCaption(String(data.message||""));return;}
       if(data.type==="final-state"){renderFinalSnapshot(data);return;}
@@ -895,6 +907,8 @@ window.gameCaption=message=>{
       setTimeout(()=>sendToHost({type:"sync-request",player:playerName}),250);
     });
 
+    function showLearningMessage(message){let panel=document.getElementById("phoneLearning");if(!panel){panel=document.createElement("section");panel.id="phoneLearning";controlBanner.after(panel);}panel.textContent=String(message||"");}
+    const reconnectButton=document.createElement("button");reconnectButton.className="btn";reconnectButton.id="resyncPhone";reconnectButton.textContent="Refresh connection / sync turn";reconnectButton.onclick=()=>{stage("Requesting the current turn. Your saved answer stays on this phone.");sendToHost({type:"sync-request",player:playerName});};deliveryStatus.after(reconnectButton);
     function submitRemoteAnswer(){
       const answer=(remoteAnswerInput.value||"").trim();
       if(submitAnswerBtn.disabled) return;
