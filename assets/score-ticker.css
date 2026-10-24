@@ -1,18 +1,12 @@
-/* Broadcast score crawl; overrides the previous multi-row score grid. */
-body{padding-bottom:100px}
-#leaderboardTicker{left:0;right:0;bottom:0;height:76px;gap:0;border-radius:0;border-top:2px solid #e9bd49;background:#050b19;box-shadow:0 -8px 30px #0009;padding-bottom:env(safe-area-inset-bottom);z-index:2100}
-#leaderboardTicker .tickerLabel{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;padding:0 22px;background:linear-gradient(120deg,#e7bd51,#ffe99a);color:#101522;font-size:13px;letter-spacing:.12em;border:0}
-#leaderboardTicker .tickerLabel small{font-size:10px;letter-spacing:.18em}
-#leaderboardTicker .tickerViewport{overflow:hidden;height:100%;display:flex;align-items:center;min-width:0}
-#leaderboardTicker .tickerTrack{display:flex;justify-content:flex-start;gap:0;width:max-content;min-width:0;padding:0;overflow:visible;will-change:transform}
-#leaderboardTicker .tickerGroup{display:flex;align-items:center;flex-shrink:0;gap:0}
-#leaderboardTicker .tickerPlayer{display:flex;align-items:center;gap:12px;flex:0 0 auto;max-width:none;white-space:nowrap;padding:14px 28px;border:0;border-right:1px solid #ffffff24;border-radius:0;background:transparent;box-shadow:none;color:#eef3ff;font-size:18px;overflow:visible}
-#leaderboardTicker .tickerPlayer strong{color:#ffe08a;font-size:24px;font-variant-numeric:tabular-nums}
-#leaderboardTicker .tickerLeader{border-color:#ffffff24;box-shadow:none;background:linear-gradient(90deg,#e9bd4919,transparent)}
-#leaderboardTicker .tickerPause{align-self:stretch;flex-shrink:0;padding:0 16px;border:0;border-left:1px solid #ffffff24;border-radius:0;background:#101c32;color:#ffe08a;font-size:13px;cursor:pointer}
-#leaderboardTicker .tickerPause:focus-visible{outline:3px solid #fff;outline-offset:-4px}
-#leaderboardTicker .tickerEmpty{padding:0 25px;color:#c1cce0}
+/* Motion and layout only: player cards retain the game's original visual styles. */
+#leaderboardTicker .tickerViewport{overflow:hidden;min-width:0;display:flex;align-items:center;height:100%}
+#leaderboardTicker .tickerTrack{display:flex;align-items:center;justify-content:flex-start;gap:0;width:max-content;min-width:0;padding:0;overflow:visible;will-change:transform}
+#leaderboardTicker .tickerGroup{display:flex;align-items:center;flex-shrink:0;gap:10px;padding:0 10px 0 0}
+#leaderboardTicker .tickerPlayer{flex:0 0 auto;white-space:nowrap}
+#leaderboardTicker .tickerPause{flex:0 0 auto;border:1px solid var(--gold);border-radius:12px;background:rgba(3,8,18,.96);color:var(--gold2);font:inherit;padding:10px 14px;cursor:pointer}
+#leaderboardTicker .tickerPause:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+#leaderboardTicker .tickerEmpty{padding:0 16px}
 #leaderboardTicker .tickerSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #leaderboardTicker.tickerReduced .tickerViewport{overflow-x:auto}
 #leaderboardTicker.tickerReduced .tickerTrack{transform:none!important;will-change:auto}
-@media(max-width:700px){#leaderboardTicker{height:66px}#leaderboardTicker .tickerLabel{padding:0 10px;font-size:10px}#leaderboardTicker .tickerLabel small{font-size:8px}#leaderboardTicker .tickerPlayer{padding:12px 18px;font-size:15px;gap:8px}#leaderboardTicker .tickerPlayer strong{font-size:20px}#leaderboardTicker .tickerPause{padding:0 10px;font-size:11px}}
+@media(max-width:700px){#leaderboardTicker .tickerPause{padding:8px;font-size:.8rem}}
