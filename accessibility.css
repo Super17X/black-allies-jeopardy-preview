@@ -23,3 +23,9 @@ body,#waitingRoomPane,#hostDrawer{padding-bottom:20dvh!important}
 body.conversation-mode *,body.conversation-mode *::before,body.conversation-mode *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 body.conversation-mode #achievementOverlay,body.conversation-mode .champ-confetti,body.conversation-mode #gameCountdown,body.conversation-mode #flashOverlay,body.conversation-mode #buzzFlashOverlay,body.conversation-mode #hostMascotV4B{display:none!important}
 #learningPanel,#phoneLearning{padding:1rem;margin:1rem 0;border:1px solid #b7c9e9;border-radius:.5rem;line-height:1.6;overflow-wrap:anywhere}
+
+.settings-disclosure{width:100%;min-width:0;border:1px solid #64748b;border-radius:.6rem;margin:.5rem 0;background:rgba(10,17,31,.75)}
+.settings-disclosure>summary{cursor:pointer;padding:.85rem 1rem;font-weight:700;color:#f7d879;list-style-position:inside}
+.settings-disclosure>summary:focus-visible{outline:3px solid #74b9ff;outline-offset:3px}
+.settings-disclosure[open]>summary{border-bottom:1px solid #64748b}
+.settings-disclosure-body{padding:1rem;overflow-wrap:anywhere}
