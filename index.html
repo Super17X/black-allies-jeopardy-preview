@@ -883,14 +883,17 @@ window.reducedMotion=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)
 // Read once for a session: changing the setting never silently alters an active timer.
 window.untimedSession=localStorage.getItem('jeopardy-untimed')==='true';
 window.educationalMode=()=>window.untimedSession;
+let captionHideTimer=null,captionLastText="",captionLastAt=0;
 window.gameCaption=message=>{
   if(!message)return;
   window.captionBroadcast?.(message);
+  const now=Date.now();if(captionLastText===message&&now-captionLastAt<1500)return;
+  captionLastText=message;captionLastAt=now;
   let panel=document.getElementById('audioCaptions');
-  if(!panel){panel=document.createElement('aside');panel.id='audioCaptions';panel.setAttribute('aria-label','Game messages');panel.setAttribute('role','log');panel.setAttribute('aria-live','polite');document.body.appendChild(panel);}
-  if(panel.lastChild?.textContent===message)return;
-  const line=document.createElement('div');line.textContent=message;panel.appendChild(line);
-  while(panel.children.length>4)panel.firstChild.remove();
+  if(!panel){panel=document.createElement('aside');panel.id='audioCaptions';panel.setAttribute('aria-label','Latest game event');panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.appendChild(panel);}
+  panel.textContent=message;panel.hidden=false;clearTimeout(captionHideTimer);captionHideTimer=setTimeout(()=>{panel.hidden=true;},2000);
+  let history=document.getElementById('gameEventHistory');if(!history){history=document.createElement('details');history.id='gameEventHistory';const title=document.createElement('summary');title.textContent='Recent game events';history.appendChild(title);const list=document.createElement('div');list.setAttribute('role','log');history.appendChild(list);(document.getElementById('hostDrawer')||document.body).appendChild(history);}
+  const list=history.querySelector('div'),line=document.createElement('p');line.textContent=message;list.appendChild(line);while(list.children.length>50)list.firstChild.remove();
 };
 </script></head>
 <body>
@@ -1134,6 +1137,7 @@ window.gameCaption=message=>{
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/qrcode.js?v=20261007-qrfix2"></script>
   <script src="config.js"></script>
+  <script src="practice-navigation.js"></script>
   <script src="host-wire.js"></script>
   <script src="host-bridge.js"></script>
   <script>
@@ -2293,7 +2297,7 @@ window.gameCaption=message=>{
     function startEveryoneRound(clue){
       allRound=allRound||{eligible:state.players.filter(p=>!removedPlayers.has(p.name)).map(p=>p.name),submissions:[],results:null};
       startTimer(controlAnswerSeconds(),"all",finishEveryoneRound);setGamePhase("ALL_ANSWER");
-      qaHeader.textContent="Everyone answers privately — equal points, no speed bonus";
+      $("closeEveryoneWindow").hidden=false;qaHeader.textContent="Everyone answers privately — equal points, no speed bonus";
       answerInput.disabled=submitBtn.disabled=passBtn.disabled=false;broadcastGameplaySync();premiereSave();
     }
     function submitEveryone(name,answer,passed=false){
@@ -2311,7 +2315,7 @@ window.gameCaption=message=>{
         statInc(correct?premiereStats.correct:premiereStats.wrong,name);
         return {name,correct,delta,reason:!sub?"No answer before the round closed":sub.passed?"Passed":correct?"Accepted answer":"Did not match an accepted answer"};});
       const observed=fairness.clues.findLast(q=>q.key===state.activeKey);if(observed){observed.correct=allRound.results.some(x=>x.correct);observed.correctCount=allRound.results.filter(x=>x.correct).length;observed.answerCount=allRound.eligible.length;observed.playMode="everyone";}
-      recordClueEvidence();markUsed();setGamePhase("ALL_REVEAL");trackLeader();renderScoreboard();
+      $("closeEveryoneWindow").hidden=true;recordClueEvidence();markUsed();setGamePhase("ALL_REVEAL");trackLeader();renderScoreboard();
       qaHeader.textContent="Answers locked — results & learning";feedback.textContent=allRound.results.map(x=>`${x.correct?"✓":"✗"} ${x.name}: +$${x.delta} · ${x.reason}`).join(" | ");
       answerInput.disabled=submitBtn.disabled=passBtn.disabled=true;$("continueEveryone").hidden=false;showLearning(clue);broadcastGameplaySync();premiereSave();
     }
@@ -2677,7 +2681,7 @@ window.gameCaption=message=>{
       state.activeKey = key;
       fairness.clues.push({key,value:state.board.valueForRow(row),difficulty:clue.difficulty,correct:false});
       state.players.forEach(p=>{if(!removedPlayers.has(p.name))fairness.opportunities[p.name]=(fairness.opportunities[p.name]||0)+((competitive()||everyoneAnswers())?1:p===state.players[state.controlIdx]?1:0);});
-      $("learningPanel").hidden=true;$("continueEveryone").hidden=true;$("closeEveryoneWindow").hidden=!everyoneAnswers();$("openCompetitiveBuzz").textContent=everyoneAnswers()?"Open answering for everyone":"Open buzzers for everyone";
+      $("learningPanel").hidden=true;$("continueEveryone").hidden=true;$("closeEveryoneWindow").hidden=true;$("openCompetitiveBuzz").textContent=everyoneAnswers()?"Open answering for everyone":"Open buzzers for everyone";
       clearHostHints();
       MascotV4B.react("hint",950);
       clueTransactionId += 1;
@@ -2734,7 +2738,7 @@ window.gameCaption=message=>{
           startTimer(5,"reading",()=>openCompetitiveBuzz(clue));setGamePhase("READING");
           qaHeader.textContent="Read the clue — buzzers open in 5 seconds";broadcastGameplaySync();
           if(window.educationalMode()){
-            feedback.textContent="Untimed reading: host opens buzzers when everyone is ready.";
+            feedback.textContent="Read the clue. Waiting for the host to open answering.";
             $("openCompetitiveBuzz").hidden=false;
           }
         }else startTimer(controlAnswerSeconds(), "main");
@@ -3087,7 +3091,7 @@ window.gameCaption=message=>{
         showLearning(clue);markUsed();
         state.players[state.controlIdx].score += value;
         const observed=fairness.clues.findLast(q=>q.key===state.activeKey);if(observed)observed.correct=true;
-        trackLeader();window.gameCaption(`✓ ${judgingPlayer}: +$${value}`);
+        trackLeader();window.gameCaption(`✓ Correct · ${judgingPlayer}: +$${value}`);
 
         closeClue();
         return;
@@ -3095,7 +3099,7 @@ window.gameCaption=message=>{
 
 
       state.players[state.controlIdx].score-=penalty;trackLeader();renderScoreboard();broadcastScoreboard(false);
-      window.gameCaption(`✗ ${judgingPlayer}: ${penalty?"−$"+penalty:"no points deducted"}`);
+      window.gameCaption(`✗ Incorrect · ${judgingPlayer}: ${penalty?"−$"+penalty:"no points deducted"}`);
       sfxWrong();
       MascotV4B.react("wrong",800);
 
@@ -4365,6 +4369,7 @@ window.gameCaption=message=>{
         if(d.timer.running){startTimer(d.timer.remaining,d.timer.mode,d.timer.mode==="all"?finishEveryoneRound:d.timer.mode==="reading"?()=>openCompetitiveBuzz(clue):d.timer.mode==="steal"?()=>d.phase==="ANSWERING"?continueAfterMiss(clue,"Answer time expired."):revealAnswerAndClose(clue):undefined,d.firstBuzzer);state.timer.remaining=d.timer.remaining;state.timer.paused=d.timer.paused;engineTurn=d.engineTurn;state.phase=d.phase;firstBuzzer=d.firstBuzzer;timerEl.textContent=window.educationalMode()?"∞ Untimed":d.timer.remaining+"s";updateQuestionPauseButton();}
         if(d.transition){const remaining=Math.max(0,d.transition.deadline-d.ts);recoveryTransition={...d.transition,deadline:Date.now()+remaining};if(d.transition.kind==="reveal"){ $("correctAnswerText").textContent=clue.answers[0];$("correctAnswerOverlay").classList.add("show");transitionTimeout=setTimeout(()=>{$("correctAnswerOverlay").classList.remove("show");closeClue();},remaining);}else transitionTimeout=setTimeout(()=>{recoveryTransition=null;setGamePhase("STEAL_OPEN");startTimer(Number(stealSecondsInput.value||10),"steal",()=>revealAnswerAndClose(clue));},remaining);}
       }
+      $("closeEveryoneWindow").hidden=d.phase!=="ALL_ANSWER";
       if(d.phase==="ALL_REVEAL"){$("continueEveryone").hidden=false;showLearning(state.board.clueFor(...d.activeKey.split("::").map((x,i)=>i?Number(x):x)));}
       if(d.gameClock.running){startGameClock();state.gameClock.remaining=d.gameClock.remaining;gameClockEl.textContent=formatClock(d.gameClock.remaining);}else if(everyoneAnswers())gameClockEl.textContent="∞ Casual session";
       if(d.final.step!=="off"){
@@ -4404,7 +4409,7 @@ window.gameCaption=message=>{
     document.querySelectorAll('[data-host-action]').forEach(b=>b.onclick=()=>{const a=b.dataset.hostAction;if(a==='correct'){if(state.activeKey){const [c,r]=state.activeKey.split('::');answerInput.value=state.board.clueFor(c,Number(r)).answers[0];handleSubmit()}}else if(a==='wrong')handleSubmit();else if(a==='pass')handlePass();else if(a==='pause')toggleQuestionTimerPause();else if(a==='reveal'){if(state.activeKey){const [c,r]=state.activeKey.split('::');revealAnswerAndClose(state.board.clueFor(c,Number(r)))}}else if(a==='board'&&state.activeKey)closeClue();});
     document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;const k=e.key.toLowerCase();if(k==='escape'){document.body.classList.remove('presentation-mode');$("hostDrawer").classList.remove('open')}if(k===' '){e.preventDefault();toggleQuestionTimerPause()}if(k==='c'&&state.activeKey){const [c,r]=state.activeKey.split('::');answerInput.value=state.board.clueFor(c,Number(r)).answers[0];handleSubmit()}if(k==='x'&&state.activeKey)handleSubmit();if(k==='p'&&state.activeKey)handlePass();if(k==='r'&&state.activeKey){const [c,r]=state.activeKey.split('::');revealAnswerAndClose(state.board.clueFor(c,Number(r)))}if(k==='f')document.documentElement.requestFullscreen?.().catch(()=>{});if(k==='m')$("muteAllBtn").click();if(k==='q')openBuzzerPanel?.();});
     $("enterPremiereBtn").onclick=()=>{$("premiereIntro").classList.add("hidden");startLandingMusic();setTimeout(()=>presentView(lobbyPane),300)};
-    const roomTools=document.createElement("section");roomTools.innerHTML=`<h3>Room security & recovery</h3><button class="btn" id="roomLock">Lock room</button><select id="removePlayerChoice" aria-label="Player to remove"></select><button class="btn" id="removeRoomPlayer">Remove player</button><p class="tiny">Removal revokes this device. Its score stays in the game history. A locked room accepts only previously registered devices.</p><p id="recoveryHealth" role="status">Recovery initializing…</p><button class="btn" id="exportRecovery">Export recovery file</button><label class="btn">Import recovery file<input id="importRecovery" type="file" accept="application/json"></label><h3>Player review queue</h3><label><input type="checkbox" id="allowPlayerReviews" checked> Allow player review requests</label><p class="tiny">Requests never pause or change automatic results. Use the override controls for a correction.</p><div id="reviewQueue"></div><h3>Event preparation</h3><button class="btn" id="tutorialBtn">Short tutorial</button> <a class="btn" href="practice.html" target="_blank" rel="noopener">Practice round</a><p><a href="ASSET-PERMISSIONS.md" target="_blank">Media permission inventory</a></p><label><input type="checkbox" id="verifiedMediaOnly"> Verified-media-only mode (mutes clips and hides supplied artwork)</label><div id="eventChecklist"><h4>Pre-event checklist</h4>${["Connect board to power and test screen sharing","Verify room QR link on every phone","Test every buzzer using Live Engine","Run a practice round and confirm answer time","Export recovery file before the event","Confirm written distribution rights for all media; use verified-media-only mode until cleared"].map(t=>`<label style="display:block"><input type="checkbox"> ${t}</label>`).join("")}</div>`;$("hostDrawer").appendChild(roomTools);
+    const roomTools=document.createElement("section");roomTools.innerHTML=`<h3>Room security & recovery</h3><button class="btn" id="roomLock">Lock room</button><select id="removePlayerChoice" aria-label="Player to remove"></select><button class="btn" id="removeRoomPlayer">Remove player</button><p class="tiny">Removal revokes this device. Its score stays in the game history. A locked room accepts only previously registered devices.</p><p id="recoveryHealth" role="status">Recovery initializing…</p><button class="btn" id="exportRecovery">Export recovery file</button><label class="btn">Import recovery file<input id="importRecovery" type="file" accept="application/json"></label><h3>Player review queue</h3><label><input type="checkbox" id="allowPlayerReviews" checked> Allow player review requests</label><p class="tiny">Requests never pause or change automatic results. Use the override controls for a correction.</p><div id="reviewQueue"></div><h3>Event preparation</h3><button class="btn" id="tutorialBtn">Short tutorial</button> <a class="btn" href="practice.html" target="_blank" rel="noopener">Practice round</a><p><a href="ASSET-PERMISSIONS.md" target="_blank">Media permission inventory</a></p><label><input type="checkbox" id="verifiedMediaOnly"> Verified-media-only mode (mutes clips and hides supplied artwork)</label><div id="eventChecklist"><h4>Pre-event checklist</h4>${["Connect board to power and test screen sharing","Verify room QR link on every phone","Test every buzzer using Live Engine","Run a practice round and confirm answer time","Export recovery file before the event","Confirm written distribution rights for all media; use verified-media-only mode until cleared"].map(t=>`<label style="display:block"><input type="checkbox"> ${t}</label>`).join("")}</div>`;$("hostDrawer").appendChild(roomTools);window.JeopardyPracticeNav?.wireLinks(roomCode,"board");
     function renderRoomControls(){if(!$("roomLock"))return;$("roomLock").textContent=roomLocked?"Unlock room":"Lock room";$("removePlayerChoice").innerHTML=state.players.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join("");$("reviewQueue").innerHTML=reviewRequests.map((r,i)=>`<p>${escapeHtml(r.player)}: ${escapeHtml(r.reason)} · ${r.status} <button class="btn" data-review="${i}">Mark reviewed</button></p>`).join("")||"No review requests.";$("reviewQueue").querySelectorAll("[data-review]").forEach(b=>b.onclick=()=>{reviewRequests[+b.dataset.review].status="reviewed";renderRoomControls();premiereSave();});}
     $("allowPlayerReviews").onchange=premiereSave;
     $("roomLock").onclick=()=>{roomLocked=!roomLocked;renderRoomControls();premiereSave();};
@@ -4425,9 +4430,9 @@ window.gameCaption=message=>{
     $("competitionRules").onchange=()=>{$("competitionRulesText").textContent=everyoneAnswers()?rulesDescription():competitive()?"5-second shared reading period; everyone may buzz. Correct answer chooses next. One attempt each; fresh answer timer. Ties share the win. $0/negative scores may wager $0. Daily Doubles stay exclusive: correct adds the wager; incorrect subtracts it.":"Chooser answers first. Other players buzz after a miss or pass. One attempt each. Ties share the win. $0/negative scores may wager $0.";};
     const rotationNotice=document.createElement("p");rotationNotice.id="boardRotationStatus";rotationNotice.setAttribute("role","status");boardPane.prepend(rotationNotice);
     const lesson=document.createElement("section");lesson.id="learningPanel";lesson.setAttribute("role","status");lesson.hidden=true;qaPane.appendChild(lesson);
-    const explainHint=document.createElement("button");explainHint.className="btn";explainHint.id="reasoningHint";explainHint.textContent="Show reasoning hint (everyone)";explainHint.onclick=()=>{if(!state.activeKey)return;const [c,r]=state.activeKey.split("::");const hint=learningFor(state.board.clueFor(c,Number(r))).hint;window.gameCaption("💡 "+hint);broadcastToBuzzers({type:"shared-hint",hint});};qaPane.appendChild(explainHint);
+    const explainHint=document.createElement("button");explainHint.className="btn";explainHint.id="reasoningHint";explainHint.textContent="Show reasoning hint (everyone)";explainHint.onclick=()=>{if(!state.activeKey)return;const [c,r]=state.activeKey.split("::");const hint=learningFor(state.board.clueFor(c,Number(r))).hint;window.gameCaption("💡 "+hint);broadcastToBuzzers({type:"shared-hint",hint});};$("hostDrawer").appendChild(explainHint);
     const nextAll=document.createElement("button");nextAll.id="continueEveryone";nextAll.className="btn";nextAll.textContent="Continue after discussion";nextAll.hidden=true;nextAll.onclick=()=>{if(state.phase!=="ALL_REVEAL")return;state.controlIdx=nextAvailablePlayer(state.clueStartIdx);closeClue();};qaPane.appendChild(nextAll);
-    const endAll=document.createElement("button");endAll.id="closeEveryoneWindow";endAll.hidden=true;endAll.className="btn";endAll.textContent="Close everyone-answer window";endAll.onclick=finishEveryoneRound;qaPane.appendChild(endAll);
+    const endAll=document.createElement("button");endAll.id="closeEveryoneWindow";endAll.hidden=true;endAll.className="btn";endAll.textContent="Close everyone-answer window";endAll.onclick=finishEveryoneRound;$("hostDrawer").appendChild(endAll);
     $("conversationMode").onchange=()=>{document.body.classList.toggle("conversation-mode",$("conversationMode").checked);if($("conversationMode").checked){stopLandingMusic();stopMusic();pauseQuestionBeat();stopFinalBeat();stopWaitingRoomMusic(0);resultSounds.forEach(a=>a.pause());Object.values(cueAudio).forEach(a=>a.pause());}document.querySelectorAll("#featuredMusicDock iframe").forEach(f=>{if($("conversationMode").checked){f.dataset.quietSrc=f.src;f.src="about:blank";}else if(f.dataset.quietSrc){f.src=f.dataset.quietSrc;delete f.dataset.quietSrc;}});broadcastGameplaySync();};
     renderRoomControls();offerRecovery();setInterval(premiereSave,250);
     function refreshSetupSummary(){
@@ -4455,7 +4460,7 @@ window.gameCaption=message=>{
       target.textContent="What can I do now? "+message;
     }
     if(window.JeopardyRemoteHost)mobileHostBridge=window.JeopardyRemoteHost.init({room:roomCode,context:()=>engineGameId+":"+engineTurn+":"+state.activeKey+":"+state.final.step,phase:()=>state.final.step!=="off"?"Final · "+state.final.step:!state.board?"Set up players and start the waiting room":!state.activeKey?"Choose a clue":({READING:"Read the clue",BUZZ_OPEN:"Buzzers open",STEAL_OPEN:"Steal open",STEAL_DELAY:"Steal opens shortly",ANSWERING:"Player answering",CONTROL_ANSWER:"Chooser answering",ALL_ANSWER:"Collecting private answers",ALL_REVEAL:"Discuss results, then continue",DD_WAGER:"Daily Double wager"})[state.phase]||"Review clue result",
-      canUse:el=>{const a=el.dataset.hostAction;if(["correct","wrong","pass"].includes(a))return !!state.activeKey&&["CONTROL_ANSWER","ANSWERING"].includes(state.phase)&&!state.timer.paused;if(a==="pause")return !!state.timer.id;if(a==="reveal")return !!state.activeKey&&state.phase!=="ALL_REVEAL";if(a==="board")return !!state.activeKey;if(el.id==="hostSkipFinalBtn")return !state.activeKey&&state.final.step==="off"&&!!state.board;if(el.id==="undoBtn")return undoStack.length>0;return true;},
+      canUse:el=>{if(el.id==="reasoningHint")return !!state.activeKey&&state.phase!=="ALL_REVEAL";if(el.id==="closeEveryoneWindow")return everyoneAnswers()&&state.phase==="ALL_ANSWER";const a=el.dataset.hostAction;if(["correct","wrong","pass"].includes(a))return !!state.activeKey&&["CONTROL_ANSWER","ANSWERING"].includes(state.phase)&&!state.timer.paused;if(a==="pause")return !!state.timer.id;if(a==="reveal")return !!state.activeKey&&state.phase!=="ALL_REVEAL";if(a==="board")return !!state.activeKey;if(el.id==="hostSkipFinalBtn")return !state.activeKey&&state.final.step==="off"&&!!state.board;if(el.id==="undoBtn")return undoStack.length>0;return true;},
       send:packet=>{if(sendRealtime(packet))return;if(bc)bc.postMessage(packet);try{localStorage.setItem(BUZZER_KEY_OUT,JSON.stringify({...packet,_ts:Date.now()}));}catch(_){}},
       exportRecovery:()=>{premiereSave();return localStorage.getItem(recoveryKey);},importRecovery:restoreSession,
       monitor:id=>{if(id==="diagnosticsBtn")runDiagnostics();else renderDeviceHealth();},

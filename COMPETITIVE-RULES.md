@@ -45,3 +45,11 @@ The private link contains a random 256-bit capability in its fragment. Phone and
 **Revoke mobile host access** immediately stops accepting the old capability. Generate a new private QR to reconnect. **Disconnect this phone** removes its stored capability without revoking other paired host phones. HTTPS and Web Crypto are required. No database schema or Supabase configuration changes are needed.
 
 `npm run test:host` checks encrypted pairing, the actual mobile control UI, private fragment handling, replay/stale/disabled/unknown/read-only command rejection, encrypted recovery, and revocation. Real-device camera scanning and mobile-browser behavior still need an event-device check.
+
+## Event messages and returning from practice
+
+The bottom event caption displays only the latest event and hides after two seconds. A later event restarts that timer. Recent messages remain in a collapsed history (Host Controls on the board; Recent game events on a player phone). The reasoning-hint and close-everyone-answer-window buttons live in Host Controls and are available through the private host phone.
+
+Practice links on player remotes carry the room code and use the same tab. Back to my game returns to `buzzer.html` for that room, keeping the device identity, saved name, and answer draft; the board supplies the current clue and scores. Legacy practice pages can infer the room from a same-origin player referrer. A practice page without identifiable room context never falls back to a new board or home screen. Board-launched practice uses a separate tab and returns focus to its original board when available, avoiding a second authoritative board.
+
+`npm run test:ui` checks two-second dismissal, timer restart, host-only button placement, practice-link routing, and reconnection to the exact active room/player/clue with the same score and draft.

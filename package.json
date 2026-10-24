@@ -6,7 +6,8 @@
     "test:remote": "node tests/remote-answers.cjs && node tests/automatic-remote.cjs && node tests/urban-slang.cjs && node tests/recovery.cjs",
     "test:competitive": "node tests/competitive.cjs && node tests/competitive-options.cjs && node tests/accessibility.cjs",
     "test:casual": "node tests/everyone.cjs",
-    "test:host": "node tests/mobile-host.cjs && node tests/mobile-host-integration.cjs"
+    "test:host": "node tests/mobile-host.cjs && node tests/mobile-host-integration.cjs",
+    "test:ui": "node tests/event-controls.cjs && node tests/practice-navigation.cjs && node tests/practice-return-integration.cjs"
   },
   "devDependencies": {
     "jsdom": "30.1.2"

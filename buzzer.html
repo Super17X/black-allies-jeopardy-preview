@@ -178,14 +178,17 @@ window.reducedMotion=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)
 // Read once for a session: changing the setting never silently alters an active timer.
 window.untimedSession=localStorage.getItem('jeopardy-untimed')==='true';
 window.educationalMode=()=>window.untimedSession;
+let captionHideTimer=null,captionLastText="",captionLastAt=0;
 window.gameCaption=message=>{
   if(!message)return;
   window.captionBroadcast?.(message);
+  const now=Date.now();if(captionLastText===message&&now-captionLastAt<1500)return;
+  captionLastText=message;captionLastAt=now;
   let panel=document.getElementById('audioCaptions');
-  if(!panel){panel=document.createElement('aside');panel.id='audioCaptions';panel.setAttribute('aria-label','Game messages');panel.setAttribute('role','log');panel.setAttribute('aria-live','polite');document.body.appendChild(panel);}
-  if(panel.lastChild?.textContent===message)return;
-  const line=document.createElement('div');line.textContent=message;panel.appendChild(line);
-  while(panel.children.length>4)panel.firstChild.remove();
+  if(!panel){panel=document.createElement('aside');panel.id='audioCaptions';panel.setAttribute('aria-label','Latest game event');panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.appendChild(panel);}
+  panel.textContent=message;panel.hidden=false;clearTimeout(captionHideTimer);captionHideTimer=setTimeout(()=>{panel.hidden=true;},2000);
+  let history=document.getElementById('gameEventHistory');if(!history){history=document.createElement('details');history.id='gameEventHistory';const title=document.createElement('summary');title.textContent='Recent game events';history.appendChild(title);const list=document.createElement('div');list.setAttribute('role','log');history.appendChild(list);(document.getElementById('hostDrawer')||document.body).appendChild(history);}
+  const list=history.querySelector('div'),line=document.createElement('p');line.textContent=message;list.appendChild(line);while(list.children.length>50)list.firstChild.remove();
 };
 </script></head>
 <body><div id="connectionBadge">● Connecting</div>
@@ -252,6 +255,7 @@ window.gameCaption=message=>{
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="practice-navigation.js"></script>
   <script>
   (() => {
     const CHANNEL_NAME = "trivia-buzzer-channel";
@@ -1018,7 +1022,7 @@ window.gameCaption=message=>{
     window.addEventListener("pagehide",()=>{
       if(playerName) sendToHost({type:"leave",player:playerName,actionId:nextActionId("leave")});
     });
-    const reviewBox=document.createElement("section");reviewBox.className="card";reviewBox.innerHTML='<h3>Request an answer review</h3><p>Play continues automatically. The host can review a decision later.</p><input id="reviewReason" maxlength="300" aria-label="Review reason" placeholder="Why should this answer be reviewed?"><button id="requestReview" class="btn">Request review of my latest answer</button><p id="reviewStatus" role="status"></p><a href="practice.html" target="_blank" rel="noopener">Try the practice round</a>';document.body.appendChild(reviewBox);
+    const reviewBox=document.createElement("section");reviewBox.className="card";reviewBox.innerHTML='<h3>Request an answer review</h3><p>Play continues automatically. The host can review a decision later.</p><input id="reviewReason" maxlength="300" aria-label="Review reason" placeholder="Why should this answer be reviewed?"><button id="requestReview" class="btn">Request review of my latest answer</button><p id="reviewStatus" role="status"></p><a href="practice.html" target="_blank" rel="noopener">Try the practice round</a>';document.body.appendChild(reviewBox);window.JeopardyPracticeNav?.wireLinks(roomCode,"player");
     let latestDecisionId=null;
     const originalHostHandler=handleHostMessage;
     handleHostMessage=function(data){if(data.type==="action-result"&&data.action==="review-request"&&sameName(data.player,playerName))document.getElementById("reviewStatus").textContent=data.accepted?"Review queued. Play continues.":data.reason;if(data.type==="game-reset")latestDecisionId=null;if(data.type==="answer-decision"&&sameName(data.player,playerName))latestDecisionId=data.id;return originalHostHandler(data);};
