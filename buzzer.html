@@ -173,7 +173,21 @@
     #deliveryStatus{font-size:.8rem;min-height:1.1em;color:var(--muted);margin-top:5px}
   #remoteTurnCard{order:-4;width:100%;padding:16px;border:1px solid var(--gold);border-radius:14px;background:linear-gradient(135deg,#132235,#0a101a);text-align:center}#turnTitle{font-size:1.25rem;color:#fff;font-weight:800}#remoteClock{font-size:2.6rem;font-weight:900;font-variant-numeric:tabular-nums;color:var(--gold2)}#remoteClock.urgent{color:#ff6868}#deliveryStage{min-height:22px;color:#9ae6ba;font-size:.9rem}#buzzerSection{gap:12px}#playerLabel,#myStanding,#controlBanner{order:-5}#questionInfo{order:-3;font-size:1.1rem;line-height:1.5}#answerArea,#finalMobile,#dailyDoubleMobile{order:-2}#statusMsg,#deliveryStatus{order:-1}#liveScoreboard{max-height:220px;overflow:auto;width:100%}#phonePhase{display:none}#buzzerBtn{width:150px;height:150px;font-size:1.4rem}#remoteSettings{font-size:.85rem;width:100%;color:#c0bba9}#remoteSettings input{width:auto;min-height:22px;margin:0 8px 0 0}#remoteSettings label{display:block;padding:8px}#mobileBoardGrid button{min-height:48px}body.large-text{font-size:120%}body.high-contrast{--muted:#fff;--border:#aaa;--text:#fff;background:#000}button:disabled{cursor:not-allowed}#remoteSettings button{min-height:44px}
 </style>
-</head>
+<link rel="stylesheet" href="accessibility.css"><script>/* Shared, visible alternatives for game audio and operating-system motion preference. */
+window.reducedMotion=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+// Read once for a session: changing the setting never silently alters an active timer.
+window.untimedSession=localStorage.getItem('jeopardy-untimed')==='true';
+window.educationalMode=()=>window.untimedSession;
+window.gameCaption=message=>{
+  if(!message)return;
+  window.captionBroadcast?.(message);
+  let panel=document.getElementById('audioCaptions');
+  if(!panel){panel=document.createElement('aside');panel.id='audioCaptions';panel.setAttribute('aria-label','Game messages');panel.setAttribute('role','log');panel.setAttribute('aria-live','polite');document.body.appendChild(panel);}
+  if(panel.lastChild?.textContent===message)return;
+  const line=document.createElement('div');line.textContent=message;panel.appendChild(line);
+  while(panel.children.length>4)panel.firstChild.remove();
+};
+</script></head>
 <body><div id="connectionBadge">● Connecting</div>
   <div id="buzzerFlash"><span class="flash-label">BUZZ!</span></div>
 
@@ -275,10 +289,10 @@
     const criticalActions=new Map();
     function envelope(type,payload){return {type,...payload,gameId:engineState.gameId,questionId:engineState.questionId,turnId:engineState.turnId,expiresAt:Date.now()+10000};}
     function saveDraft(){if(currentQuestionKey)try{sessionStorage.setItem(`answer-draft-${roomCode}`,JSON.stringify({key:currentQuestionKey,text:remoteAnswerInput.value}));}catch(_){}}
-    function updateClock(data){if(!Number.isFinite(Number(data.remaining??data.seconds)))return;clockRemaining=Math.max(0,Number(data.remaining??data.seconds));clockPaused=!!data.paused;localDeadline=Date.now()+clockRemaining*1000;paintClock();}
+    function updateClock(data){window.remoteUntimed=!!data.untimed;if(!Number.isFinite(Number(data.remaining??data.seconds)))return;clockRemaining=Math.max(0,Number(data.remaining??data.seconds));clockPaused=!!data.paused;localDeadline=Date.now()+clockRemaining*1000;paintClock();}
     function paintClock(){
       const left=clockPaused?clockRemaining:Math.max(0,Math.ceil((localDeadline-Date.now())/1000));
-      const clock=document.getElementById("remoteClock");clock.textContent=localDeadline?(clockPaused?`${left}s · paused`:`${left}s`):"—";clock.classList.toggle("urgent",left>0&&left<=5);
+      const clock=document.getElementById("remoteClock");clock.textContent=window.remoteUntimed?"∞ Untimed":localDeadline?(clockPaused?`${left}s · paused`:`${left}s`):"—";clock.classList.toggle("urgent",left>0&&left<=5);
     }
     function stage(text){document.getElementById("deliveryStage").textContent=text;}
     function connectionLost(){
@@ -341,6 +355,7 @@
 
     // ---- Flash animation ----
     function triggerBuzzerFlash() {
+      if(window.reducedMotion())return;
       buzzerFlash.style.background = "rgba(247,201,72,0.5)";
       buzzerFlash.style.opacity = "1";
       flashLabel.style.opacity = "1";
@@ -566,7 +581,7 @@
         const action=criticalActions.get(data.mid);criticalActions.delete(data.mid);
         const timer=pendingCritical.get(data.mid);if(timer)clearTimeout(timer);pendingCritical.delete(data.mid);
         if(!data.accepted){answerPending=false;stage(data.reason||"Not accepted — syncing your turn");sendToHost({type:"sync-request",player:playerName});return;}
-        const labels={correct:"Correct — score updated automatically",incorrect:"Incorrect — judged automatically",passed:"Passed",'buzz-won':"Buzzer won — enter your answer",'wager-locked':"Wager locked privately",'final-answer-locked':"Final answer received and locked"};
+        const labels={correct:"✓ Correct — score updated automatically",incorrect:"✗ Incorrect — judged automatically",passed:"Passed",'buzz-won':"Buzzer won — enter your answer",'wager-locked':"Wager locked privately",'final-answer-locked':"Final answer received and locked"};
         stage(labels[data.result]||"Received by game engine");
         if(data.result==="correct"||data.result==="incorrect")lastVerdictUntil=Date.now()+4000;
         return;
@@ -583,6 +598,7 @@
       if(data.type==="final-answer-revealed"){
         const answer=document.getElementById("finalAnswerRevealed");answer.style.display="block";answer.textContent="Final Jeopardy Answer: "+String(data.answer||"");return;
       }
+      if(data.type==="audio-caption"){window.gameCaption(String(data.message||""));return;}
       if(data.type==="final-state"){renderFinalSnapshot(data);return;}
 
 

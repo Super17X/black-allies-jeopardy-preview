@@ -878,7 +878,21 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 @media(max-width:700px){#boardGrid{min-width:calc(var(--board-columns,8)*112px + (var(--board-columns,8) - 1)*7px)}#boardGrid>.cat{font-size:.8rem}#boardGrid>.cell{font-size:1.1rem;min-height:48px}}
 </style>
 <link rel="stylesheet" href="assets/score-ticker.css">
-</head>
+<link rel="stylesheet" href="accessibility.css"><script>/* Shared, visible alternatives for game audio and operating-system motion preference. */
+window.reducedMotion=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+// Read once for a session: changing the setting never silently alters an active timer.
+window.untimedSession=localStorage.getItem('jeopardy-untimed')==='true';
+window.educationalMode=()=>window.untimedSession;
+window.gameCaption=message=>{
+  if(!message)return;
+  window.captionBroadcast?.(message);
+  let panel=document.getElementById('audioCaptions');
+  if(!panel){panel=document.createElement('aside');panel.id='audioCaptions';panel.setAttribute('aria-label','Game messages');panel.setAttribute('role','log');panel.setAttribute('aria-live','polite');document.body.appendChild(panel);}
+  if(panel.lastChild?.textContent===message)return;
+  const line=document.createElement('div');line.textContent=message;panel.appendChild(line);
+  while(panel.children.length>4)panel.firstChild.remove();
+};
+</script></head>
 <body>
   <div id="premiereIntro"><div><div class="premiere-logo">BLACK &amp; ALLIES<br>JEOPARDY</div><p style="color:var(--muted)">A live multiplayer game-show experience</p><button id="enterPremiereBtn" class="btn ok" style="font-size:1.15rem;padding:14px 26px">ENTER THE GAME</button></div></div>
   <div id="gameCountdown"></div>
@@ -952,8 +966,8 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
     <div class="row">
-      <label for="qSeconds" class="mono tiny">Player-in-control answer time (3–30 seconds):</label>
-      <input id="qSeconds" type="number" min="3" max="30" step="1" value="30" style="width:90px" aria-label="Player-in-control answer time, 3 to 30 seconds" /><span class="mono tiny">Applies to the next question. Maximum: 30 seconds.</span>
+      <fieldset><legend>Accessible timing</legend><label><input type="checkbox" id="educationalMode"> Untimed educational mode</label><p>No automatic question, steal, wager, Final answer, or main-round expiry. Use the host controls to advance.</p><label for="answerPreset">Answer preset</label><select id="answerPreset"><option value="30">Standard · 30 seconds</option><option value="60">Extended · 60 seconds</option><option value="90">Relaxed · 90 seconds</option><option value="120">Extra time · 120 seconds</option><option value="180">Maximum · 180 seconds</option></select></fieldset><label for="qSeconds" class="mono tiny">Player-in-control answer time (3–180 seconds):</label>
+      <input id="qSeconds" type="number" min="3" max="180" step="1" value="30" style="width:90px" aria-label="Player-in-control answer time, 3 to 180 seconds" /><span class="mono tiny">Applies to the next question. Maximum: 180 seconds.</span>
       <label for="stealSeconds" class="mono tiny">Steal seconds:</label>
       <input id="stealSeconds" type="number" min="2" max="45" value="10" style="width:90px" aria-label="Steal seconds" />
       <label for="finalSeconds" class="mono tiny">Final round:</label>
@@ -1601,7 +1615,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     const qSecondsInput = $("qSeconds");
     function controlAnswerSeconds(){
       const raw=Number(qSecondsInput.value);
-      const seconds=Number.isFinite(raw)&&qSecondsInput.value.trim()!==""?Math.max(3,Math.min(30,Math.floor(raw))):30;
+      const seconds=Number.isFinite(raw)&&qSecondsInput.value.trim()!==""?Math.max(3,Math.min(180,Math.floor(raw))):30;
       qSecondsInput.value=String(seconds);
       return seconds;
     }
@@ -1730,6 +1744,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     // Flash + privacy
     // -----------------------------
     function flash(color, ms=220, opacity=0.7){
+      if(window.reducedMotion())return;
       flashOverlay.style.background = color;
       flashOverlay.style.opacity = opacity;
       setTimeout(()=> flashOverlay.style.opacity = 0, ms);
@@ -1829,13 +1844,13 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       el.classList.remove("page-enter");
       void el.offsetWidth;
       el.classList.add("page-enter");
-      requestAnimationFrame(()=>el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"}));
+      requestAnimationFrame(()=>el.scrollIntoView({behavior:window.reducedMotion()?"instant":"smooth",block:"center",inline:"center"}));
     }
     function centerLobbyPlayers(){
       if (lobbyPane.style.display === "none") return;
       const target = $("lobbyList");
       if (!target) return;
-      requestAnimationFrame(()=>setTimeout(()=>target.scrollIntoView({behavior:"smooth",block:"center",inline:"nearest"}),60));
+      requestAnimationFrame(()=>setTimeout(()=>target.scrollIntoView({behavior:window.reducedMotion()?"instant":"smooth",block:"center",inline:"nearest"}),60));
     }
     window.addEventListener("load", ()=>setTimeout(()=>{
       const visible=[lobbyPane,waitingRoomPane,scoreBoard,boardPane,qaPane,finalPane,summaryPane].find(el=>el && getComputedStyle(el).display!=="none");
@@ -1905,6 +1920,8 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       if (audio.master) audio.master.gain.value = audio.volume;
     }
     function playResultSound(sound){
+      const captions=new Map([[moneySound,"✓ Correct — points awarded"],[stealSound,"↪ Steal opportunity"],[rizzSound,"✗ Incorrect answer"],[boomSound,"✓ Correct answer"],[buzzSound,"⚑ Buzzer pressed"],[joinSound,"+ Player joined"],[dailyDoubleSound,"★ Daily Double"],[passSound,"↪ Answer passed"],[streakSound,"★ Correct-answer streak"],[timeOutSound,"⏱ Time is up"],[whoopsieSound,"✗ Answer missed"],[ayYaiYaiSound,"✗ Multiple incorrect answers"],[boomBittySound,"★ Two correct in a row"],[bruhSound,"↪ Steal is open"],[gavinLuckySound,"★ Highest-value clue"],[gamesSound,"▶ Game starting"],[gameOverSound,"■ Round ended"],[nintendoRevealSound,"? Question revealed"]]);
+      window.gameCaption(captions.get(sound)||"♪ Game sound");
       if (soundModeSel.value === "off") return;
       const t=Date.now();
       if (t-(lastSfxAt.get(sound)||0)<350) return; // suppress duplicate realtime/event bursts
@@ -2027,9 +2044,9 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       osc.connect(g); g.connect(audio.master);
       osc.start(t); osc.stop(t + dur + 0.02);
     }
-    function sfxCorrect(){ flash("rgba(124,252,152,0.38)", 240, 0.8); const t=now(); [659.25,783.99,987.77,1318.51].forEach((freq,i)=>tone({freq,t:t+i*.085,dur:.16,type:"triangle",gain:.17})); }
-    function sfxWrong(){ flash("rgba(255,107,107,0.38)", 280, 0.8); const t=now(); [311.13,277.18,233.08,196].forEach((freq,i)=>tone({freq,t:t+i*.11,dur:.2,type:"sawtooth",gain:.13})); }
-    function sfxTimesUp(){ flash("rgba(247,201,72,0.22)", 360, 0.95); const t=now(); tone({freq:200,t,dur:0.25,type:"square",gain:0.12}); }
+    function sfxCorrect(){ window.gameCaption("✓ Correct answer"); flash("rgba(124,252,152,0.38)", 240, 0.8); const t=now(); [659.25,783.99,987.77,1318.51].forEach((freq,i)=>tone({freq,t:t+i*.085,dur:.16,type:"triangle",gain:.17})); }
+    function sfxWrong(){ window.gameCaption("✗ Incorrect answer"); flash("rgba(255,107,107,0.38)", 280, 0.8); const t=now(); [311.13,277.18,233.08,196].forEach((freq,i)=>tone({freq,t:t+i*.11,dur:.2,type:"sawtooth",gain:.13})); }
+    function sfxTimesUp(){ window.gameCaption("⏱ Time is up"); flash("rgba(247,201,72,0.22)", 360, 0.95); const t=now(); tone({freq:200,t,dur:0.25,type:"square",gain:0.12}); }
     function sfxPriceIsRightBuzzer(){ const t=now(); tone({freq:392,t,dur:0.14,type:"square",gain:0.14}); tone({freq:262,t:t+0.14,dur:0.18,type:"square",gain:0.14}); }
     function sfxQuestionOpen(){ const t=now(); tone({freq:523.25,t,dur:.08,type:"triangle",gain:.1}); tone({freq:783.99,t:t+.09,dur:.12,type:"triangle",gain:.12}); }
     function stopMusic(){
@@ -2161,7 +2178,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     function premiumJoinUrl(){const url=new URL("buzzer.html",location.href);url.search="";url.hash="";url.searchParams.set("room",roomCode);return url;}
     function premiumRenderQr(){const target=$("premiumLobbyQr");if(!target)return;const url=premiumJoinUrl();$("premiumLobbyCode").textContent=roomCode;const link=$("premiumLobbyLink");link.href=url.href;link.textContent="Open Player Join Link";target.innerHTML="";try{if(typeof window.qrcode!=="function")throw Error("QR library unavailable");const qr=window.qrcode(0,"L");qr.addData(url.href,"Byte");qr.make();target.innerHTML=qr.createSvgTag(5,4);const svg=target.querySelector("svg");if(svg){svg.setAttribute("width","100%");svg.setAttribute("height","100%");svg.setAttribute("preserveAspectRatio","xMidYMid meet");svg.setAttribute("aria-hidden","true");}}catch(err){target.textContent="Use the join link below";console.warn("Lobby QR unavailable",err)}}
     $("premiumCopyJoin").addEventListener("click",async()=>{const url=premiumJoinUrl().href;try{await navigator.clipboard.writeText(url);$("premiumCopyJoin").textContent="✓ Link Copied";setTimeout(()=>$("premiumCopyJoin").textContent="Copy Join Link",1800)}catch(e){$("premiumLobbyLink").textContent=url;premiumActivity("Copy unavailable — use the player join link")}});
-    function renderLobbySettingsSummary(){const rows=[["Urban Slang",$("includeUrbanSlang").checked?"On · extra category":"Off"],["Player-in-control answer time",controlAnswerSeconds()+"s (max 30)"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
+    function renderLobbySettingsSummary(){const rows=[["Urban Slang",$("includeUrbanSlang").checked?"On · extra category":"Off"],["Player-in-control answer time",controlAnswerSeconds()+"s (max 180)"],["Steal seconds",($("stealSeconds")?.value||"7")+"s"],["Categories",$("categoryCount")?.value||"8"],["Questions per category",$("qPerCat")?.value||"10"],["Randomize board",$("randomizeBoard")?.value||"On"],["Round",$("roundSelect")?.value==="2"?"Round 2":"Round 1"],["Auto-start waiting room",$("autoStartSel")?.value==="on"?"On (10s)":"Off"],["Require ready",$("requireReadySel")?.value==="on"?"On":"Off"],["Scoring mode",$("gameMode")?.value||"Individual"],["Teams",($("teamCount")?.value||"2")+" Teams"]];const target=$("lobbySettingsSummary");if(target)target.innerHTML=rows.map(([label,value])=>'<div class="lobby-setting-row"><span>'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join("");}
     $("lobbyEditSettings").addEventListener("click",()=>backToLobby());
     function renderWaitingRoom(){
       renderLobbySettingsSummary();
@@ -2543,6 +2560,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     // Game start
     // -----------------------------
     function beginGameNow(){
+      $("educationalMode").disabled=true;
       setTimeout(()=>MascotV4B.react("greet",1200),200);
       $("premiumLobbyCountdown").classList.remove("show");
       if (waitingCountdownId) clearInterval(waitingCountdownId);
@@ -2624,6 +2642,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       state.gameClock.id=null;
     }
     function startGameClock(){
+      if(window.educationalMode()){stopGameClock();gameClockEl.textContent="∞ Untimed";return;}
       stopGameClock();
       state.gameClock.remaining=15*60;
       gameClockEl.textContent=formatClock(state.gameClock.remaining);
@@ -2768,7 +2787,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
 
     function startTimer(seconds, mode, onExpire){
-      if(mode==="main")seconds=Math.max(3,Math.min(30,Math.floor(Number(seconds)||30)));
+      if(mode==="main")seconds=Math.max(3,Math.min(180,Math.floor(Number(seconds)||30)));
       stopTimer();
       state.timer.remaining = seconds;
       lastHeartbeatSecond=null;
@@ -2778,6 +2797,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       updateQuestionPauseButton();
 
 
+      if(window.educationalMode()){timerEl.textContent="∞ Untimed";return;}
       state.timer.id = setInterval(()=>{
         if (state.timer.paused) return;
         state.timer.remaining -= 1;
@@ -2841,6 +2861,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     let lastHeartbeatSecond=null;
     const cueAudio={heartbeat:new Audio("assets/heart_beat_sms.mp3"),winner:new Audio("assets/winner.mp3"),boondocks:new Audio("assets/boondocks.mp3")};
     function playCue(name){
+      window.gameCaption({heartbeat:"⏱ 10 seconds or less remaining",winner:"🏆 Winner announced — see final scores",boondocks:"★ Final Jeopardy begins"}[name]);
       if(soundModeSel.value==="off")return;
       const el=cueAudio[name];if(!el)return;
       el.volume=Math.max(0,Math.min(1,Number(volumeInput.value||0.25)));
@@ -3117,8 +3138,9 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       if(state.final.step!=="answers")return;
       stopFinalTimer();championshipPaused=false;startFinalBeat();
       state.final.timerRemaining=120;finalTimerEl.textContent="120s";
+      if(window.educationalMode()){finalTimerEl.textContent="∞ Untimed";broadcastFinalState();return;}
       state.final.timerId=setInterval(()=>{
-        if(championshipPaused)return;
+        if(championshipPaused || window.educationalMode())return;
         state.final.timerRemaining-=1;finalTimerEl.textContent=state.final.timerRemaining+"s";broadcastFinalState();
         if(state.final.timerRemaining<=0){
           for(let i=0;i<state.players.length;i++)if(!state.final.answers.has(i))state.final.answers.set(i,"");
@@ -3139,7 +3161,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       $("finalStatusPanel").textContent="Automatic judging complete — results reveal in 4 seconds. Pause to review.";
       state.final.revealRemaining=4;championshipPaused=false;
       clearInterval(autoRevealTimer);autoRevealTimer=setInterval(()=>{
-        if(championshipPaused)return;
+        if(championshipPaused || window.educationalMode())return;
         if(--state.final.revealRemaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(state.final.step==="reveal")revealFinalResults();}
       },1000);broadcastFinalState();
     }
@@ -3179,7 +3201,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       renderFinalUI();
       broadcastToBuzzers({type:"final-wager",category:finalJeopardy.category,scores:Object.fromEntries(state.players.map(p=>[p.name,p.score]))});
       championshipPaused=false;state.final.wagerRemaining=30;finalTimerEl.textContent="30s";
-      clearInterval(finalWagerTimer);finalWagerTimer=setInterval(()=>{if(championshipPaused)return;state.final.wagerRemaining-=1;finalTimerEl.textContent=state.final.wagerRemaining+"s";broadcastFinalState();if(state.final.wagerRemaining<=0)beginFinalAnswers();},1000);broadcastFinalState();
+      clearInterval(finalWagerTimer);finalWagerTimer=setInterval(()=>{if(championshipPaused || window.educationalMode())return;state.final.wagerRemaining-=1;finalTimerEl.textContent=state.final.wagerRemaining+"s";broadcastFinalState();if(state.final.wagerRemaining<=0)beginFinalAnswers();},1000);broadcastFinalState();
     }
 
 
@@ -3301,7 +3323,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         lines.push(
           `${escapeHtml(p.name)} wagered <strong>$${wager}</strong> and answered ` +
           `<strong>${escapeHtml(ans || "(blank)")}</strong> — ` +
-          `${correct ? "<strong>Correct</strong>" : "<strong>Wrong</strong>"}`
+          `${correct ? "<strong>✓ Correct</strong>" : "<strong>✗ Incorrect</strong>"}`
         );
       }
 
@@ -3643,6 +3665,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
     // ---------- buzz flash popup ----------
     function triggerBuzzFlash(playerName) {
+      window.gameCaption("⚑ "+playerName+" buzzed");if(window.reducedMotion())return;
       MascotV4B.react("buzz",700);
       buzzFlashLabel.textContent = `🔔 ${playerName} BUZZED!`;
       buzzFlashOverlay.style.background = "rgba(247,201,72,0.55)";
@@ -3660,6 +3683,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 
     // ---------- send to buzzer pages ----------
     function broadcastToBuzzers(msg) {
+      msg={...msg,untimed:window.educationalMode()};
       msg = {...msg, room: roomCode};
       if (sendRealtime(msg)) return;
       if (bc) bc.postMessage(msg);
@@ -4250,7 +4274,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         const board=state.board;
         const d={version:3,room:roomCode,ts:Date.now(),players:state.players,ready:[...state.ready],round:state.round,controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,
           board:board?{cfg:board.cfg,categories:board.categories,rows:board.rows,clues:board.categories.flatMap(c=>board.rows.map(r=>[board.keyFor(c,r),board.clueFor(c,r)])),dailyDoubles:[...board.dailyDoubles]}:null,
-          timer:{remaining:state.timer.remaining,mode:state.timer.mode,paused:state.timer.paused,running:!!state.timer.id},gameClock:{remaining:state.gameClock.remaining,running:!!state.gameClock.id},
+          timer:{remaining:state.timer.remaining,mode:state.timer.mode,paused:state.timer.paused,running:!!state.timer.id || (window.educationalMode() && !!state.activeKey)},gameClock:{remaining:state.gameClock.remaining,running:!!state.gameClock.id},
           final:{...state.final,timerId:null,wagers:[...state.final.wagers],answers:[...state.final.answers]},finalJeopardy,championshipPaused,finalTimerRunning:!!state.final.timerId,finalResultsApplied,finalAnswerRevealed,finalJudgments:[...finalJudgments],finalHTML:$("summaryText").innerHTML,stats:Object.fromEntries(Object.entries(premiereStats).map(([k,v])=>[k,[...v]])),
           phase:state.phase,clueAttempts:state.clueAttempts,clueStartIdx:state.clueStartIdx,ddLockedWager:state.ddLockedWager,attempted:[...attemptedPlayersThisClue],firstBuzzer,buzzerActive,answerTransactionLocked,
           engineGameId,engineTurn,clueTransactionId,decisions:decisionHistory,actionResults:[...actionResults],sessions:[...playerSessions],removed:[...removedDevices],removedPlayers:[...removedPlayers],roomLocked,reviews:reviewRequests,
@@ -4276,7 +4300,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
       $("premiereIntro").classList.add("hidden");lobbyPane.style.display=d.board?"none":"block";boardPane.style.display=d.board&&!d.activeKey&&d.final.step==="off"?"block":"none";qaPane.style.display=d.activeKey?"block":"none";finalPane.style.display=d.final.step!=="off"&&d.final.step!=="complete"?"block":"none";summaryPane.style.display=d.final.step==="complete"?"block":"none";
       renderLobbyList();renderScoreboard();if(state.board)renderBoard();renderOverrides();renderRoomControls();
       if(d.activeKey){const [c,r]=d.activeKey.split("::"),clue=state.board.clueFor(c,Number(r));questionText.textContent=clue.text;clueCatEl.textContent=c;clueValueEl.textContent="$"+state.board.valueForRow(Number(r));qaHeader.textContent=state.players[state.controlIdx].name+"'s Question";ddBadge.style.display=state.board.isDailyDouble(d.activeKey)?"inline-block":"none";ddWagerRow.style.display=d.timer.mode==="dd-wager"?"block":"none";answerInput.value=d.answerDraft||"";answerInput.disabled=submitBtn.disabled=passBtn.disabled=d.timer.mode==="dd-wager"||d.phase==="STEAL_OPEN";
-        if(d.timer.running){startTimer(d.timer.remaining,d.timer.mode,d.timer.mode==="steal"?()=>revealAnswerAndClose(clue):undefined,d.firstBuzzer);state.timer.remaining=d.timer.remaining;state.timer.paused=d.timer.paused;engineTurn=d.engineTurn;state.phase=d.phase;firstBuzzer=d.firstBuzzer;timerEl.textContent=d.timer.remaining+"s";updateQuestionPauseButton();}
+        if(d.timer.running){startTimer(d.timer.remaining,d.timer.mode,d.timer.mode==="steal"?()=>revealAnswerAndClose(clue):undefined,d.firstBuzzer);state.timer.remaining=d.timer.remaining;state.timer.paused=d.timer.paused;engineTurn=d.engineTurn;state.phase=d.phase;firstBuzzer=d.firstBuzzer;timerEl.textContent=window.educationalMode()?"∞ Untimed":d.timer.remaining+"s";updateQuestionPauseButton();}
         if(d.transition){const remaining=Math.max(0,d.transition.deadline-d.ts);recoveryTransition={...d.transition,deadline:Date.now()+remaining};if(d.transition.kind==="reveal"){ $("correctAnswerText").textContent=clue.answers[0];$("correctAnswerOverlay").classList.add("show");transitionTimeout=setTimeout(()=>{$("correctAnswerOverlay").classList.remove("show");closeClue();},remaining);}else transitionTimeout=setTimeout(()=>{recoveryTransition=null;setGamePhase("STEAL_OPEN");startTimer(5,"steal",()=>revealAnswerAndClose(clue));},remaining);}
       }
       if(d.gameClock.running){startGameClock();state.gameClock.remaining=d.gameClock.remaining;gameClockEl.textContent=formatClock(d.gameClock.remaining);}
@@ -4285,8 +4309,8 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
         if(d.final.step==="complete")$("summaryText").innerHTML=d.finalHTML;
         else renderFinalUI();
         if(d.final.step==="answers"&&d.final.timerRemaining>0&&d.finalTimerRunning!==false){startFinalTimer();state.final.timerRemaining=d.final.timerRemaining;championshipPaused=d.championshipPaused;finalTimerEl.textContent=d.final.timerRemaining+"s";}
-        if(d.final.step==="wagers")finalWagerTimer=setInterval(()=>{if(championshipPaused)return;if(--state.final.wagerRemaining<=0)beginFinalAnswers();finalTimerEl.textContent=state.final.wagerRemaining+"s";broadcastFinalState();},1000);
-        if(d.final.step==="reveal")autoRevealTimer=setInterval(()=>{if(championshipPaused)return;if(--state.final.revealRemaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(!finalResultsApplied)revealFinalResults();}},1000);
+        if(d.final.step==="wagers")finalWagerTimer=setInterval(()=>{if(championshipPaused || window.educationalMode())return;if(--state.final.wagerRemaining<=0)beginFinalAnswers();finalTimerEl.textContent=state.final.wagerRemaining+"s";broadcastFinalState();},1000);
+        if(d.final.step==="reveal")autoRevealTimer=setInterval(()=>{if(championshipPaused || window.educationalMode())return;if(--state.final.revealRemaining<=0){clearInterval(autoRevealTimer);autoRevealTimer=null;if(!finalResultsApplied)revealFinalResults();}},1000);
         renderFinalAnswerBanner();
       }
       (d.checklist||[]).forEach((v,i)=>{const e=$("eventChecklist").querySelectorAll("input")[i];if(e)e.checked=v;});
@@ -4328,6 +4352,12 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
     $("verifiedMediaOnly").onchange=()=>{const on=$("verifiedMediaOnly").checked;document.documentElement.classList.toggle("verified-media",on);if(on){soundModeSel.value="off";soundModeSel.dispatchEvent(new Event("change"));document.querySelectorAll("audio,video").forEach(e=>e.pause());}premiereSave();};
     const rightsStyle=document.createElement("style");rightsStyle.textContent='.verified-media *,.verified-media *:before,.verified-media *:after{background-image:none!important}.verified-media [id*=mascot],.verified-media [id*=Mascot]{visibility:hidden!important}.verified-media img,.verified-media #mascotStage,.verified-media #bobbleheadWidget{visibility:hidden!important}.verified-media body,.verified-media .hero,.verified-media .app{background-image:none!important}';document.head.appendChild(rightsStyle);
     const originalMediaPlay=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if($("verifiedMediaOnly")?.checked)return Promise.resolve();return originalMediaPlay.apply(this,arguments);};
+    $("answerPreset").onchange=e=>{qSecondsInput.value=e.target.value;qSecondsInput.dispatchEvent(new Event("change"));};
+    $("educationalMode").checked=localStorage.getItem("jeopardy-untimed")==="true";
+    $("educationalMode").onchange=e=>{window.untimedSession=e.target.checked;localStorage.setItem("jeopardy-untimed",String(e.target.checked));window.gameCaption("Timing preference saved for this game.");};
+    const educationalControls=document.createElement("div");educationalControls.innerHTML='<p>Educational mode: advance Final manually after players finish.</p><button class="btn" id="educationNext">Continue Final</button>';
+    finalPane.appendChild(educationalControls);$("educationNext").onclick=()=>{if(!window.educationalMode())return;if(state.final.step==="wagers")beginFinalAnswers();else if(state.final.step==="answers")beginAutomaticReveal();else if(state.final.step==="reveal")revealFinalResults();};
+    window.captionBroadcast=message=>broadcastToBuzzers({type:"audio-caption",message});
     renderRoomControls();offerRecovery();setInterval(premiereSave,250);
 
   })();
