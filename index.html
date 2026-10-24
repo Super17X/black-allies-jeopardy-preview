@@ -947,138 +947,25 @@ window.gameCaption=message=>{
   </header>
 
 
-  <div id="lobbyPane" class="card">
-    <h2 style="margin:0 0 10px;color:var(--gold2)">Game Lobby</h2>
-
-
-    <div class="row">
-      <label for="nameInput" class="mono tiny">Player name:</label>
-      <input id="nameInput" placeholder="Player name" aria-label="Player name" />
-      <button id="addPlayerBtn" class="btn ok">Add player</button>
-      <button id="clearPlayersBtn" class="btn warn">Clear</button>
-    </div>
-
-
-    <div id="lobbyError" class="mono tiny" style="color:var(--danger);margin-top:6px;min-height:1.2em" role="alert" aria-live="polite"></div>
-
-
-    <div class="spacer"></div>
-
-
-    <details id="accessibleTimingSettings" class="settings-disclosure"><summary>Accessible timing</summary><div class="row settings-disclosure-body">
-      <label><input type="checkbox" id="educationalMode"> Untimed educational mode</label><p>No automatic question, steal, wager, Final answer, or main-round expiry. Use the host controls to advance.</p><label for="answerPreset">Answer preset</label><select id="answerPreset"><option value="30">Standard · 30 seconds</option><option value="60">Extended · 60 seconds</option><option value="90">Relaxed · 90 seconds</option><option value="120">Extra time · 120 seconds</option><option value="180">Maximum · 180 seconds</option></select><label for="qSeconds" class="mono tiny">Player-in-control answer time (3–180 seconds):</label>
-      <input id="qSeconds" type="number" min="3" max="180" step="1" value="30" style="width:90px" aria-label="Player-in-control answer time, 3 to 180 seconds" /><span class="mono tiny">Applies to the next question. Maximum: 180 seconds.</span>
-      <label for="stealSeconds" class="mono tiny">Steal seconds:</label>
-      <input id="stealSeconds" type="number" min="2" max="45" value="10" style="width:90px" aria-label="Steal seconds" />
-      <label for="finalSeconds" class="mono tiny">Final round:</label>
-      <input id="finalSeconds" type="number" min="120" max="120" value="120" readonly style="width:90px" aria-label="Final round is fixed at 120 seconds" />
-      <span class="pill">Main game: 15:00</span>
-    </div></details>
-
-
-    <div class="spacer"></div>
-
-
-    <div class="row">
-      <label for="categoryCount" class="mono tiny">Categories:</label>
-      <input id="categoryCount" type="number" min="3" max="10" value="8" style="width:80px" aria-label="Number of categories" />
-      <label class="mono tiny" for="includeUrbanSlang"><input id="includeUrbanSlang" type="checkbox" /> Add Urban Slang (optional extra category)</label>
-      <label for="qPerCat" class="mono tiny">Questions / category:</label>
-      <input id="qPerCat" type="number" min="5" max="12" value="10" style="width:90px" aria-label="Questions per category" />
-      <label for="startValue" class="mono tiny">Start value:</label>
-      <input id="startValue" type="number" min="100" max="1000" value="200" style="width:90px" aria-label="Starting dollar value" />
-      <label for="valueStep" class="mono tiny">Step:</label>
-      <input id="valueStep" type="number" min="50" max="1000" value="200" style="width:90px" aria-label="Dollar value step between rows" />
-    </div>
-
-
-    <div class="spacer"></div>
-
-
-    <div class="row">
-      <label for="randomizeBoard" class="mono tiny">Randomize board:</label>
-      <select id="randomizeBoard" aria-label="Randomize board">
-        <option value="on" selected>On</option>
+<div id="lobbyPane" class="card"><div class="setup-heading"><div><p class="setup-eyebrow">HOST SETUP</p><h2>Set up your game</h2><p>Start with players. Fine-tune the rest when you need to.</p></div></div><div class="setup-sections"><details id="playersSettings" class="setup-group" open><summary><span><strong>Players</strong><small>Names, play format and competition rules</small></span><span class="setup-group-status" data-setup-status="players"></span></summary><div class="setup-group-body"><div class="setup-grid"><div class="setup-field"><label for="nameInput">Player name</label><input id="nameInput" placeholder="Player name" aria-label="Player name"></div><div class="setup-player-buttons"><button id="addPlayerBtn" class="btn ok">Add player</button><button id="clearPlayersBtn" class="btn warn">Clear</button></div></div><div id="lobbyError" class="mono tiny" style="color:var(--danger);margin-top:6px;min-height:1.2em" role="alert" aria-live="polite"></div><div id="lobbyList" class="mono tiny"></div><div class="setup-grid"><div class="setup-field"><label for="competitionRules">How everyone plays</label><select id="competitionRules"><option value="everyone">Casual · everyone answers privately</option><option value="competitive" selected="">Competitive · everyone can buzz</option><option value="controller">Controller-first · original play</option></select><small>Choose a format before the group joins.</small></div><div class="setup-field"><label for="gameMode">Players or teams</label><select id="gameMode"><option value="individual" selected="">Individual</option><option value="team">Team Mode</option></select></div></div><details id="competitionRulesSettings" class="setup-advanced"><summary>Competition rules</summary><div class="setup-grid"><div class="setup-field"><label for="missScoring">Missed-answer scoring</label><select id="missScoring"><option value="friendly">No deduction</option><option value="traditional">Traditional · deduct clue value</option></select></div><div class="setup-field"><label for="finalWagerPolicy">Final wager limit</label><select id="finalWagerPolicy"><option value="balanced">Balanced · up to 50% of positive score</option><option value="full">Traditional · up to full positive score</option></select></div></div><p id="competitionRulesText">Competitive: 5 seconds to read, then everyone may buzz. Correct answers choose next. One attempt per player. Steals get a fresh answer timer. Shared wins for ties; tournaments wait for a host-resolved tie. Scores of $0 or below may answer Final with a $0 wager. Daily Doubles remain exclusive to the chooser; correct adds the wager and incorrect subtracts it.</p></details><details class="setup-advanced"><summary>Readiness, teams &amp; tournaments</summary><div class="setup-grid"><div class="setup-field"><label for="requireReady">Ready checks</label><select id="requireReady" aria-label="Require all players ready">
+        <option value="on" selected="">On</option>
         <option value="off">Off</option>
-      </select>
-
-
-      <label for="roundSelect" class="mono tiny">Round:</label>
-      <select id="roundSelect" aria-label="Round">
-        <option value="1" selected>Round 1</option>
+      </select></div><div class="setup-field"><label for="autoStart">Waiting-room start</label><select id="autoStart" aria-label="Auto-start waiting room">
+        <option value="on" selected="">On (10s)</option>
+        <option value="off">Off</option>
+      </select></div><div class="setup-field"><label for="teamCount">Number of teams</label><select id="teamCount"><option value="2" selected="">2 Teams</option><option value="3">3 Teams</option><option value="4">4 Teams</option></select></div><div class="setup-field"><label for="tournamentSize">Tournament bracket</label><select id="tournamentSize"><option value="0" selected="">Off</option><option value="4">4 entrants</option><option value="8">8 entrants</option></select></div></div><div class="setup-secondary-actions"><button class="btn" id="assignTeamsBtn" type="button">👥 Assign Teams</button><button class="btn" id="createTournamentBtn" type="button">🏆 Create Bracket</button></div><div id="teamPreview" class="team-grid"></div><div id="tournamentPreview"></div></details></div></details><details id="accessibleTimingSettings" class="setup-group" ><summary><span><strong>Timing</strong><small>Accessible timing and answer windows</small></span><span class="setup-group-status" data-setup-status="timing"></span></summary><div class="setup-group-body"><label class="setup-check"><input type="checkbox" id="educationalMode"><span>Untimed educational mode<small>Let the host advance when the group is ready.</small></span></label><div class="setup-grid"><div class="setup-field"><label for="answerPreset">Answer-time preset</label><select id="answerPreset"><option value="30">Standard · 30 seconds</option><option value="60">Extended · 60 seconds</option><option value="90">Relaxed · 90 seconds</option><option value="120">Extra time · 120 seconds</option><option value="180">Maximum · 180 seconds</option></select></div><div class="setup-field"><label for="stealSeconds">Steal window (seconds)</label><input id="stealSeconds" type="number" min="2" max="45" value="10" style="width:90px" aria-label="Steal seconds"></div></div><details class="setup-advanced"><summary>Custom answer time &amp; round limits</summary><div class="setup-grid"><div class="setup-field"><label for="qSeconds">Custom answer time (seconds)</label><input id="qSeconds" type="number" min="3" max="180" step="1" value="30" style="width:90px" aria-label="Player-in-control answer time, 3 to 180 seconds"><small>3–180 seconds; applies to the next clue.</small></div><div class="setup-field"><label for="finalSeconds">Final answer time (seconds)</label><input id="finalSeconds" type="number" min="120" max="120" value="120" readonly="" style="width:90px" aria-label="Final round is fixed at 120 seconds"><small>Fixed at 120 seconds in timed play.</small></div></div><p class="setup-note">Competitive main round: 15 minutes. Casual sessions have no overall time limit. Untimed mode removes automatic answer deadlines.</p></details></div></details><details id="contentSettings" class="setup-group" ><summary><span><strong>Content</strong><small>Categories, board size and clue values</small></span><span class="setup-group-status" data-setup-status="content"></span></summary><div class="setup-group-body"><div class="setup-grid"><div class="setup-field"><label for="categoryCount">Number of categories</label><input id="categoryCount" type="number" min="3" max="10" value="8" style="width:80px" aria-label="Number of categories"></div><div class="setup-field"><label for="qPerCat">Questions per category</label><input id="qPerCat" type="number" min="5" max="12" value="10" style="width:90px" aria-label="Questions per category"></div></div><label class="setup-check"><input id="includeUrbanSlang" type="checkbox"><span>Include Urban Slang<small>Adds an extra category to the board.</small></span></label><details class="setup-advanced"><summary>Board values, rotation &amp; Daily Doubles</summary><div class="setup-grid"><div class="setup-field"><label for="startValue">First clue value ($)</label><input id="startValue" type="number" min="100" max="1000" value="200" style="width:90px" aria-label="Starting dollar value"></div><div class="setup-field"><label for="valueStep">Value increase per row ($)</label><input id="valueStep" type="number" min="50" max="1000" value="200" style="width:90px" aria-label="Dollar value step between rows"></div><div class="setup-field"><label for="randomizeBoard">Randomize board</label><select id="randomizeBoard" aria-label="Randomize board">
+        <option value="on" selected="">On</option>
+        <option value="off">Off</option>
+      </select></div><div class="setup-field"><label for="roundSelect">Round</label><select id="roundSelect" aria-label="Round">
+        <option value="1" selected="">Round 1</option>
         <option value="2">Round 2 (values double + new Black History Movies/TV)</option>
-      </select>
-
-
-      <label for="dailyDoubles" class="mono tiny">Daily Doubles:</label>
-      <select id="dailyDoubles" aria-label="Enable Daily Doubles">
-        <option value="on" selected>On</option>
+      </select></div><div class="setup-field"><label for="dailyDoubles">Daily Doubles</label><select id="dailyDoubles" aria-label="Enable Daily Doubles">
+        <option value="on" selected="">On</option>
         <option value="off">Off</option>
-      </select>
-
-
-      <label for="dailyDoubleCount" class="mono tiny"># Daily Doubles:</label>
-      <input id="dailyDoubleCount" type="number" min="0" max="6" value="2" style="width:80px" aria-label="Number of Daily Doubles" />
-    </div>
-
-
-    <div class="competition-panel" id="competitionSetup">
-      <h3>🏆 Competition Suite</h3>
-      <div class="row">
-        <p id="contentRotationStatus" role="status"></p><details id="competitionRulesSettings" class="settings-disclosure"><summary>Competition rules</summary><div class="settings-disclosure-body"><label for="competitionRules">Play preset</label><select id="competitionRules"><option value="everyone">Casual · everyone answers privately</option><option value="competitive" selected>Competitive · everyone can buzz</option><option value="controller">Controller-first · original play</option></select><label><input type="checkbox" id="conversationMode"> Conversation mode · mute sounds and minimize motion</label><label for="missScoring">Regular missed answers</label><select id="missScoring"><option value="friendly">No deduction</option><option value="traditional">Traditional · deduct clue value</option></select><label for="finalWagerPolicy">Final wagers</label><select id="finalWagerPolicy"><option value="balanced">Balanced · up to 50% of positive score</option><option value="full">Traditional · up to full positive score</option></select><p id="competitionRulesText">Competitive: 5 seconds to read, then everyone may buzz. Correct answers choose next. One attempt per player. Steals get a fresh answer timer. Shared wins for ties; tournaments wait for a host-resolved tie. Scores of $0 or below may answer Final with a $0 wager. Daily Doubles remain exclusive to the chooser; correct adds the wager and incorrect subtracts it.</p></div></details><label for="gameMode" class="mono tiny">Scoring mode:</label>
-        <select id="gameMode"><option value="individual" selected>Individual</option><option value="team">Team Mode</option></select>
-        <label for="teamCount" class="mono tiny">Teams:</label>
-        <select id="teamCount"><option value="2" selected>2 Teams</option><option value="3">3 Teams</option><option value="4">4 Teams</option></select>
-        <label for="tournamentSize" class="mono tiny">Tournament:</label>
-        <select id="tournamentSize"><option value="0" selected>Off</option><option value="4">4 entrants</option><option value="8">8 entrants</option></select>
-      </div>
-      <div class="row" style="margin-top:8px"><button class="btn" id="assignTeamsBtn" type="button">👥 Assign Teams</button><button class="btn" id="createTournamentBtn" type="button">🏆 Create Bracket</button></div>
-      <div id="teamPreview" class="team-grid"></div><div id="tournamentPreview"></div>
-    </div>
-
-
-    <div class="spacer"></div>
-
-
-    <div class="row">
-      <label for="autoStart" class="mono tiny">Auto-start waiting room:</label>
-      <select id="autoStart" aria-label="Auto-start waiting room">
-        <option value="on" selected>On (10s)</option>
+      </select></div><div class="setup-field"><label for="dailyDoubleCount">Daily Doubles per board</label><input id="dailyDoubleCount" type="number" min="0" max="6" value="2" style="width:80px" aria-label="Number of Daily Doubles"></div></div></details><p id="contentRotationStatus" role="status"></p></div></details><details id="presentationSettings" class="setup-group" ><summary><span><strong>Presentation</strong><small>Sound, motion and conversation</small></span><span class="setup-group-status" data-setup-status="presentation"></span></summary><div class="setup-group-body"><label class="setup-check"><input type="checkbox" id="conversationMode"><span>Conversation mode<small>Mute sounds and minimize motion so the group can talk.</small></span></label><div class="setup-grid"><div class="setup-field"><label for="soundMode">Game audio</label><select id="soundMode" aria-label="Sound mode">
+        <option value="on" selected="">On</option>
         <option value="off">Off</option>
-      </select>
-
-
-      <label for="requireReady" class="mono tiny">Require ready checks:</label>
-      <select id="requireReady" aria-label="Require all players ready">
-        <option value="on" selected>On</option>
-        <option value="off">Off</option>
-      </select>
-
-
-      <label for="soundMode" class="mono tiny">Sound mode:</label>
-      <select id="soundMode" aria-label="Sound mode">
-        <option value="on" selected>On</option>
-        <option value="off">Off</option>
-      </select>
-
-
-      <label for="volume" class="mono tiny">Volume:</label>
-      <input id="volume" type="number" min="0" max="1" step="0.05" value="0.25" style="width:90px" aria-label="Volume (0 to 1)" />
-      <button id="musicToggleBtn" class="btn alt" type="button">🔊 Landing Music: On</button>
-    </div>
-
-
-    <div class="spacer"></div>
-
-
-    <button id="enterWaitingRoomBtn" class="btn ok">Enter Waiting Room</button>
-    <button id="lobbyBuzzerLinkBtn" class="btn premium-qr-btn" style="font-size:.94rem;padding:10px 16px">✦ Generate Player QR</button>
-
-
-    <div class="spacer"></div>
-    <div id="lobbyList" class="mono tiny"></div>
-  </div>
-
+      </select></div><div class="setup-field"><label for="volume">Volume</label><input id="volume" type="number" min="0" max="1" step="0.05" value="0.25" style="width:90px" aria-label="Volume (0 to 1)"><small>0 = muted · 1 = full volume</small></div></div><div class="setup-secondary-actions"><button id="musicToggleBtn" class="btn alt" type="button">🔊 Landing Music: On</button></div><p class="setup-note">Visible game messages remain available when audio is muted. Your device’s reduced-motion preference is respected.</p></div></details></div><div class="setup-footer"><p id="settingsSetupSummary" role="status"></p><div class="setup-main-actions"><button id="enterWaitingRoomBtn" class="btn ok">Enter Waiting Room</button><button id="lobbyBuzzerLinkBtn" class="btn premium-qr-btn" style="font-size:.94rem;padding:10px 16px">✦ Generate Player QR</button></div></div></div>
 
   <audio id="waitingRoomMusic" preload="auto" loop playsinline src="assets/black_allies_waiting_room_loop.mp3?v=20261007"></audio>
 
@@ -4538,6 +4425,19 @@ window.gameCaption=message=>{
     const endAll=document.createElement("button");endAll.className="btn";endAll.textContent="Close everyone-answer window";endAll.onclick=finishEveryoneRound;qaPane.appendChild(endAll);
     $("conversationMode").onchange=()=>{document.body.classList.toggle("conversation-mode",$("conversationMode").checked);if($("conversationMode").checked){stopLandingMusic();stopMusic();pauseQuestionBeat();stopFinalBeat();stopWaitingRoomMusic(0);resultSounds.forEach(a=>a.pause());Object.values(cueAudio).forEach(a=>a.pause());}document.querySelectorAll("#featuredMusicDock iframe").forEach(f=>{if($("conversationMode").checked){f.dataset.quietSrc=f.src;f.src="about:blank";}else if(f.dataset.quietSrc){f.src=f.dataset.quietSrc;delete f.dataset.quietSrc;}});broadcastGameplaySync();};
     renderRoomControls();offerRecovery();setInterval(premiereSave,250);
+    function refreshSetupSummary(){
+      const mode=$('competitionRules').selectedOptions[0]?.textContent||'';
+      document.querySelector('[data-setup-status="players"]').textContent=state.players.length+' players · '+($('gameMode').value==='team'?'Teams':'Individual');
+      document.querySelector('[data-setup-status="timing"]').textContent=$('educationalMode').checked?'Untimed':$('qSeconds').value+'s answers · '+$('stealSeconds').value+'s steals';
+      document.querySelector('[data-setup-status="content"]').textContent=(Number($('categoryCount').value)+($('includeUrbanSlang').checked?1:0))+' categories · '+$('qPerCat').value+' clues each';
+      document.querySelector('[data-setup-status="presentation"]').textContent=$('conversationMode').checked?'Conversation mode':$('soundMode').value==='off'?'Audio muted':'Audio on · '+Math.round(Number($('volume').value)*100)+'%';
+      $('settingsSetupSummary').textContent=state.players.length+' players · '+mode+' · '+($('educationalMode').checked?'Untimed':$('qSeconds').value+'s answers');
+    }
+    $('lobbyPane').addEventListener('change',()=>queueMicrotask(refreshSetupSummary));
+    $('lobbyPane').addEventListener('click',()=>queueMicrotask(refreshSetupSummary));
+    new MutationObserver(refreshSetupSummary).observe($('lobbyList'),{childList:true,subtree:true});
+    refreshSetupSummary();
+
 
   })();
   

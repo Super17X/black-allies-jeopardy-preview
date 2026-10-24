@@ -29,3 +29,36 @@ body.conversation-mode #achievementOverlay,body.conversation-mode .champ-confett
 .settings-disclosure>summary:focus-visible{outline:3px solid #74b9ff;outline-offset:3px}
 .settings-disclosure[open]>summary{border-bottom:1px solid #64748b}
 .settings-disclosure-body{padding:1rem;overflow-wrap:anywhere}
+
+/* Grouped host setup: primary choices first, specialist options on demand. */
+#lobbyPane .setup-heading h2{margin:0;color:#ffe082;font-size:1.8rem}
+#lobbyPane .setup-heading p{margin:.4rem 0;color:#c2cddd}
+#lobbyPane .setup-heading .setup-eyebrow{letter-spacing:.16em;color:#e9c45a;font-size:.75rem}
+#lobbyPane .setup-sections{display:grid;gap:.8rem;margin:1.5rem 0}
+#lobbyPane .setup-group{border:1px solid #45516b;border-radius:12px;background:#0b1222;min-width:0}
+#lobbyPane .setup-group>summary{display:flex;gap:1rem;align-items:center;justify-content:space-between;cursor:pointer;padding:1.1rem;list-style:none}
+#lobbyPane .setup-group>summary::after{content:'＋';color:#e9c45a;font-size:1.2rem}
+#lobbyPane .setup-group[open]>summary::after{content:'−'}
+#lobbyPane .setup-group>summary>span:first-child{flex:1}
+#lobbyPane .setup-group strong{display:block;color:#f7e5aa;font-size:1.1rem}
+#lobbyPane .setup-group summary small{display:block;color:#becadc;margin-top:.25rem;font-size:.82rem}
+#lobbyPane .setup-group-status{color:#d6dfed;font-size:.82rem;text-align:right;max-width:40%}
+#lobbyPane .setup-group-body{padding:0 1.1rem 1.1rem}
+#lobbyPane .setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:.8rem 0}
+#lobbyPane .setup-field{min-width:0;display:flex;flex-direction:column;gap:.45rem}
+#lobbyPane .setup-field>label{color:#ecf0f8;font-size:.9rem}
+#lobbyPane .setup-field>input,#lobbyPane .setup-field>select{width:100%!important;min-width:0;height:44px}
+#lobbyPane .setup-field small,#lobbyPane .setup-check small,#lobbyPane .setup-note{font-size:.82rem;color:#bfcadd;line-height:1.5}
+#lobbyPane .setup-check{display:flex;gap:.75rem;align-items:flex-start;margin:1rem 0;color:#f3f5fb}
+#lobbyPane .setup-check input{margin-top:.3rem;flex-shrink:0}
+#lobbyPane .setup-check small{display:block;margin-top:.3rem}
+#lobbyPane .setup-advanced{border-top:1px solid #35415a;padding-top:.9rem;margin-top:1rem}
+#lobbyPane .setup-advanced>summary{cursor:pointer;color:#c4cee0;padding:.25rem 0}
+#lobbyPane .setup-player-buttons{display:flex;gap:.6rem;align-items:end;padding-bottom:0;flex-wrap:wrap}
+#lobbyPane .setup-secondary-actions,#lobbyPane .setup-main-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}
+#lobbyPane .setup-footer{border-top:1px solid #45516b;padding-top:1rem}
+#lobbyPane .setup-footer p{color:#c4cee0;font-size:.88rem}
+#lobbyPane #enterWaitingRoomBtn{background:#f0cc62;color:#171305;border:1px solid #f0cc62;font-weight:700;padding:12px 22px}
+#lobbyPane #lobbyBuzzerLinkBtn{background:transparent!important;color:#dbe4f2!important;border:1px solid #60708c!important;box-shadow:none!important}
+#lobbyPane summary:focus-visible{outline:3px solid #74b9ff;outline-offset:4px}
+@media(max-width:560px){#lobbyPane .setup-grid{grid-template-columns:1fr}#lobbyPane .setup-group>summary{flex-wrap:wrap}#lobbyPane .setup-group-status{max-width:100%;text-align:left}#lobbyPane .setup-player-buttons{padding-bottom:.4rem}}
