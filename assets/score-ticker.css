@@ -10,3 +10,14 @@
 #leaderboardTicker.tickerReduced .tickerViewport{overflow-x:auto}
 #leaderboardTicker.tickerReduced .tickerTrack{transform:none!important;will-change:auto}
 @media(max-width:700px){#leaderboardTicker .tickerPause{padding:8px;font-size:.8rem}}
+/* Seamless stage dock: original cards, colors and type with a continuous edge fade. */
+#leaderboardTicker{left:0;right:0;bottom:0;height:84px;padding:0 88px 0 18px;box-sizing:border-box;gap:14px;overflow:visible;background:linear-gradient(180deg,rgba(3,8,18,.78),rgba(3,8,18,.98));border-top:1px solid rgba(245,194,78,.24);box-shadow:0 -12px 35px rgba(0,0,0,.25)}
+#leaderboardTicker .tickerViewport{mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
+#leaderboardTicker .tickerGroup{gap:16px;padding-right:16px}
+#leaderboardTicker .tickerPlayer{box-shadow:0 3px 10px #0006}
+#leaderboardTicker .tickerLeader{box-shadow:0 0 9px #ffd33f55,0 3px 10px #0006}
+#leaderboardTicker .tickerPause{min-height:42px;padding:8px 12px;background:rgba(3,8,18,.65);border-color:rgba(245,194,78,.5);font-size:.8rem;transition:background .2s ease,border-color .2s ease}
+#leaderboardTicker .tickerPause:hover{background:rgba(245,194,78,.12);border-color:var(--gold)}
+body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:fixed!important;float:none!important;clear:none!important;right:12px!important;bottom:8px!important;width:58px!important;height:76px!important;margin:0!important;z-index:2101}
+@media(max-width:700px){#leaderboardTicker{height:72px;padding-left:4px;padding-right:58px;gap:6px}#leaderboardTicker .tickerGroup{gap:10px;padding-right:10px}#leaderboardTicker .tickerPause{padding:8px;min-height:44px}body:has(#boardPane[style*="display: block"]) #hostMascotV4B{width:42px!important;height:64px!important;right:6px!important;bottom:5px!important}}
+@media(prefers-reduced-motion:reduce){#leaderboardTicker .tickerPause{transition:none}}
