@@ -12,3 +12,7 @@
 #gameHighlights summary{cursor:pointer;color:#ffe094;min-height:44px}
 #gameHighlights .highlight-notice{margin:0 0 16px}
 @media(max-width:540px){#gameHighlights{padding:16px}#gameHighlights .highlights-grid{grid-template-columns:1fr}}
+/* Summary's championship heading styles must not enlarge the recap title. */
+#summaryPane #gameHighlights h2{font-size:clamp(1.4rem,3vw,2rem)!important;line-height:1.2!important;letter-spacing:normal!important;text-shadow:none!important;margin:0 0 20px!important}
+#summaryPane #gameHighlights h3{font-size:1.05rem!important;line-height:1.4!important;letter-spacing:normal!important;text-shadow:none!important}
+body:has(#summaryPane[style*="block"]) #hostMascotV4B{display:none!important}
