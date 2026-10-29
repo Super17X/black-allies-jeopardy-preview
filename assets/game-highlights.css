@@ -1,0 +1,14 @@
+#gameHighlights{margin:28px 0;padding:24px;background:#071126;color:#f4f6fb;border:1px solid #b99b52;border-radius:18px;font-family:Arial,sans-serif}
+#gameHighlights h2{color:#ffe094;margin:0 0 20px;font-size:clamp(1.4rem,3vw,2rem)}
+#gameHighlights .highlight-kicker{color:#e9c66c;letter-spacing:.12em;font-size:.8rem}
+#gameHighlights .highlights-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#gameHighlights .highlight-card{background:#0d1d38;border:1px solid #334363;border-radius:12px;padding:18px;overflow-wrap:anywhere}
+#gameHighlights .highlight-mvp{grid-column:1/-1;background:#172444;border-color:#d4b464}
+#gameHighlights h3{font-size:1.05rem;color:#ffe094;margin:0 0 14px}
+#gameHighlights .highlight-names{font-size:1.2rem;font-weight:700;margin-bottom:10px}
+#gameHighlights .highlight-value{color:#ffe094;font-size:1.1rem;font-weight:700}
+#gameHighlights p{color:#c5cfe1;line-height:1.5;margin:10px 0 0}
+#gameHighlights details{margin-top:18px;padding-top:16px;border-top:1px solid #334363}
+#gameHighlights summary{cursor:pointer;color:#ffe094;min-height:44px}
+#gameHighlights .highlight-notice{margin:0 0 16px}
+@media(max-width:540px){#gameHighlights{padding:16px}#gameHighlights .highlights-grid{grid-template-columns:1fr}}

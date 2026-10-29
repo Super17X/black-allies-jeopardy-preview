@@ -879,6 +879,7 @@ body:has(#boardPane[style*="display: block"]) #hostMascotV4B{position:relative!i
 </style>
 <link rel="stylesheet" href="assets/score-ticker.css">
 <link rel="stylesheet" href="assets/large-room-ui.css">
+<link rel="stylesheet" href="assets/game-highlights.css">
 <link rel="stylesheet" href="accessibility.css"><script>/* Shared, visible alternatives for game audio and operating-system motion preference. */
 window.reducedMotion=()=>!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 // Read once for a session: changing the setting never silently alters an active timer.
@@ -2599,6 +2600,7 @@ window.gameCaption=message=>{
 
 
       setGamePhase("BOARD");
+      highlightEvents.length=0;highlightsComplete=true;decisionHistory.length=0;Object.values(premiereStats).forEach(m=>m.clear());
       state.players.forEach(p=>p.score=0);
       correctStreaks.clear();
       state.players.forEach(p=>correctStreaks.set(p.name,0));
@@ -2796,6 +2798,7 @@ window.gameCaption=message=>{
 
       clearDdWagerError();
       state.ddLockedWager = wager;
+      highlightWager(state.players[state.controlIdx].name,wager,"daily-double");
 
 
       flash("rgba(247,201,72,0.18)", 180, 0.95);
@@ -3043,7 +3046,7 @@ window.gameCaption=message=>{
     const premiereStats={correct:new Map(),wrong:new Map(),steals:new Map(),buzzes:new Map(),maxStreak:new Map(),dailyDoubleWins:new Map()};
     const undoStack=[];
     function pushUndo(label){
-      undoStack.push({label,scores:state.players.map(p=>p.score),controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,clueAttempts:state.clueAttempts});
+      undoStack.push({label,highlightLength:highlightEvents.length,scores:state.players.map(p=>p.score),controlIdx:state.controlIdx,used:[...state.used],activeKey:state.activeKey,clueAttempts:state.clueAttempts});
       if(undoStack.length>20) undoStack.shift();
     }
     function statInc(map,name,n=1){map.set(name,(map.get(name)||0)+n)}
@@ -3304,7 +3307,7 @@ window.gameCaption=message=>{
         const max = finalWagerMax(player.score);
         if (wager > max) { showFinalError(`Wager cannot exceed $${max}.`); return; }
         clearFinalError();
-        state.final.wagers.set(idx, wager);
+        state.final.wagers.set(idx, wager);highlightWager(state.players[idx].name,wager,"final");
 
 
         if(state.final.wagers.size>=state.players.length)beginFinalAnswers();
@@ -3393,14 +3396,13 @@ window.gameCaption=message=>{
         `<div class="spacer"></div>` +
         `<div class="mono tiny">${lines.join("<br/>")}</div>`;
 
-      const awardTop=(map)=>{const arr=[...map.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));return arr[0]&&arr[0][1]>0?`${escapeHtml(arr[0][0])} (${arr[0][1]})`:"—"};
-      $("summaryText").innerHTML += `<div class="spacer"></div><h3 style="color:var(--gold2)">Game Awards</h3><div class="mono tiny">🔥 Hot Streak: ${awardTop(premiereStats.maxStreak)} &nbsp; • &nbsp; ⚡ Fastest Finger: ${awardTop(premiereStats.buzzes)} &nbsp; • &nbsp; 🏴‍☠️ Master Thief: ${awardTop(premiereStats.steals)} &nbsp; • &nbsp; 💰 Daily Double: ${awardTop(premiereStats.dailyDoubleWins)}</div>`;
+      renderGameHighlights();
       MascotV4B.react("winner",2000);
       showAchievement(winners.length>1?`🏆 CO-WINNERS<br>${winners.map(p=>escapeHtml(p.name)).join(" & ")}`:`🏆 ${escapeHtml(winners[0]?.name||"")} WINS!`,4500);
       broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
       const competitionWinners=getRankedPlayers().filter(p=>p.rank===1); if(competitionWinners.length===1) advanceTournamentWinner(competitionWinners[0].name);
       $("summaryText").innerHTML+=fairnessReport()+calibrationReport();
-      if(winners.length>1){const tieBtn=document.createElement("button");tieBtn.className="btn";tieBtn.id="knowledgeTiebreak";tieBtn.textContent="Play knowledge tiebreak";tieBtn.onclick=startKnowledgeTiebreak;$("summaryText").appendChild(tieBtn);const note=document.createElement("p");note.textContent="Tiebreak: tied leaders answer privately at the same time. Correct answers earn 1 point; misses cost 0. If still tied, play another clue. Tournament advancement waits for a single winner.";$("summaryText").appendChild(note);}state.final.step="complete";renderFinalAnswerBanner();broadcastFinalState();
+      if(winners.length>1){const tieBtn=document.createElement("button");tieBtn.className="btn";tieBtn.id="knowledgeTiebreak";tieBtn.textContent="Play knowledge tiebreak";tieBtn.onclick=startKnowledgeTiebreak;$("summaryText").appendChild(tieBtn);const note=document.createElement("p");note.textContent="Tiebreak: tied leaders answer privately at the same time. Correct answers earn 1 point; misses cost 0. If still tied, play another clue. Tournament advancement waits for a single winner.";$("summaryText").appendChild(note);}state.final.step="complete";renderFinalAnswerBanner();broadcastFinalState();premiereSave();
       localStorage.removeItem("black-allies-jeopardy-premiere-state");
     }
 
@@ -3477,7 +3479,7 @@ window.gameCaption=message=>{
       ["competitionRules","missScoring","finalWagerPolicy","educationalMode"].forEach(id=>$(id).disabled=false);
       clearInterval(finalWagerTimer);clearInterval(autoRevealTimer);finalWagerTimer=autoRevealTimer=null;
       engineGameId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);engineTurn=0;
-      actionResults.clear();decisionHistory.length=0;finalJudgments.clear();renderOverrides();finalResultsApplied=false;finalAnswerRevealed=false;renderFinalAnswerBanner();updateFinalAnswerControls();
+      actionResults.clear();decisionHistory.length=0;highlightEvents.length=0;highlightsComplete=true;Object.values(premiereStats).forEach(m=>m.clear());finalJudgments.clear();renderOverrides();finalResultsApplied=false;finalAnswerRevealed=false;renderFinalAnswerBanner();updateFinalAnswerControls();
       broadcastToBuzzers({type:"game-reset",gameId:engineGameId});
       // stop timers
       stopTimer();
@@ -3609,6 +3611,44 @@ window.gameCaption=message=>{
     let engineTurn = 0;
     const actionResults = new Map();
     const decisionHistory = [];
+    // Full-session award events are separate from the 100-item host review list.
+    const highlightEvents=[];
+    let highlightsComplete=true;
+    function highlightWager(player,value,kind){
+      if(!tiebreakPlayers)highlightEvents.push({event:"wager",player,value,kind});
+    }
+    function renderGameHighlights(){
+      const scores=new Map(state.players.map(p=>[p.name,{name:p.name,correct:0,answers:0,earned:0,steals:0,streak:0,hot:0,dd:0,final:0,buzzes:0,wager:0}]));
+      for(const e of highlightEvents){
+        const p=scores.get(e.player);if(!p || e.voided || e.kind==="tiebreak")continue;
+        if(e.event==="wager"){p.wager=Math.max(p.wager,e.value||0);continue;}
+        if(e.event==="buzz"){p.buzzes++;continue;}
+        if(e.event!=="answer")continue;
+        if(String(e.answer||"").trim())p.answers++;
+        p.streak=e.correct?p.streak+1:0;p.hot=Math.max(p.hot,p.streak);
+        if(e.correct){p.correct++;p.earned+=e.value||0;if(e.steal)p.steals++;if(e.dailyDouble)p.dd++;if(e.kind==="final")p.final+=e.value||0;}
+      }
+      const players=[...scores.values()];
+      const award=(label,key,format,description,featured=false)=>{
+        const best=Math.max(0,...players.map(p=>p[key]));
+        const winners=players.filter(p=>p[key]===best&&best>0);
+        return `<article class="highlight-card${featured?" highlight-mvp":""}"><h3>${label}</h3><div class="highlight-names">${winners.length?winners.map(p=>escapeHtml(p.name)).join(" &amp; "):"Not earned this game"}</div><div class="highlight-value">${best>0?format(best):"—"}</div>${winners.length>1?'<p class="highlight-shared">Shared award</p>':""}<p>${description}</p></article>`;
+      };
+      const money=n=>"$"+n.toLocaleString("en-US");
+      const html=`<section id="gameHighlights" aria-labelledby="gameHighlightsTitle"><p class="highlight-kicker">BLACK &amp; ALLIES · GAME HIGHLIGHTS</p><h2 id="gameHighlightsTitle">Tonight’s standout players</h2>${!highlightsComplete?'<p class="highlight-notice">This game began before highlights tracking was added. Awards reflect only recorded events.</p>':""}<div class="highlights-grid">`+
+        award("🏆 Most Valuable Player","earned",n=>money(n)+" earned","Most points earned from correct answers, before deductions.",true)+
+        award("🧠 Knowledge Champion","correct",n=>n+" correct answers","Most questions answered correctly.")+
+        award("🎤 Most Answers Submitted","answers",n=>n+" answers","Nonblank answers; passes excluded.")+
+        award("💰 Biggest Wager","wager",n=>money(n)+" wager","Largest locked Daily Double or Final wager.")+
+        award("🏴‍☠️ Steal Leader","steals",n=>n+" successful steals","Correct answers after an earlier missed attempt.")+
+        award("🔥 Longest Hot Streak","hot",n=>n+" correct in a row","Consecutive correct personal answer attempts.")+
+        award("💎 Daily Double Specialist","dd",n=>n+" Daily Double wins","Most correctly answered Daily Doubles.")+
+        award("🌟 Clutch Final","final",n=>"+"+money(n)+" in Final","Largest gain from a correct Final answer.")+
+        award("⚡ Buzzer Leader","buzzes",n=>n+" buzz-in wins","Most accepted buzzes; not a latency award.")+
+        '</div><details><summary>How highlights are awarded</summary><p>All tied leaders share an award. Correct answers include regular clues, Daily Doubles and Final; tiebreaks are excluded. Host corrections update awards. The overall winner is still determined by the final score. Awards are individual player achievements, including in team games.</p></details></section>';
+      $("gameHighlights")?.remove();$("summaryText").insertAdjacentHTML("beforeend",html);
+    }
+
     let finalWagerTimer=null, autoRevealTimer=null;
     let finalAnswerRevealed=false;
     let tiebreakPlayers=null,tiebreakNumber=0,tiebreakUsed=[];
@@ -3635,8 +3675,8 @@ window.gameCaption=message=>{
       broadcastToBuzzers(result);return result;
     }
     function recordDecision(player,answer,correct,value,key=state.activeKey,kind="clue"){
-      const item={id:`decision-${Date.now()}-${decisionHistory.length}`,player,answer,correct,value,key,kind,at:Date.now(),overridden:false};
-      broadcastToBuzzers({type:"answer-decision",player,id:item.id});decisionHistory.push(item);if(decisionHistory.length>100)decisionHistory.shift();renderOverrides();return item;
+      const item={id:`decision-${Date.now()}-${highlightEvents.length}`,event:"answer",player,answer,correct,value,key,kind,steal:kind==="clue"&&!everyoneAnswers()&&state.clueAttempts>0,dailyDouble:kind==="clue"&&!!state.board?.isDailyDouble(key),at:Date.now(),overridden:false};
+      broadcastToBuzzers({type:"answer-decision",player,id:item.id});decisionHistory.push(item);highlightEvents.push(item);if(decisionHistory.length>100)decisionHistory.shift();renderOverrides();return item;
     }
     function renderOverrides(){
       const list=$("overrideDecision");if(!list)return;
@@ -3649,7 +3689,7 @@ window.gameCaption=message=>{
       const idx=playerIndexByName(d.player);if(idx<0||d.correct===correct)return;
       // Final judgments are ±wager; regular incorrect attempts have no score penalty.
       const delta=d.kind==="tiebreak"?(correct?1:-1):d.kind==="final"?(correct?2:-2)*d.value:(correct?1:-1)*(d.value+(d.penalty||0));
-      state.players[idx].score+=delta;d.correct=correct;d.overridden=true;d.reason=reason;const observed=fairness.clues.findLast(q=>q.key===d.key);if(observed)observed.correct=decisionHistory.some(x=>x.key===d.key&&x.correct);trackLeader();
+      state.players[idx].score+=delta;d.correct=correct;const awardEvent=highlightEvents.find(e=>e.id===d.id);if(awardEvent)awardEvent.correct=correct;d.overridden=true;d.reason=reason;const observed=fairness.clues.findLast(q=>q.key===d.key);if(observed)observed.correct=decisionHistory.some(x=>x.key===d.key&&x.correct);trackLeader();
       if(d.kind==="clue" && correct && state.activeKey===d.key){state.controlIdx=idx;markUsed();closeClue();}
       if(d.kind==="final")finalJudgments.set(idx,correct);
       proLog(`OVERRIDE: ${d.player} → ${correct?"correct":"incorrect"}; ${reason}`);
@@ -3660,7 +3700,7 @@ window.gameCaption=message=>{
     function renderCorrectedFinal(){
       const ranked=getRankedPlayers(),winners=ranked.filter(p=>p.rank===1);
       $("summaryText").innerHTML=`<div class="finalWinnerBanner">${winners.length>1?"Co-Winners":"Winner"}: ${winners.map(p=>escapeHtml(p.name)).join(" & ")}</div><p>Results updated by host override.</p>`+ranked.map(p=>`<div class="scoreRow"><span>${p.rank}. ${escapeHtml(p.name)}</span><strong>$${p.score}</strong></div>`).join("");
-      renderFinalAnswerBanner();
+      renderGameHighlights();renderFinalAnswerBanner();
       broadcastToBuzzers({...scoreboardPayload(true),type:"final-results",accepted:finalJeopardy.answers[0]});
     }
 
@@ -4037,7 +4077,7 @@ window.gameCaption=message=>{
           actionResult(data,false,{reason:"Check your wager amount."});
           broadcastToBuzzers({type:"final-error",player:data.player,message:`Wager must be $0 to $${max}.`}); return;
         }
-        state.final.wagers.set(idx,wager);
+        state.final.wagers.set(idx,wager);highlightWager(state.players[idx].name,wager,"final");
         actionResult(data,true,{result:"wager-locked"});
         broadcastToBuzzers({type:"final-wager-ack",player:data.player});
         if(state.final.wagers.size>=state.players.length)beginFinalAnswers();
@@ -4119,7 +4159,7 @@ window.gameCaption=message=>{
           const [cat,row]=key.split("::");
           continueAfterMiss(state.board.clueFor(cat,Number(row)),"Steal answer time expired.");
         }, registration.player);
-        statInc(premiereStats.buzzes,registration.player);
+        statInc(premiereStats.buzzes,registration.player);highlightEvents.push({event:"buzz",player:registration.player});
         broadcastToBuzzers({type:"buzz-lock",player:registration.player,at:Date.now(),racers:state.players.map(p=>p.name)});
         showHostRaceWinner(registration.player);
         broadcastToBuzzers({ type: "buzz-ack", player: registration.player });
@@ -4354,7 +4394,7 @@ window.gameCaption=message=>{
           timer:{remaining:state.timer.remaining,mode:state.timer.mode,paused:state.timer.paused,running:!!state.timer.id || (window.educationalMode() && !!state.activeKey)},gameClock:{remaining:state.gameClock.remaining,running:!!state.gameClock.id},
           final:{...state.final,timerId:null,wagers:[...state.final.wagers],answers:[...state.final.answers]},finalJeopardy,championshipPaused,finalTimerRunning:!!state.final.timerId,finalResultsApplied,finalAnswerRevealed,finalJudgments:[...finalJudgments],finalHTML:$("summaryText").innerHTML,stats:Object.fromEntries(Object.entries(premiereStats).map(([k,v])=>[k,[...v]])),
           phase:state.phase,clueAttempts:state.clueAttempts,clueStartIdx:state.clueStartIdx,ddLockedWager:state.ddLockedWager,attempted:[...attemptedPlayersThisClue],firstBuzzer,buzzerActive,answerTransactionLocked,
-          engineGameId,engineTurn,clueTransactionId,decisions:decisionHistory,actionResults:[...actionResults],sessions:[...playerSessions],removed:[...removedDevices],removedPlayers:[...removedPlayers],roomLocked,reviews:reviewRequests,
+          engineGameId,engineTurn,clueTransactionId,decisions:decisionHistory,highlightEvents,highlightsComplete,actionResults:[...actionResults],sessions:[...playerSessions],removed:[...removedDevices],removedPlayers:[...removedPlayers],roomLocked,reviews:reviewRequests,
           transition:recoveryTransition,checklist:[...$("eventChecklist").querySelectorAll("input")].map(e=>e.checked),gameMode:state.gameMode,teams:[...state.teams],tournament:state.tournament,previousRanks:[...state.previousRanks],privacyOn:state.privacyOn,phaseChangedAt:state.phaseChangedAt,inputs:[...document.querySelectorAll("input[id],select[id]")].filter(e=>e.id!=="nameInput").map(e=>[e.id,e.value,e.checked]),answerDraft:answerInput.value};
         const text=JSON.stringify(d);localStorage.setItem(recoveryKey,text);
         $("recoveryHealth").textContent="Recovery saved · "+new Date(d.ts).toLocaleTimeString();
@@ -4376,6 +4416,7 @@ window.gameCaption=message=>{
       engineGameId=d.engineGameId;engineTurn=d.engineTurn;clueTransactionId=d.clueTransactionId;firstBuzzer=d.firstBuzzer;buzzerActive=d.buzzerActive;answerTransactionLocked=d.answerTransactionLocked;attemptedPlayersThisClue=new Set(d.attempted);
       for(const [map,entries] of [[playerSessions,d.sessions],[finalJudgments,d.finalJudgments],[actionResults,d.actionResults]]){map.clear();for(const [k,v] of entries||[])map.set(k,v);}
       removedPlayers.clear();for(const n of d.removedPlayers||[])removedPlayers.add(n);removedDevices.clear();for(const t of d.removed||[])removedDevices.add(t);roomLocked=d.roomLocked;reviewRequests.splice(0,reviewRequests.length,...d.reviews||[]);decisionHistory.splice(0,decisionHistory.length,...d.decisions||[]);
+      highlightEvents.splice(0,highlightEvents.length,...(d.highlightEvents||[]));highlightsComplete=d.highlightsComplete===true;
       finalResultsApplied=d.finalResultsApplied;finalAnswerRevealed=d.finalAnswerRevealed;championshipPaused=d.championshipPaused;recoveryTransition=d.transition;
       $("premiereIntro").classList.add("hidden");lobbyPane.style.display=d.board?"none":"block";boardPane.style.display=d.board&&!d.activeKey&&d.final.step==="off"?"block":"none";qaPane.style.display=d.activeKey?"block":"none";finalPane.style.display=d.final.step!=="off"&&d.final.step!=="complete"?"block":"none";summaryPane.style.display=d.final.step==="complete"?"block":"none";
       renderLobbyList();renderScoreboard();if(state.board)renderBoard();renderOverrides();renderRoomControls();
@@ -4388,7 +4429,7 @@ window.gameCaption=message=>{
       if(d.gameClock.running){startGameClock();state.gameClock.remaining=d.gameClock.remaining;gameClockEl.textContent=formatClock(d.gameClock.remaining);}else if(everyoneAnswers())gameClockEl.textContent="∞ Casual session";
       if(d.final.step!=="off"){
         finalCategoryEl.textContent=finalJeopardy.category;finalTimerEl.textContent=(d.final.step==="wagers"?d.final.wagerRemaining:d.final.timerRemaining)+"s";championshipPauseBtn.textContent=championshipPaused?"Resume Countdown":"Pause Countdown";
-        if(d.final.step==="complete")$("summaryText").innerHTML=d.finalHTML;
+        if(d.final.step==="complete"){$("summaryText").innerHTML=d.finalHTML;renderGameHighlights();}
         else renderFinalUI();
         if(d.final.step==="answers"&&d.final.timerRemaining>0&&d.finalTimerRunning!==false){startFinalTimer();state.final.timerRemaining=d.final.timerRemaining;championshipPaused=d.championshipPaused;finalTimerEl.textContent=d.final.timerRemaining+"s";}
         if(d.final.step==="wagers")finalWagerTimer=setInterval(()=>{if(championshipPaused || window.educationalMode())return;if(--state.final.wagerRemaining<=0)beginFinalAnswers();finalTimerEl.textContent=state.final.wagerRemaining+"s";broadcastFinalState();},1000);
@@ -4410,7 +4451,7 @@ window.gameCaption=message=>{
       Promise.all(assets.map(src=>fetch(src,{method:'HEAD'}).then(r=>[src,r.ok]).catch(()=>[src,false]))).then(found=>{const all=rows.concat(found.map(([a,ok])=>[a,ok]));$("diagnosticRows").innerHTML=all.map(([n,ok])=>`<div class="diag-row"><span>${escapeHtml(n)}</span><strong style="color:${ok?'var(--ok)':'var(--danger)'}">${ok?'✓ READY':'✕ CHECK'}</strong></div>`).join('');});
       $("systemCheckModal").classList.add("show");
     }
-    function undoLast(){const u=undoStack.pop();if(!u)return toast("Nothing to undo");u.scores.forEach((v,i)=>{if(state.players[i])state.players[i].score=v});state.controlIdx=u.controlIdx;state.used=new Set(u.used);renderScoreboard();renderBoard();broadcastScoreboard(false);broadcastBoardState();toast(`Undid: ${u.label}`)}
+    function undoLast(){const u=undoStack.pop();if(!u)return toast("Nothing to undo");if(Number.isInteger(u.highlightLength)){highlightEvents.splice(u.highlightLength);const ids=new Set(highlightEvents.filter(e=>e.id).map(e=>e.id));for(let i=decisionHistory.length-1;i>=0;i--)if(!ids.has(decisionHistory[i].id))decisionHistory.splice(i,1);renderOverrides();}u.scores.forEach((v,i)=>{if(state.players[i])state.players[i].score=v});state.controlIdx=u.controlIdx;state.used=new Set(u.used);renderScoreboard();renderBoard();broadcastScoreboard(false);broadcastBoardState();toast(`Undid: ${u.label}`)}
     $("hostFab").onclick=()=>$("hostDrawer").classList.toggle("open");$("closeHostDrawer").onclick=()=>$("hostDrawer").classList.remove("open");$("undoBtn").onclick=undoLast;
     $("presentationBtn").onclick=()=>{document.body.classList.toggle("presentation-mode");toast(document.body.classList.contains("presentation-mode")?"Presentation mode on — press Esc for host controls":"Presentation mode off")};
     $("fullscreenBtn").onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});
