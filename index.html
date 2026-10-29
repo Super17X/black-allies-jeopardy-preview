@@ -3573,6 +3573,9 @@ window.gameCaption=message=>{
           realtimeReady = true;
           flushRealtimeQueue();
           buzzStatusEl.textContent = `🌐 Online room ${roomCode} ready`;
+        }else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(status)){
+          realtimeReady = false;
+          buzzStatusEl.textContent = `Reconnecting room ${roomCode}…`;
         }
       });
     }
@@ -3818,7 +3821,8 @@ window.gameCaption=message=>{
     }
     function broadcastGameplaySync(){
       updateBoardNow();
-      for(const p of state.players){const d=decisionHistory.slice().reverse().find(d=>d.player===p.name);if(d)broadcastToBuzzers({type:"answer-decision",player:p.name,id:d.id});} broadcastToBuzzers(gameplaySyncPayload()); broadcastFinalState(); }
+      const decisions = Object.fromEntries(decisionHistory.map(d=>[d.player,d.id]));
+      broadcastToBuzzers({...gameplaySyncPayload(),decisions}); broadcastFinalState(); }
 
     // Remove stale phone sessions and reopen a steal if its winner disconnects.
     setInterval(()=>{
@@ -3845,6 +3849,17 @@ window.gameCaption=message=>{
         if(state.activeKey) broadcastScoreboard(false);
       }
     },1500);
+
+    // A reconnect wave needs one room snapshot, not one full fan-out per phone.
+    let roomSyncPending = null;
+    function scheduleRoomSync(){
+      if(roomSyncPending !== null) return;
+      roomSyncPending = setTimeout(()=>{
+        roomSyncPending = null;
+        broadcastGameplaySync(); broadcastScoreboard(false);
+        broadcastReadyState(); broadcastBoardState(); broadcastActiveQuestion();
+      },100);
+    }
 
     // ---------- handle message from buzzer pages ----------
     function handleBuzzerMessage(data) { try { return processBuzzerMessage(data); } finally { premiereSave(); } }
@@ -3898,10 +3913,7 @@ window.gameCaption=message=>{
       }
 
       if (data.type === "sync-request") {
-        broadcastGameplaySync();
-        broadcastScoreboard(false);
-        broadcastReadyState();
-        broadcastBoardState();
+        scheduleRoomSync();
         return;
       }
 
@@ -3934,10 +3946,7 @@ window.gameCaption=message=>{
         if (waitingRoomPane.style.display !== "none") renderWaitingRoom();
         if (registration.added) playJoinSound();
         buzzStatusEl.textContent = `📱 ${registration.player} connected and ready`;
-        broadcastBoardState();
-        broadcastScoreboard(false);
-        broadcastReadyState();
-        broadcastActiveQuestion();
+        scheduleRoomSync();
         if(state.final.step === "wagers") broadcastToBuzzers({type:"final-wager", category:finalJeopardy.category, scores:Object.fromEntries(state.players.map(p=>[p.name,p.score]))});
         if(state.final.step === "answers") broadcastToBuzzers({type:"final-answer", category:finalJeopardy.category, clue:finalJeopardy.text});
       }
