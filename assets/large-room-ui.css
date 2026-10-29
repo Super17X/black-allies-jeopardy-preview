@@ -1,0 +1,19 @@
+/* Keep the roster bounded so readiness and start controls remain nearby. */
+#waitingRoomPane #roomGrid{max-height:clamp(220px,42vh,440px)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable;align-content:start}
+#waitingRoomPane #roomGrid .roomBox{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;padding:7px!important}
+#waitingRoomPane #roomGrid .roomTitle{min-width:0;display:flex;flex-wrap:wrap;overflow-wrap:anywhere}
+#waitingRoomPane #roomGrid .roomBox .row{margin:0!important}
+#waitingRoomPane #roomGrid .roomBox .btn{min-height:40px;font-size:.8rem;padding:6px 8px}
+#roomGrid:focus-visible{outline:2px solid #ffd36b;outline-offset:3px}
+#leaderboardTicker .allScoresButton{flex:0 0 auto;min-height:44px;padding:6px 10px;background:#10213a;color:#ffe18a;border:1px solid #ad8a45;border-radius:7px;cursor:pointer}
+#allScoresDialog{box-sizing:border-box;width:min(720px,94vw);max-height:85vh;overflow:auto;background:#081329;color:#f5f7ff;border:1px solid #d4b464;border-radius:14px;padding:20px}
+#allScoresDialog::backdrop{background:#000b}
+#allScoresDialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#allScoresDialog h2{margin:0;color:#ffe18a}
+#allScoresSearch{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;background:#fff;color:#111;border-radius:6px}
+#allScoresRows{display:grid;gap:6px;margin-top:10px}
+#allScoresRows .tickerPlayer{display:block;background:#11233d;border-radius:6px;padding:12px;overflow-wrap:anywhere}
+#allScoresRows .leader-move{display:none}
+#allScoresRows strong{color:#ffe18a}
+#allScoresDialog button{min-height:44px}
+@media(max-width:600px){#waitingRoomPane #roomGrid{max-height:40vh!important}#leaderboardTicker .tickerLabel{display:none}#leaderboardTicker .allScoresButton{font-size:.8rem;padding:6px}#waitingRoomPane #roomGrid .roomBox{grid-template-columns:1fr!important}}

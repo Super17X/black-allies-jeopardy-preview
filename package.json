@@ -7,7 +7,8 @@
     "test:competitive": "node tests/competitive.cjs && node tests/competitive-options.cjs && node tests/accessibility.cjs",
     "test:casual": "node tests/everyone.cjs",
     "test:host": "node tests/mobile-host.cjs && node tests/mobile-host-integration.cjs",
-    "test:ui": "node tests/event-controls.cjs && node tests/practice-navigation.cjs && node tests/practice-return-integration.cjs"
+    "test:ui": "node tests/event-controls.cjs && node tests/practice-navigation.cjs && node tests/practice-return-integration.cjs",
+    "test:capacity": "node tests/large-room.cjs && node tests/large-room-ui.cjs"
   },
   "devDependencies": {
     "jsdom": "30.1.2"
