@@ -50,6 +50,10 @@ assert.equal(messages.slice(decisionStart).filter(m=>m.type==='answer-decision')
 assert.equal(Object.keys(messages.filter(m=>m.type==='gameplay-sync').at(-1).decisions).length,50);
 host.document.getElementById('competitionRules').value='everyone';
 host.document.getElementById('enterWaitingRoomBtn').click();
+assert.equal(host.document.getElementById('premiumLobbyFraction').textContent,'50 players');
+assert.equal(host.document.getElementById('lobbySideCount').textContent,'(50 players)');
+const roster=host.document.getElementById('roomGrid');roster.scrollTop=400;roster.querySelectorAll('button')[34].focus();
+send(players[34],'ready-toggle');assert.equal(roster.scrollTop,400);assert.equal([...roster.querySelectorAll('button')].indexOf(host.document.activeElement),34);send(players[34],'ready-toggle');
 for(const p of players)send(p,'ready-toggle');
 advance(14000);
 host.document.querySelector('#boardGrid button:not(:disabled)').click();advance(5001);
